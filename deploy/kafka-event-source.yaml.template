@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: issm-kafka
+spec:
+  kafka:
+    intent:
+      url: $KAFKA_HOST:$KAFKA_PORT
+      topic: issm-topic
+      jsonBody: true
+      partition: "0"
+      connectionBackoff:
+        duration: 10000000000
+        steps: 5
+        factor: 2
+        jitter: 0.2
+

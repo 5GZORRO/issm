@@ -1,0 +1,267 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: issm-kafka
+spec:
+  template:
+    serviceAccountName: argo-events-sa
+  dependencies:
+    - name: test-dep
+      eventSourceName: issm-kafka
+      eventName: intent
+  triggers:
+    - template:
+        name: kafka-workflow-trigger
+        k8s:
+          group: argoproj.io
+          version: v1alpha1
+          resource: workflows
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                #
+                # Workflow name is the event_uuid defined in the payload
+                # (see event parameters below)
+                #
+                name: "OVERRIDE"
+              spec:
+                entrypoint: handlerequest
+                arguments:
+                  parameters:
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Kafka bus ip and port
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: kafka_ip
+                    value: 1.2.3.4
+                  - name: kafka_port
+                    value: 9092
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Discovery service ip and port
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: discovery_service_ip
+                    value: 1.2.3.4
+                  - name: discovery_service_port
+                    value: 31848
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Payload parameters
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: operation
+                    value: OVERRIDE
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # operation == submit_intent
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: location
+                    value: OVERRIDE
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # operation == submit_bp
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: resources
+                    value: OVERRIDE
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Id of the transaction
+                  # (N/A for submit_intent)
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: transaction_uuid
+                    value: OVERRIDE
+                templates:
+                - name: handlerequest
+                  steps:
+                  - - name: submit-intent
+                      # It is assumed that this is the starting point of the transaction
+                      # meaning that event_uuid here is the transaction_uuid
+                      template: submit-intent-flow
+                      when: "{{workflow.parameters.operation}} == \"submit_intent\""
+
+                  - - name: submit-bp
+                      template: submit-bp-flow
+                      when: "{{workflow.parameters.operation}} == \"submit_bp\""
+
+                - name: submit-intent-flow
+                  dag:
+                    tasks:
+                    - name: smart-resource-discovery
+                      template: smart-resource-discovery
+                      arguments:
+                        parameters:
+                        - name: service_ip
+                          value: "{{workflow.parameters.discovery_service_ip}}"
+                        - name: service_port
+                          value: "{{workflow.parameters.discovery_service_port}}"
+                        - name: location
+                          value: "{{workflow.parameters.location}}"
+
+                    - name: send-resouces-to-optimizer
+                      # publish discovered resources for the optimizer to consume
+                      dependencies: [smart-resource-discovery]
+                      template: produce-message
+                      arguments:
+                        parameters:
+                        - name: data
+                          # note: transaction_uuid is the event_uuid passed to this flow
+                          value: |
+                            { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}", "resources": {{tasks.smart-resource-discovery.outputs.result}} }
+                        - name: kafka_topic
+                          value: "issm-optimizer"
+
+                - name: submit-bp-flow
+                  dag:
+                    tasks:
+                    - name: acquire
+                      # invokes acquire template for every entry in resources list
+                      # waits for them to succeed and publishes status success for the
+                      # service owner to consume
+                      template: acquire
+                      arguments:
+                        parameters:
+                        - name: resource_name
+                          value: "{{item.resource_name}}"
+                      withParam: "{{workflow.parameters.resources}}"
+
+                    - name: return-acquire-status
+                      dependencies: [acquire]
+                      template: produce-message
+                      arguments:
+                        parameters:
+                        - name: kafka_topic
+                          # TODO: should topic be parametrized ?
+                          value: "service-owner"
+                        - name: data
+                          value: |
+                            { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}", "status": "success" }
+
+                - name: smart-resource-discovery
+                  inputs:
+                    parameters:
+                    - name: service_ip
+                    - name: service_port
+                    - name: location
+                  script:
+                    image: artifactory.haifa.ibm.com:5130/weit/python:alpine3.6-kafka
+                    command: [python]
+                    source: |
+                      import json
+                      import requests
+                      import sys
+
+                      headers = {'Content-Type': 'application/json'}
+                      r = requests.post("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discovery/resources",
+                          json={'location': "{{inputs.parameters.location}}"}, headers=headers)
+                      json.dump(r.json(), sys.stdout)
+
+                - name: acquire
+                  # acquire is devided into two sub-tasks:
+                  # 1. the acquire operation itself
+                  # 2. branch to inspect acquire status and either fail the flow
+                  # or proceed as normal
+                  inputs:
+                    parameters:
+                    - name: resource_name
+                  steps:
+                    - - name: acquire-resource
+                        template: acquire-simulator
+                        arguments:
+                          parameters:
+                          - name: resource_name
+                            value: "{{inputs.parameters.resource_name}}"
+
+                    - - name: acquire-fail
+                        template: produce-message
+                        when: "{{steps.acquire-resource.outputs.parameters.status}} == \"FAIL\""
+                        arguments:
+                          parameters:
+                          - name: kafka_topic
+                            value: "service-owner"
+                          - name: data
+                            value: |
+                              { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}", "status": "fail", "resource_name": "{{inputs.parameters.resource_name}}" }
+                    - - name: fail-flow
+                        template: fail
+                        when: "{{steps.acquire-resource.outputs.parameters.status}} == \"FAIL\""
+
+                - name: acquire-simulator
+                  # simulate a resource purchase with a return of a
+                  # fail/success status
+                  inputs:
+                    parameters:
+                    - name: resource_name
+                  script:
+                    image: python:alpine3.6
+                    command: [python]
+                    source: |
+                      import json
+                      import random
+                      import sys
+                      status = "acquire_success"
+                      json.dump({"resource_name": "{{inputs.parameters.resource_name}}", "status": status}, sys.stdout)
+                      with open("/tmp/status.txt", "a") as myfile:
+                          myfile.write(status)                      
+                  outputs:
+                    parameters:
+                    - name: status
+                      valueFrom:
+                        path: /tmp/status.txt
+
+                - name: fail
+                  script:
+                    image: debian:9.4
+                    command: [bash]
+                    source: |
+                      exit 123
+
+                - name: produce-message
+                  inputs:
+                    parameters:
+                    - name: data
+                    - name: kafka_topic
+                  steps:
+                    - - name: return-result
+                        templateRef:
+                          name: workflow-base
+                          template: produce
+                        arguments:
+                          parameters:
+                          - name: kafka_topic
+                            value: "{{inputs.parameters.kafka_topic}}"
+                          - name: kafka_ip
+                            value: "{{workflow.parameters.kafka_ip}}"
+                          - name: kafka_port
+                            value: "{{workflow.parameters.kafka_port}}"
+                          - name: data
+                            value: "{{inputs.parameters.data}}"
+
+          parameters:
+            - src:
+                dependencyName: test-dep
+                dataKey: body.event_uuid
+              dest: metadata.name
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.operation
+              dest: spec.arguments.parameters.4.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.location
+                value: DEFAULT
+              dest: spec.arguments.parameters.5.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resources
+                value: DEFAULT
+              dest: spec.arguments.parameters.6.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.transaction_uuid
+                value: DEFAULT
+              dest: spec.arguments.parameters.7.value

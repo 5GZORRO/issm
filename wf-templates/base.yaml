@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: workflow-base
+spec:
+  templates:
+  - name: produce
+    inputs:
+      parameters:
+      - name: kafka_topic
+      - name: kafka_ip
+      - name: kafka_port
+      - name: data
+
+    script:
+      image: artifactory.haifa.ibm.com:5130/weit/python:alpine3.6-kafka
+      command: [python]
+      source: |
+        import json
+        import os
+
+        from kafka import KafkaProducer
+        from kafka.errors import KafkaError
+
+        KAFKA_TOPIC = '{{inputs.parameters.kafka_topic}}'
+        KAFKA_TIMEOUT = 10
+        KAFKA_API_VERSION = (1, 1, 0)
+
+        KAFKA_SERVER = "{}:{}".format("{{inputs.parameters.kafka_ip}}", "{{inputs.parameters.kafka_port}}")
+        producer = KafkaProducer(bootstrap_servers=KAFKA_SERVER,
+                                 api_version=KAFKA_API_VERSION,
+                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+
+        t = producer.send(KAFKA_TOPIC, {"data": {{inputs.parameters.data}} })
+        # Block for 'synchronous' send; set timeout on X seconds
+        try:
+            t.get(timeout=KAFKA_TIMEOUT)
+        except KafkaError as ke:
+            print("1")
+        print ("0")
