@@ -13,15 +13,46 @@ ISSM runs on kubernetes. You can use [these instructions](https://github.com/5GZ
 
 ## Deploy the service
 
+Deploying the service comprises these two steps:
+
+* Set ISSM role
+* Create ISSM kafka sink
+
 Log into kuberneters master
 
 Invoke the below in this order
+
+### Set ISSM role
 
 ```
 kubectl create -n argo-events -f deploy/role.yaml
 ```
 
-**Note:** you may need to update sensor's kafka and discovery services ips, ports according to your environment - before applying it on the system
+### Create ISSM kafka event source
+
+Update ISSM kafka bus ip and port
+
+```
+export KAFKA_HOST=10.20.3.4
+export KAFKA_PORT=9092
+```
+
+```
+envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n argo-events -f -
+```
+
+**Note:** Kafka `issm-topic` is automatically created during the creation of the event-source
+
+## Onboard ISSM flow
+
+Depending on the flow context, you may need to customize it with access information to the 5G Zorro services the flow depends on
+
+Open `flows/issm-sensor.yaml`
+
+Update access info for:
+
+* ISSM kafka bus with the values set [above](./README.md#create-issm-kafka-event-source)
+* Discovery service
 
 ```
                 arguments:
@@ -36,15 +67,11 @@ kubectl create -n argo-events -f deploy/role.yaml
                     value: 31848
 ```
 
-```
-envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n argo-events -f -
-```
+Onboard the flow
 
 ```
-kubectl apply -f deploy/issm-sensor.yaml -n argo-events
+kubectl apply -f flows/issm-sensor.yaml -n argo-events
 ```
-
-**Note:** Kafka `issm-topic` automatically get created during the onboarding of the event-source
 
 ## Deploy common template library
 
@@ -54,7 +81,7 @@ kubectl create -f wf-templates/base.yaml -n argo-events
 
 ## Trigger ISSM business flow
 
-Log into your Kafka container
+In a new terminal, log into ISSM Kafka container
 
 Invoke the below command to publish an intent on ISSM topic
 
@@ -68,7 +95,7 @@ The flow is invoked automatically
 
 ## Inspect result
 
-Log into your Kafka container
+In a new terminal, log into ISSM Kafka container
 
 Invoke the below command to obtain the latest message produced by the flow
 

@@ -34,7 +34,7 @@ spec:
                 arguments:
                   parameters:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Kafka bus ip and port
+                  # ISSM kafka bus
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: kafka_ip
                     value: 1.2.3.4
@@ -42,7 +42,7 @@ spec:
                     value: 9092
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Discovery service ip and port
+                  # Discovery service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: discovery_service_ip
                     value: 1.2.3.4
