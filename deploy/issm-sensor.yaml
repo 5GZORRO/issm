@@ -29,6 +29,8 @@ spec:
                 name: "OVERRIDE"
               spec:
                 entrypoint: handlerequest
+                imagePullSecrets:
+                - name: myregistrykey
                 arguments:
                   parameters:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -144,7 +146,7 @@ spec:
                     - name: service_port
                     - name: location
                   script:
-                    image: artifactory.haifa.ibm.com:5130/weit/python:alpine3.6-kafka
+                    image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka
                     command: [python]
                     source: |
                       import json

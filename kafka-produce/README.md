@@ -6,16 +6,16 @@ This image also contains the `requests` to be used by Argo steps/tasks to commun
 ## Build and push docker images (**relevant for developers only**)
 
 1.  Set the `REGISTRY` environment variable to hold the name of your docker registry. The following command sets it
-    equal to the Haifa Varuna repository.
+    equal to the docker github package repository.
 
     ```
-    $ export REGISTRY=artifactory.haifa.ibm.com:5130
+    $ export REGISTRY=docker.pkg.github.com
     ```
 
 1.  Set the `IMAGE` environment variable to hold the image of the operator.
 
     ```
-    $ export IMAGE=$REGISTRY/weit/python:alpine3.6-kafka
+    $ export IMAGE=$REGISTRY/5gzorro/issm/python:alpine3.6-kafka
     ```
 
 1.  Invoke the below command.

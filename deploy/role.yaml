@@ -9,6 +9,7 @@ rules:
   - services
   - pods
   - pods/exec
+  - secrets
   verbs:
   - create
   - get
