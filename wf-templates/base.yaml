@@ -4,14 +4,58 @@ metadata:
   name: workflow-base
 spec:
   templates:
+  - name: callback
+    # Invoke user provided callback by publishing the given data into the provided
+    # kafka topic (specified in callback json) of ISSM kafka bus.
+    #
+    # Note: if no callback provided then this step is considered as NOP
+    #
+    # Parameters
+    # callback: callback (json)
+    # data: the payload to publish (json)
+    inputs:
+      parameters:
+      - name: callback
+      - name: data
+    steps:
+    - - name: kafka-topic-from-callback
+        template: from-key
+        #when: "{{inputs.parameters.callback}} != \"DEFAULT\""
+        arguments:
+          parameters:
+          - name: key
+            value: "kafka_topic"
+          - name: json_str
+            value: "{{inputs.parameters.callback}}"
+
+    - - name: invoke-callback
+        template: produce
+        #when: "{{inputs.parameters.callback}} != \"DEFAULT\""
+        arguments:
+          parameters:
+          - name: kafka_topic
+            value: "{{steps.kafka-topic-from-callback.outputs.result}}"
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_port}}"
+          - name: data
+            value: "{{inputs.parameters.data}}"
+
   - name: produce
+    # Publish a message into kafka broker
+    #
+    # Parameters
+    # kafka_topic: the topic to publish the message on (string)
+    # kafka_ip: ipaddress of the kafka broker (string)
+    # kafka_port: kafka broker port (number)
+    # data: the payload to publish (json)
     inputs:
       parameters:
       - name: kafka_topic
       - name: kafka_ip
       - name: kafka_port
       - name: data
-
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka
       command: [python]
@@ -38,3 +82,16 @@ spec:
         except KafkaError as ke:
             print("1")
         print ("0")
+
+  - name: from-key
+    inputs:
+      parameters:
+      - name: key
+      - name: json_str
+    script:
+      image: python:alpine3.6
+      command: [python]
+      source: |
+        import json
+
+        print({{inputs.parameters.json_str}}['{{inputs.parameters.key}}'])

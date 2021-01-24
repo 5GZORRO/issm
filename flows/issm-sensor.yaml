@@ -50,6 +50,12 @@ spec:
                     value: 31848
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Callback parameters
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: callback
+                    value: OVERRIDE
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Payload parameters
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: operation
@@ -109,7 +115,7 @@ spec:
                         - name: data
                           # note: transaction_uuid is the event_uuid passed to this flow
                           value: |
-                            { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}", "resources": {{tasks.smart-resource-discovery.outputs.result}} }
+                            { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}", "resources": {{tasks.smart-resource-discovery.outputs.result}}, "callback": {{workflow.parameters.callback}} }
                         - name: kafka_topic
                           value: "issm-optimizer"
 
@@ -127,14 +133,15 @@ spec:
                           value: "{{item.resource_name}}"
                       withParam: "{{workflow.parameters.resources}}"
 
-                    - name: return-acquire-status
+                    - name: callback-acquire-success
                       dependencies: [acquire]
-                      template: produce-message
+                      templateRef:
+                        name: workflow-base
+                        template: callback
                       arguments:
                         parameters:
-                        - name: kafka_topic
-                          # TODO: should topic be parametrized ?
-                          value: "service-owner"
+                        - name: callback
+                          value: "{{workflow.parameters.callback}}"
                         - name: data
                           value: |
                             { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}", "status": "success" }
@@ -174,13 +181,15 @@ spec:
                           - name: resource_name
                             value: "{{inputs.parameters.resource_name}}"
 
-                    - - name: acquire-fail
-                        template: produce-message
+                    - - name: callback-acquire-fail
+                        templateRef:
+                          name: workflow-base
+                          template: callback
                         when: "{{steps.acquire-resource.outputs.parameters.status}} == \"FAIL\""
                         arguments:
                           parameters:
-                          - name: kafka_topic
-                            value: "service-owner"
+                          - name: callback
+                            value: "{{workflow.parameters.callback}}"
                           - name: data
                             value: |
                               { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}", "status": "fail", "resource_name": "{{inputs.parameters.resource_name}}" }
@@ -247,23 +256,29 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.operation
+                dataKey: body.callback
+                value: DEFAULT
               dest: spec.arguments.parameters.4.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.operation
+              dest: spec.arguments.parameters.5.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.location
                 value: DEFAULT
-              dest: spec.arguments.parameters.5.value
+              dest: spec.arguments.parameters.6.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resources
                 value: DEFAULT
-              dest: spec.arguments.parameters.6.value
+              dest: spec.arguments.parameters.7.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.transaction_uuid
                 value: DEFAULT
-              dest: spec.arguments.parameters.7.value
+              dest: spec.arguments.parameters.8.value

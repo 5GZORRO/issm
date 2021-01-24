@@ -83,13 +83,15 @@ kubectl create -f wf-templates/base.yaml -n argo-events
 
 In a new terminal, log into ISSM Kafka container
 
-Invoke the below command to publish an intent on ISSM topic
+Invoke the below command to publish an intent on ISSM topic providing a callback where progress and flow result are to be published.
+
+**Note:** for kafka callback ISSM kafka bus is being used
 
 ```
  /opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
 ```
 
->{"event_uuid": "123", "operation": "submit_intent", "location": "37.80 N, 23.75 E"}
+>{"event_uuid": "123", "operation": "submit_intent", "location": "37.80 N, 23.75 E", "callback": {"type": "kafka", "kafka_topic": "my-mno-topic"}}
 
 The flow is invoked automatically
 
@@ -100,7 +102,7 @@ In a new terminal, log into ISSM Kafka container
 Invoke the below command to obtain the latest message produced by the flow
 
 ```
-/opt/kafka/bin/kafka-console-consumer.sh --topic service-owner --from-beginning --bootstrap-server localhost:9092
+/opt/kafka/bin/kafka-console-consumer.sh --topic my-mno-topic --from-beginning --bootstrap-server localhost:9092
 ```
 
 >{"data": {"event_uuid": "e50dfc010f62434fb3195e8feec86d74", "transaction_uuid": "123", "status": "success"}}
