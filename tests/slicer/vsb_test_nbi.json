@@ -1,0 +1,224 @@
+{
+  "vsBlueprint": {
+    "version": "0.1",
+    "name": "vCDN",
+    "description": "Entertainment vCDN service",
+    "parameters": [{
+      "parameterId": "users",
+      "parameterName": "users",
+      "parameterType": "number",
+      "parameterDescription": "number of users",
+      "applicabilityField": "entertainment"
+    }],
+  "atomicComponents": [
+    {
+      "componentId": "vCacheEdge_1_01",
+      "serversNumber": 2,
+      "imagesUrls": [],
+      "endPointsIds": ["vCacheEdge_1_mgmt_ext", "vCacheEdge_1_cache_ext", "vCacheEdge_1_users_ext"],
+      "lifecycleOperations": {
+        "update": "scripts/update",
+        "heal": "scripts/heal",
+        "instantiate": "scripts/instantiate",
+        "terminate": "scripts/terminate"
+      }
+
+    }
+  ],
+  "serviceSequence": [
+    {
+      "vsComponentId": "vCacheEdge_1_01",
+      "endPointId":  "vCacheEdge_1_users_ext"
+    },
+    {
+      "vsComponentId": "vCacheEdge_1_01",
+      "endPointId":  "vCacheEdge_1_cache_ext"
+    }
+  ],
+  "endPoints": [
+    {
+      "endPointId": "vCacheEdge_1_users_ext",
+      "external": true,
+      "management": false,
+      "ranConnection": true
+
+    },
+    {
+      "endPointId": "vCacheEdge_1_cache_ext",
+      "external": false,
+      "management": false,
+      "ranConnection": false
+
+    }
+  ],
+  "connectivityServices": [
+    {
+      "endPointIds": [
+        "vCacheEdge_1_users_ext"
+
+      ],
+      "external": true
+    },
+    {
+      "endPointIds": [
+        "vCacheEdge_1_mgmt_ext"
+      ],
+      "external": true
+    }
+  ]
+},
+  "nsds": [
+    {
+		"nsdIdentifier": "vCDN_full_v01",
+		"designer": "NXW",
+		"version": "0.1",
+		"nsdName": "vCDN_TIMEO_BLUESPACE",
+		"nsdInvariantId": "vCDN_TIMEO_BLUESPACE_01",
+		"vnfdId": ["vCacheEdge_1_01"],
+		"sapd": [
+			{
+				"cpdId": "sap_mgmt",
+				"description": "Management SAP for all the vCDN VNFs",
+				"layerProtocol": "IPV4",
+				"cpRole": "ROOT",
+				"addressData": [{
+					"addressType": "IP_ADDRESS",
+					"iPAddressAssignment": false,
+					"floatingIpActivated": true,
+					"iPAddressType": "IPv4",
+					"numberOfIpAddress": 1
+				}],
+				"sapAddressAssignment": false,
+				"nsVirtualLinkDescId": "vl_mgmt"
+			}
+		],
+		"virtualLinkDesc": [
+			{
+				"virtualLinkDescId": "vl_mgmt",
+				"virtualLinkDescProvider": "NXW",
+				"virtuaLinkDescVersion": "0.1",
+				"connectivityType": {
+					"layerProtocol": "IPV4"
+				},
+				"virtualLinkDf": [{
+					"flavourId": "vl_df_mgmt",
+					"qos": {
+						"latency": 0,
+						"packetDelayVariation": 0,
+						"packetLossRatio": 0,
+						"priority": 0
+					},
+					"serviceAvaibilityLevel": "LEVEL_1"
+				}
+				],
+				"description": "Management network"
+			}
+		],
+		"nsDf": [{
+			"nsDfId": "df_vCDN",
+			"flavourKey": "df_vCDN",
+			"vnfProfile": [
+
+				{
+					"vnfProfileId": "vCacheEdge_1_profile",
+					"vnfdId": "vCacheEdge_1_01",
+					"flavourId": "df_vCacheEdge_1",
+					"instantiationLevel": "il_vCacheEdge_1",
+					"minNumberOfInstances": 1,
+					"maxNumberOfInstances": 1,
+					"nsVirtualLinkConnectivity": [{
+							"virtualLinkProfileId": "vl_profile_mgmt",
+							"cpdId": [
+								"vCacheEdge_1_mgmt_ext"
+							]
+						}
+					]
+				}
+			],
+			"virtualLinkProfile": [
+				{
+					"virtualLinkProfileId": "vl_profile_mgmt",
+					"virtualLinkDescId": "vl_mgmt",
+					"flavourId": "vl_df_mgmt",
+					"maxBitrateRequirements": {
+						"root": "1",
+						"leaf": "1"
+					},
+					"minBitrateRequirements": {
+						"root": "1",
+						"leaf": "1"
+					}
+				}
+			],
+			"nsInstantiationLevel": [
+				{
+					"nsLevelId": "il_vCDN_big",
+					"description": "Big instantiation level for the vCDN",
+					"vnfToLevelMapping": [
+						{
+							"vnfProfileId": "vCacheEdge_1_profile",
+							"numberOfInstances": 1
+						}
+					],
+					"virtualLinkToLevelMapping": [
+						{
+							"virtualLinkProfileId": "vl_profile_mgmt",
+							"bitRateRequirements": {
+								"root": "1",
+								"leaf": "1"
+							}
+						}
+					]
+				}
+			],
+			"defaultNsInstantiationLevelId": "il_vCDN_big",
+			"nsProfile": [
+				{
+					"nsProfileId": "ns_profile_vCDN_big",
+					"nsdId": "vCDN_v01",
+					"nsDfId": "df_vCDN",
+					"nsInstantiationLevelId": "il_vCDN_big",
+					"minNumberOfInstances": 1,
+					"maxNumberOfInstances": 1
+				}
+			],
+			"dependencies": [
+				{
+					"primaryId": ["vCacheEdge_1_profile"],
+					"secondaryId": ["vCacheEdge_1_profile"]
+				}
+			]
+		}],
+		"security": {
+			"signature": "vCDN_NSD_SIGNATURE",
+			"algorithm": "vCDN_NSD_ALGORITHM",
+			"certificate": "vCDN_NSD_CERTIFICATE"
+		}
+	}
+  ],
+  "vnfPackages": [
+    {
+      "name": "CDN vCacheEdge_1",
+      "version": "0.1",
+      "provider": "NXW",
+      "checksum": "nn",
+      "vnfPackagePath": "http://localhost/vnfd/vnfd_vCacheEdge_1_v01.tar"
+    }
+  ],
+  "mecAppPackages": [],
+  "translationRules": [
+    {
+      "nsdId": "vCDN_full_v01",
+      "nsdVersion": "0.1",
+      "nsFlavourId": "df_vCDN",
+      "nsInstantiationLevelId": "il_vCDN_big",
+      "input": [
+        {
+          "parameterId": "users",
+          "minValue": "101",
+          "maxValue": "100000"
+        }
+      ]
+    }
+  ]
+}

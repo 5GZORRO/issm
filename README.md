@@ -10,6 +10,7 @@ ISSM runs on kubernetes. You can use [these instructions](https://github.com/5GZ
 * Install argo and argo-events per [these instructions](docs/argo.md)
 * Install discovery service per [these instructions](https://github.com/5GZORRO/smart-discovery-simulator/blob/master/README.md). Ensure to populate its data model with its `init.sh` script
 * Install optimizer service per [these instructions](https://github.com/5GZORRO/issm-optimizer/blob/master/README.md)
+* Install vertical slicer per [these instructions](docs/slicer.md)
 
 ## Deploy the service
 
