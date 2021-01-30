@@ -196,15 +196,6 @@
 		}
 	}
   ],
-  "vnfPackages": [
-    {
-      "name": "CDN vCacheEdge_1",
-      "version": "0.1",
-      "provider": "NXW",
-      "checksum": "nn",
-      "vnfPackagePath": "http://localhost/vnfd/vnfd_vCacheEdge_1_v01.tar"
-    }
-  ],
   "mecAppPackages": [],
   "translationRules": [
     {
