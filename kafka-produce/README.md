@@ -15,7 +15,7 @@ This image also contains the `requests` to be used by Argo steps/tasks to commun
 1.  Set the `IMAGE` environment variable to hold the image of the operator.
 
     ```
-    $ export IMAGE=$REGISTRY/5gzorro/issm/python:alpine3.6-kafka
+    $ export IMAGE=$REGISTRY/5gzorro/issm/python:alpine3.6-kafka-v0.1
     ```
 
 1.  Invoke the below command.

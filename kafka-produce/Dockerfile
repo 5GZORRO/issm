@@ -1,7 +1,7 @@
 FROM python:3.6.1-alpine
 
 # Upgrade and install basic Python dependencies.
-RUN apk add --no-cache bash \
+RUN apk add --no-cache bash jq curl wget\
  && apk add --no-cache --virtual .build-deps \
         bzip2-dev \
         gcc \
