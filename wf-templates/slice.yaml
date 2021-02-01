@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: workflow-slice
+spec:
+  templates:
+  - name: create-tenant
+    # Create new tenant in vertical slicer
+    #
+    # Parameters:
+    # slicer_ip: ipaddress of the vertical slicer service (str)
+    # group_name: group name of the tenant (str)
+    # tenant_name: the name of the vertical tenant to create (str)
+    inputs:
+      parameters:
+      - name: slicer_ip
+      - name: group_name
+      - name: tenant_name
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      command: [sh]
+      source: |
+        generate_post_tenant_create()
+        {
+          cat <<EOF
+        {
+          "username": "{{inputs.parameters.tenant_name}}",
+          "password": "{{inputs.parameters.tenant_name}}"
+        }
+        EOF
+        }
+        curl --insecure -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/login
+        curl --insecure -b /tmp/a_c -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/admin/group/{{inputs.parameters.group_name}}/tenant --data "$(generate_post_tenant_create)" --header "Content-Type:application/json"
+
+  - name: create-group
+    # Create a new group in vertical slicer
+    #
+    # Parameters:
+    # slicer_ip: ipaddress of the vertical slicer service (str)
+    # group_name: group name of the tenant (str)
+    inputs:
+      parameters:
+      - name: slicer_ip
+      - name: group_name
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      command: [sh]
+      source: |
+        curl --insecure -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/login
+        curl --insecure -b /tmp/a_c -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/admin/group/{{inputs.parameters.group_name}} --header "Content-Type:application/json"

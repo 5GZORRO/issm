@@ -54,6 +54,7 @@ Update access info for:
 
 * ISSM kafka bus with the values set [above](./README.md#create-issm-kafka-event-source)
 * Discovery service
+* Vertical slicer service
 
 ```
                 arguments:
@@ -66,6 +67,9 @@ Update access info for:
                     value: 10.20.4.2
                   - name: discovery_service_port
                     value: 31848
+                  - name: slicer_ip
+                    value: 1.2.3.4
+
 ```
 
 Onboard the flow
@@ -78,6 +82,7 @@ kubectl apply -f flows/issm-sensor.yaml -n argo-events
 
 ```
 kubectl create -f wf-templates/base.yaml -n argo-events
+kubectl create -f wf-templates/slice.yaml -n argo-events
 ```
 
 ## Trigger ISSM business flow
@@ -92,7 +97,7 @@ Invoke the below command to publish an intent on ISSM topic providing a callback
  /opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
 ```
 
->{"event_uuid": "123", "operation": "submit_intent", "location": "37.80 N, 23.75 E", "callback": {"type": "kafka", "kafka_topic": "my-mno-topic"}}
+>{"event_uuid": "123", "operation": "submit_intent", "location": "37.80 N, 23.75 E", "callback": {"type": "kafka", "kafka_topic": "my-mno-topic"}, "mno_name": "my-mno"}
 
 The flow is invoked automatically
 
