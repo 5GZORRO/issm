@@ -44,6 +44,10 @@ envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n argo-even
 
 **Note:** Kafka `issm-topic` is automatically created during the creation of the event-source
 
+### Create ISSM optimizer topic
+
+Follow [create-topics](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md#create-topics) to create `issm-optmizer` topic
+
 ## Onboard ISSM flow
 
 Depending on the flow context, you may need to customize it with access information to the 5G Zorro services the flow depends on
@@ -94,7 +98,7 @@ Invoke the below command to publish an intent on ISSM topic providing a callback
 **Note:** for kafka callback ISSM kafka bus is being used
 
 ```
- /opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
+/opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
 ```
 
 >{"event_uuid": "123", "operation": "submit_intent", "location": "37.80 N, 23.75 E", "callback": {"type": "kafka", "kafka_topic": "my-mno-topic"}, "mno_name": "my-mno"}
