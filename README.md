@@ -9,7 +9,7 @@ ISSM runs on kubernetes. You can use [these instructions](https://github.com/5GZ
 * Ensure you have kafka broker already installed. You can use [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md) to provision such a one
 * Install argo and argo-events per [these instructions](docs/argo.md)
 * Install discovery service per [these instructions](https://github.com/5GZORRO/smart-discovery-simulator/blob/master/README.md). Ensure to populate its data model with its `init.sh` script
-* Install optimizer service per [these instructions](https://github.com/5GZORRO/issm-optimizer/blob/master/README.md)
+* Install optimizer service per [these instructions](https://github.com/5GZORRO/issm-optimizer/blob/master/README.md). **Ensure kafka topic `issm-optimizer` exists before running the service**
 * Install vertical slicer per [these instructions](docs/slicer.md)
 
 ## Deploy the service
@@ -43,10 +43,6 @@ envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n argo-even
 ```
 
 **Note:** Kafka `issm-topic` is automatically created during the creation of the event-source
-
-### Create ISSM optimizer topic
-
-Follow [create-topics](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md#create-topics) to create `issm-optmizer` topic
 
 ## Onboard ISSM flow
 
@@ -95,7 +91,7 @@ In a new terminal, log into ISSM Kafka container
 
 Invoke the below command to publish an intent on ISSM topic providing a callback where progress and flow result are to be published.
 
-**Note:** for kafka callback ISSM kafka bus is being used
+**Note:** ensure to create `my-mno-topic` on ISSM kafka bus before publishing the intent
 
 ```
 /opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
