@@ -69,16 +69,16 @@ spec:
         {
           cat <<EOF
         {
-          vsd: {
+          "vsd": {
             "name": "{{inputs.parameters.name}}",
             "version": "0.1",
             "sst": "EMBB",
             "managementType": "PROVIDER_MANAGED",
             "vsBlueprintId": "$1",
-            "qosParameters": "{{inputs.parameters.parameters}}"
+            "qosParameters": {{inputs.parameters.parameters}}
           },
           "tenantId": "{{inputs.parameters.tenant_name}}",
-          "isPublic": true
+          "isPublic": "true"
         }
         EOF
         }

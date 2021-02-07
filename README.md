@@ -8,7 +8,7 @@ ISSM runs on kubernetes. You can use [these instructions](https://github.com/5GZ
 
 * Ensure you have kafka broker already installed. You can use [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md) to provision such a one
 * Install argo and argo-events per [these instructions](docs/argo.md)
-* Install discovery service per [these instructions](https://github.com/5GZORRO/smart-discovery-simulator/blob/master/README.md). Ensure to populate its data model with its `init.sh` script
+* Install discovery application per [these instructions](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/blob/main/readme.txt)
 * Install optimizer service per [these instructions](https://github.com/5GZORRO/issm-optimizer/blob/master/README.md). **Ensure kafka topic `issm-optimizer` exists before running the service**
 * Install vertical slicer per [these instructions](docs/slicer.md)
 
@@ -66,7 +66,7 @@ Update access info for:
                   - name: discovery_service_ip
                     value: 10.20.4.2
                   - name: discovery_service_port
-                    value: 31848
+                    value: 80
                   - name: slicer_ip
                     value: 1.2.3.4
 
@@ -97,7 +97,7 @@ Invoke the below command to publish an intent on ISSM topic providing a callback
 /opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
 ```
 
->{"event_uuid": "123", "operation": "submit_intent", "location": "37.80 N, 23.75 E", "callback": {"type": "kafka", "kafka_topic": "my-mno-topic"}, "mno_name": "my-mno"}
+>{"event_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segement": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "callback": {"type":"kafka", "kafka_topic": "my-mno-topic"}, "service_owner": "my-mno"}
 
 The flow is invoked automatically
 
