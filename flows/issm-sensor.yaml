@@ -44,9 +44,9 @@ spec:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Discovery service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: discovery_service_ip
+                  - name: discovery_ip
                     value: 1.2.3.4
-                  - name: discovery_service_port
+                  - name: discovery_port
                     value: 31848
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,13 +67,24 @@ spec:
                   - name: operation
                     value: OVERRIDE
 
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # operation == submit_intent
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: location
+                  - name: category
                     value: OVERRIDE
 
-                  - name: mno_name
+                  - name: latitude
+                    value: OVERRIDE
+                  - name: longitude
+                    value: OVERRIDE
+
+                  - name: service_owner
+                    value: OVERRIDE
+
+                  - name: offered_price
+                    value: OVERRIDE
+
+                  - name: slice_segment
+                    value: OVERRIDE
+
+                  - name: qos_parameters
                     value: OVERRIDE
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -104,27 +115,33 @@ spec:
                 - name: submit-intent-flow
                   dag:
                     tasks:
-                    - name: smart-resource-discovery
-                      template: smart-resource-discovery
+                    - name: smart-discovery-application
+                      template: smart-discovery-application
                       arguments:
                         parameters:
                         - name: service_ip
-                          value: "{{workflow.parameters.discovery_service_ip}}"
+                          value: "{{workflow.parameters.discovery_ip}}"
                         - name: service_port
-                          value: "{{workflow.parameters.discovery_service_port}}"
-                        - name: location
-                          value: "{{workflow.parameters.location}}"
+                          value: "{{workflow.parameters.discovery_port}}"
+                        - name: category
+                          value: "{{workflow.parameters.category}}"
+                        - name: latitude
+                          value: "{{workflow.parameters.latitude}}"
+                        - name: longitude
+                          value: "{{workflow.parameters.longitude}}"
+                        - name: offered_price
+                          value: "{{workflow.parameters.offered_price}}"
 
                     - name: send-resouces-to-optimizer
                       # publish discovered resources for the optimizer to consume
-                      dependencies: [smart-resource-discovery]
+                      dependencies: [smart-discovery-application]
                       template: produce-message
                       arguments:
                         parameters:
                         - name: data
                           # note: transaction_uuid is the event_uuid passed to this flow
                           value: |
-                            { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}", "resources": {{tasks.smart-resource-discovery.outputs.result}}, "callback": {{workflow.parameters.callback}}, "mno_name": "{{workflow.parameters.mno_name}}" }
+                            { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}", "resources": [{{tasks.smart-discovery-application.outputs.result}}], "callback": {{workflow.parameters.callback}}, "service_owner": "{{workflow.parameters.service_owner}}" }
                         - name: kafka_topic
                           value: "issm-optimizer"
 
@@ -138,12 +155,37 @@ spec:
                       template: acquire
                       arguments:
                         parameters:
-                        - name: resource_name
-                          value: "{{item.resource_name}}"
+                        - name: resource_id
+                          value: "{{item.id}}"
                       withParam: "{{workflow.parameters.resources}}"
 
-                    - name: slicer-create-group
+                    - name: resource-vsb
                       dependencies: [acquire]
+                      templateRef:
+                        name: workflow-base
+                        template: jq-script
+                      arguments:
+                        parameters:
+                        - name: json_str
+                          value: "{{workflow.parameters.resources}}"
+                        - name: jq_query
+                          value: '.[0].VSB'
+  
+                    - name: resource-segment
+                      dependencies: [acquire]
+                      templateRef:
+                        name: workflow-base
+                        template: jq-script
+                      arguments:
+                        parameters:
+                        - name: json_str
+                          value: "{{workflow.parameters.resources}}"
+                        - name: jq_query
+                          value: '.[0].slice_segment'
+
+
+                    - name: slicer-create-group
+                      dependencies: [resource-vsb, resource-segment]
                       templateRef:
                         name: workflow-slice
                         template: create-group
@@ -166,14 +208,37 @@ spec:
                         - name: group_name
                           value: "5gzorro"
                         - name: tenant_name
-                          value: "{{workflow.parameters.mno_name}}"
+                          value: "{{workflow.parameters.service_owner}}"
 
-                - name: smart-resource-discovery
+                    - name: slicer-create-vsb
+                      dependencies: [slicer-create-tenant]
+                      templateRef:
+                        name: workflow-slice
+                        template: create-descriptor
+                      arguments:
+                        parameters:
+                        - name: slicer_ip
+                          value: "{{workflow.parameters.slicer_ip}}"
+                        - name: tenant_name
+                          value: "{{workflow.parameters.service_owner}}"
+                        - name: blueprint_name
+                          # VSB attr in offer
+                          value: "{{tasks.resource-vsb.outputs.result}}"
+                        - name: name
+                          # VSB-slice_segment attr in offer
+                          value: "{{tasks.resource-vsb.outputs.result}}-{{tasks.resource-segment.outputs.result}}"
+                        - name: parameters
+                          value: "{{workflow.parameters.qos_parameters}}"
+
+                - name: smart-discovery-application
                   inputs:
                     parameters:
                     - name: service_ip
                     - name: service_port
-                    - name: location
+                    - name: category
+                    - name: latitude
+                    - name: longitude
+                    - name: offered_price
                   script:
                     image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
                     command: [python]
@@ -183,9 +248,11 @@ spec:
                       import sys
 
                       headers = {'Content-Type': 'application/json'}
-                      r = requests.post("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discovery/resources",
-                          json={'location': "{{inputs.parameters.location}}"}, headers=headers)
-                      json.dump(r.json(), sys.stdout)
+                      r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer/{{inputs.parameters.offered_price}}"
+                          "lat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}computeandvirtual{{inputs.parameters.category}}",
+                          headers=headers)
+                      # return first offer
+                      json.dump(r.json()[0], sys.stdout)
 
                 - name: acquire
                   # acquire is devided into two sub-tasks:
@@ -224,7 +291,7 @@ spec:
                   # fail/success status
                   inputs:
                     parameters:
-                    - name: resource_name
+                    - name: offer_id
                   script:
                     image: python:alpine3.6
                     command: [python]
@@ -233,9 +300,9 @@ spec:
                       import random
                       import sys
                       status = "acquire_success"
-                      json.dump({"resource_name": "{{inputs.parameters.resource_name}}", "status": status}, sys.stdout)
+                      json.dump({"offer_id": "{{inputs.parameters.offer_id}}", "status": status}, sys.stdout)
                       with open("/tmp/status.txt", "a") as myfile:
-                          myfile.write(status)                      
+                          myfile.write(status)
                   outputs:
                     parameters:
                     - name: status
@@ -295,7 +362,7 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.mno_name
+                dataKey: body.service_owner
                 value: DEFAULT
               dest: spec.arguments.parameters.8.value
 
