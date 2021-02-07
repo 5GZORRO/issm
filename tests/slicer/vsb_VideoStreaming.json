@@ -7,9 +7,10 @@
       "parameterId": "bandwidth",
       "parameterName": "bandwidth",
       "parameterType": "number",
-      "parameterDescription": "bandwidth in bps",
+      "parameterDescription": "bandwidth in Mbps",
       "applicabilityField": "entertainment"
-    }],
+    }]
+  },
   "translationRules": [
     {
       "nsdId": "vUhD_NSD_v01",
@@ -26,3 +27,4 @@
     }
   ]
 }
+
