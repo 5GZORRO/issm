@@ -4,15 +4,18 @@
 
 ISSM runs on kubernetes. You can use [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes.md) to provision such a one
 
-## Pre-requisite
+## Pre-requisites
 
 * Ensure you have kafka broker already installed. You can use [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md) to provision such a one
 * Install argo and argo-events per [these instructions](docs/argo.md)
-* Install discovery application per [these instructions](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/blob/main/readme.txt)
-* Install optimizer service per [these instructions](https://github.com/5GZORRO/issm-optimizer/blob/master/README.md). **Ensure kafka topic `issm-optimizer` exists before running the service**
 * Install vertical slicer per [these instructions](docs/slicer.md)
+* Install discovery application per [these instructions](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/blob/main/readme.txt)
+* Create kafka topic `issm-optimizer`:
+  * Log into ISSM Kafka container
+  * Invoke `/opt/kafka/bin/kafka-topics.sh --create --topic issm-optimizer --bootstrap-server localhost:9092`
+* Install optimizer service per [these instructions](https://github.com/5GZORRO/issm-optimizer/blob/master/README.md)
 
-## Deploy the service
+## Deploy
 
 Deploying the service comprises these two steps:
 
@@ -91,8 +94,6 @@ In a new terminal, log into ISSM Kafka container
 
 Invoke the below command to publish an intent on ISSM topic providing a callback where progress and flow result are to be published.
 
-**Note:** ensure to create `my-mno-topic` on ISSM kafka bus before publishing the intent
-
 ```
 /opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
 ```
@@ -100,6 +101,8 @@ Invoke the below command to publish an intent on ISSM topic providing a callback
 >{"event_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segement": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "callback": {"type":"kafka", "kafka_topic": "my-mno-topic"}, "service_owner": "my-mno"}
 
 The flow is invoked automatically
+
+**Important:** ensure to [create](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md#create-topics) `my-mno-topic` on ISSM kafka bus before publishing the intent
 
 ## Inspect result
 

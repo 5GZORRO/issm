@@ -54,6 +54,13 @@ spec:
   - name: create-descriptor
     # Create a new VSD
     #
+    # Parameters:
+    # slicer_ip: ipaddress of the vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant to create (str)
+    # blueprint_name: the name of the blueprint VSD is from
+    # name: VSD name
+    # parameters: qos parameters to be given to this VSD
+    #
     inputs:
       parameters:
       - name: slicer_ip
@@ -83,9 +90,59 @@ spec:
         EOF
         }
 
+        echo "Log in admin.."
         curl -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/login
-        bp_list="$(curl -b /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/vs/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
-        bp_id="$(echo $bp_list | jq -r '.[] | select(.name=="{{inputs.parameters.blueprint_name}}") | .vsBlueprintId')"
 
+        echo "Retrieve blueprints.."
+        bp_list="$(curl -b /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/vs/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
+
+        bp_id="$(echo $bp_list | jq -r '.[] | select(.name=="{{inputs.parameters.blueprint_name}}") | .vsBlueprintId')"
+        echo "Blueprint id [$bp_id] matches blueprint_name [{{inputs.parameters.blueprint_name}}]"
+
+        echo "Log in {{inputs.parameters.tenant_name}}.."
         curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/login
+
+        echo "Create descriptor.."
         curl -b /tmp/t_c --data "$(generate_post_descriptor_create $bp_id)" -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/catalogue/vsdescriptor --header "Content-Type:application/json"
+
+
+  - name: create-instance
+    # Create a new VSI
+    #
+    # Parameters:
+    # slicer_ip: ipaddress of the vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant to create (str)
+    # descriptor_name: the name of the desctiptor VSI is from
+    #
+    inputs:
+      parameters:
+      - name: slicer_ip
+      - name: tenant_name
+      - name: descriptor_name
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      command: [sh]
+      source: |
+        generate_post_instance_create()
+        {
+          cat <<EOF
+        {
+          "name": "{{inputs.parameters.descriptor_name}}",
+          "description": "5G Zorro demo slice",
+          "vsdId": "$1",
+          "tenantId": "{{inputs.parameters.tenant_name}}"
+        }
+        EOF
+        }
+
+        echo "Log in {{inputs.parameters.tenant_name}}.."
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/login
+
+        echo "Retrieve descriptors.."
+        vsd_list="$(curl -b /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/vs/catalogue/vsdescriptor --header "Content-Type:application/json" 2>/dev/null)"
+
+        vsd_id="$(echo $vsd_list | jq -r '.[] | select(.name=="{{inputs.parameters.descriptor_name}}") | .vsDescriptorId')"
+        echo "Descriptor id [$vsd_id] matches descriptor_name [{{inputs.parameters.descriptor_name}}]"
+
+        echo "Create instance.."
+        curl -b /tmp/t_c --data "$(generate_post_instance_create $vsd_id)" -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/basic/vslcm/vs --header "Content-Type:application/json"

@@ -45,7 +45,7 @@ spec:
                   # Discovery service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: discovery_ip
-                    value: 1.2.3.4
+                    value: 172.15.0.180
                   - name: discovery_port
                     value: 80
 
@@ -53,7 +53,7 @@ spec:
                   # Slicer service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: slicer_ip
-                    value: 1.2.3.4
+                    value: 172.15.0.190
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Callback parameters
@@ -144,7 +144,7 @@ spec:
                             { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}",
                               "resources": [{{tasks.smart-discovery-application.outputs.result}}],
                               "callback": {{workflow.parameters.callback}}, "service_owner": "{{workflow.parameters.service_owner}}",
-                              "category": "{{workflow.parameters.category}}", "qos_parameters": "{{workflow.parameters.qos_parameters}}" }
+                              "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
                         - name: kafka_topic
                           value: "issm-optimizer"
 
@@ -213,7 +213,7 @@ spec:
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
 
-                    - name: slicer-create-vsb
+                    - name: slicer-create-vsd
                       dependencies: [slicer-create-tenant]
                       templateRef:
                         name: workflow-slice
@@ -228,10 +228,25 @@ spec:
                           # VSB attr in offer
                           value: "{{tasks.resource-vsb.outputs.result}}"
                         - name: name
-                          # VSB-slice_segment attr in offer
+                          # <VSB>-<slice_segment> attrs in offer
                           value: "{{tasks.resource-vsb.outputs.result}}-{{tasks.resource-segment.outputs.result}}"
                         - name: parameters
                           value: "{{workflow.parameters.qos_parameters}}"
+
+                    - name: slicer-create-vsi
+                      dependencies: [slicer-create-vsd]
+                      templateRef:
+                        name: workflow-slice
+                        template: create-instance
+                      arguments:
+                        parameters:
+                        - name: slicer_ip
+                          value: "{{workflow.parameters.slicer_ip}}"
+                        - name: tenant_name
+                          value: "{{workflow.parameters.service_owner}}"
+                        - name: descriptor_name
+                          # <VSB>-<slice_segment> attrs in offer
+                          value: "{{tasks.resource-vsb.outputs.result}}-{{tasks.resource-segment.outputs.result}}"
 
                 - name: smart-discovery-application
                   inputs:
@@ -284,7 +299,8 @@ spec:
                             value: "{{workflow.parameters.callback}}"
                           - name: data
                             value: |
-                              { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}", "status": "fail", "offer_id": "{{inputs.parameters.offer_id}}" }
+                              { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                              "status": "fail", "offer_id": "{{inputs.parameters.offer_id}}" }
                     - - name: fail-flow
                         template: fail
                         when: "{{steps.acquire-resource.outputs.parameters.status}} == \"FAIL\""
