@@ -162,33 +162,8 @@ spec:
                           value: "{{item.id}}"
                       withParam: "{{workflow.parameters.resources}}"
 
-                    - name: resource-vsb
-                      dependencies: [acquire]
-                      templateRef:
-                        name: workflow-base
-                        template: jq-script
-                      arguments:
-                        parameters:
-                        - name: json_str
-                          value: "{{workflow.parameters.resources}}"
-                        - name: jq_query
-                          value: '.[0].VSB'
-  
-                    - name: resource-segment
-                      dependencies: [acquire]
-                      templateRef:
-                        name: workflow-base
-                        template: jq-script
-                      arguments:
-                        parameters:
-                        - name: json_str
-                          value: "{{workflow.parameters.resources}}"
-                        - name: jq_query
-                          value: '.[0].slice_segment'
-
-
                     - name: slicer-create-group
-                      dependencies: [resource-vsb, resource-segment]
+                      dependencies: [acquire]
                       templateRef:
                         name: workflow-slice
                         template: create-group
@@ -213,8 +188,20 @@ spec:
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
 
-                    - name: slicer-create-vsd
+                    - name: resource-vsb
                       dependencies: [slicer-create-tenant]
+                      templateRef:
+                        name: workflow-base
+                        template: jq-script
+                      arguments:
+                        parameters:
+                        - name: json_str
+                          value: "{{workflow.parameters.resources}}"
+                        - name: jq_query
+                          value: '.[0].VSB'
+
+                    - name: slicer-create-vsd
+                      dependencies: [resource-vsb]
                       templateRef:
                         name: workflow-slice
                         template: create-descriptor
@@ -228,8 +215,8 @@ spec:
                           # VSB attr in offer
                           value: "{{tasks.resource-vsb.outputs.result}}"
                         - name: name
-                          # <VSB>-<slice_segment> attrs in offer
-                          value: "{{tasks.resource-vsb.outputs.result}}-{{tasks.resource-segment.outputs.result}}"
+                          # <VSB> attr in offer
+                          value: "{{tasks.resource-vsb.outputs.result}}"
                         - name: parameters
                           value: "{{workflow.parameters.qos_parameters}}"
 
@@ -245,8 +232,8 @@ spec:
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
                         - name: descriptor_name
-                          # <VSB>-<slice_segment> attrs in offer
-                          value: "{{tasks.resource-vsb.outputs.result}}-{{tasks.resource-segment.outputs.result}}"
+                          # <VSB> attr in offer
+                          value: "{{tasks.resource-vsb.outputs.result}}"
 
                 - name: smart-discovery-application
                   inputs:
