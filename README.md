@@ -111,14 +111,12 @@ The flow is invoked automatically
 
 Browse to `http://<kubernetes master ipaddress>:2746`
 
-## Inspect result
+## Consume flow progress (via callback)
 
 In a new terminal, log into ISSM Kafka container
 
-Invoke the below command to obtain the latest message produced by the flow
+Consume latest updates reported on callback's topic
 
 ```
 /opt/kafka/bin/kafka-console-consumer.sh --topic my-mno-topic --from-beginning --bootstrap-server localhost:9092
 ```
-
->{"data": {"event_uuid": "e50dfc010f62434fb3195e8feec86d74", "transaction_uuid": "123", "status": "success"}}

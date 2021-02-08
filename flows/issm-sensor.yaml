@@ -235,6 +235,20 @@ spec:
                           # <VSB> attr in offer
                           value: "{{tasks.resource-vsb.outputs.result}}"
 
+                    - name: callback-complete
+                      dependencies: [slicer-create-vsi]
+                      templateRef:
+                        name: workflow-base
+                        template: callback
+                      arguments:
+                        parameters:
+                        - name: callback
+                          value: "{{workflow.parameters.callback}}"
+                        - name: data
+                          value: |
+                            { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                              "status": "completed", "pahse": "slicer-create-vsi" }
+
                 - name: smart-discovery-application
                   inputs:
                     parameters:
