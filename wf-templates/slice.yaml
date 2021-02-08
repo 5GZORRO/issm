@@ -56,8 +56,8 @@ spec:
     #
     # Parameters:
     # slicer_ip: ipaddress of the vertical slicer service (str)
-    # tenant_name: the name of the vertical tenant to create (str)
-    # blueprint_name: the name of the blueprint VSD is from
+    # tenant_name: the name of the vertical tenant (str)
+    # blueprint_name: the name of the blueprint VSD is created from
     # name: VSD name
     # parameters: qos parameters to be given to this VSD
     #
@@ -112,7 +112,7 @@ spec:
     # Parameters:
     # slicer_ip: ipaddress of the vertical slicer service (str)
     # tenant_name: the name of the vertical tenant to create (str)
-    # descriptor_name: the name of the desctiptor VSI is from
+    # descriptor_name: the name of the descriptor VSI is created from
     #
     inputs:
       parameters:
