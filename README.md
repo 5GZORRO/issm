@@ -102,7 +102,14 @@ Invoke the below command to publish an intent on ISSM topic providing a callback
 
 The flow is invoked automatically
 
-**Important:** ensure to [create](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md#create-topics) `my-mno-topic` on ISSM kafka bus before publishing the intent
+**Important:**
+
+1. ensure to [create](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md#create-topics) `my-mno-topic` on ISSM kafka bus before publishing the intent
+1. the offers loaded into discovery application are of `VideoStreaming`, hence, ensure to [pre-onboard the blueprint](./scripts/slicer/README.md) into the vertical slicer.
+
+## Watch flow progress using Argo GUI
+
+Browse to `http://<kubernetes master ipaddress>:2746`
 
 ## Inspect result
 
