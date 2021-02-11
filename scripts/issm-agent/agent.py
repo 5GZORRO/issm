@@ -1,15 +1,67 @@
 import argparse
 import json
 import threading
+import uuid
 
 
-from kafka import KafkaConsumer
+from kafka import KafkaConsumer, KafkaProducer
 from kafka.admin import KafkaAdminClient, NewTopic
-from kafka.error import TopicAlreadyExistsError
+from kafka.errors import KafkaError, TopicAlreadyExistsError
 
 
-KAFKA_TOPIC = 'issm-topic'
 KAFKA_API_VERSION = (0, 10, 1)
+KAFKA_TIMEOUT = 10  # seconds
+KAFKA_TOPIC = 'issm-topic'
+
+
+# Singleton
+PROCESSED_INTENT = {}
+
+
+def publish_intent(kafka_ip, kafka_port, intent):
+    """
+    Send the intent to the ISSM kafka bus
+    """
+    producer = KafkaProducer(bootstrap_servers="%s:%s" % (kafka_ip, kafka_port),
+                             api_version=KAFKA_API_VERSION,
+                             value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+
+    print('[INTENT] %s' % intent)
+    t = producer.send(KAFKA_TOPIC, intent)
+
+    # Block for 'synchronous' send; set timeout on X seconds
+    try:
+        t.get(timeout=KAFKA_TIMEOUT)
+    except KafkaError as ke:
+        print('[ERROR] KafkaError: %s' % str(ke))
+
+    producer.close()
+
+
+def process_file(f, **kwargs):
+    """
+    Process a given intent file parsing it and publishing into ISSM Workflow
+    Manager gateway
+    """
+    data = {}
+    try:
+        data = json.load(f)
+    except Exception as e:
+        print ('[ERROR] Error [%s] occurred on json load from file: %s. '
+               % (str(e), f))
+        raise
+    try:
+        data['qos_parameters']
+        data['offered_price']
+        data['latitude']
+        data['longitude']
+        data['slice_segement']
+        data['category']
+        return data
+
+    except KeyError as e:
+        print ('[ERROR] File %s failed schema validation. Error: %s' % (f.name, str(e)))
+        raise
 
 
 def topic_create(kafka_ip, kafka_port, topic_name):
@@ -28,7 +80,7 @@ def topic_create(kafka_ip, kafka_port, topic_name):
 
     """
     print ('[INFO] Request to create topic [%s] on kafka [%s]' %
-           (topic_name, kafka_ip+':'+str(kafka_port)))
+          (topic_name, kafka_ip+':'+str(kafka_port)))
     admin_client = KafkaAdminClient(bootstrap_servers="%s:%s" % (kafka_ip, kafka_port),
     client_id='%s-%s' % (topic_name, 'client-id'))
 
@@ -75,19 +127,37 @@ def main():
     """
     parser = argparse.ArgumentParser(description='ISSM Agent.')
     parser.add_argument('--kafka_ip', help='ISSM kafka ipaddress', required=True)
-    parser.add_argument('--kafka_port', type=int, help='ISSM kafka port', default=9092)
+    parser.add_argument('--kafka_port', type=int, help='ISSM kafka port (default 9092)', default=9092)
     parser.add_argument('--intent_file', help='Full path to intent file (json)', required=True)
     parser.add_argument('--service_owner', help='Service owner publishing this intent', required=True)
 
     args = parser.parse_args()
 
+    topic_name = args.service_owner
     # create callback topic
     topic_create(kafka_ip=args.kafka_ip, kafka_port=args.kafka_port,
-                 topic_name=args.service_owner)
+                 topic_name=topic_name)
 
-    print ('** Start _consume_issm thread..')
-    threading.Thread(target=_consume_issm, args=[args.kafka_ip, args.kafka_port,
-                                                 args.service_owner]).start()
+    print ('** Start _consume_issm thread from topic [%s]..' % args.service_owner)
+    threading.Thread(target=_consume_issm,
+                     args=[args.kafka_ip, args.kafka_port,topic_name]).start()
+
+    global PROCESSED_INTENT
+    with open(args.intent_file) as f:
+        PROCESSED_INTENT = process_file(f)
+
+    event_uuid = str(uuid.uuid4()).replace('-','')
+    print ('** event_uuid: %s' % event_uuid)
+
+    # add required metadata
+    PROCESSED_INTENT['operation'] = 'submit_intent'
+
+    PROCESSED_INTENT['event_uuid'] = event_uuid
+    PROCESSED_INTENT['callback'] = dict(type='kafka', kafka_topic=topic_name)
+    PROCESSED_INTENT['service_owner'] = args.service_owner
+
+    publish_intent(args.kafka_ip, args.kafka_port, PROCESSED_INTENT)
+
 
 if __name__=="__main__":
     main()
