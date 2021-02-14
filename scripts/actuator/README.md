@@ -67,3 +67,5 @@ python agent.py --kafka_ip 10.20.3.4 --intent_file ./slice_intent.json --service
 ```
 
 You should receive asynch callback notifications for this intent flow
+
+You could also watch flow progress using Argo GUI: `http://<kubernetes master ipaddress>:2746`

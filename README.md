@@ -90,6 +90,16 @@ kubectl create -f wf-templates/slice.yaml -n argo-events
 
 ## Trigger ISSM business flow
 
+**Important:**
+* the offers loaded into discovery application are of `VideoStreaming`, hence, ensure to [pre-onboard the blueprint](./scripts/slicer/README.md) into the vertical slicer.
+
+As an alternative to the below, an [actuation script](scrips/actuator/README.md) can be used which automates most of the below steps
+
+### Manual steps
+
+**Important:**
+* ensure to [create](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md#create-topics) `my-mno-topic` on ISSM kafka bus before publishing the intent
+
 In a new terminal, log into ISSM Kafka container
 
 Invoke the below command to publish an intent on ISSM topic providing a callback where progress and flow result are to be published.
@@ -101,11 +111,6 @@ Invoke the below command to publish an intent on ISSM topic providing a callback
 >{"event_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segement": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "callback": {"type":"kafka", "kafka_topic": "my-mno-topic"}, "service_owner": "my-mno"}
 
 The flow is invoked automatically
-
-**Important:**
-
-1. ensure to [create](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md#create-topics) `my-mno-topic` on ISSM kafka bus before publishing the intent
-1. the offers loaded into discovery application are of `VideoStreaming`, hence, ensure to [pre-onboard the blueprint](./scripts/slicer/README.md) into the vertical slicer.
 
 ## Watch flow progress using Argo GUI
 
