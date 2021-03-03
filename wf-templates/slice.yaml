@@ -94,7 +94,7 @@ spec:
         curl -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/login
 
         echo "Retrieve blueprints.."
-        bp_list="$(curl -b /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/vs/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
+        bp_list="$(curl -b /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/portal/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
 
         bp_id="$(echo $bp_list | jq -r '.[] | select(.name=="{{inputs.parameters.blueprint_name}}") | .vsBlueprintId')"
         echo "Blueprint id [$bp_id] matches blueprint_name [{{inputs.parameters.blueprint_name}}]"
@@ -103,7 +103,7 @@ spec:
         curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/login
 
         echo "Create descriptor.."
-        curl -b /tmp/t_c --data "$(generate_post_descriptor_create $bp_id)" -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/catalogue/vsdescriptor --header "Content-Type:application/json"
+        curl -b /tmp/t_c --data "$(generate_post_descriptor_create $bp_id)" -X POST http://{{inputs.parameters.slicer_ip}}:8082/portal/catalogue/vsdescriptor --header "Content-Type:application/json"
 
 
   - name: create-instance
@@ -139,7 +139,7 @@ spec:
         curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/login
 
         echo "Retrieve descriptors.."
-        vsd_list="$(curl -b /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/vs/catalogue/vsdescriptor --header "Content-Type:application/json" 2>/dev/null)"
+        vsd_list="$(curl -b /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/portal/catalogue/vsdescriptor --header "Content-Type:application/json" 2>/dev/null)"
 
         vsd_id="$(echo $vsd_list | jq -r '.[] | select(.name=="{{inputs.parameters.descriptor_name}}") | .vsDescriptorId')"
         echo "Descriptor id [$vsd_id] matches descriptor_name [{{inputs.parameters.descriptor_name}}]"

@@ -22,4 +22,4 @@ echo "-=-=-=-=-=-= TRACE -=-=-=-=-=-=-=-=-=-"
 echo "Create blueprint"
 echo "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-"
 
-curl -b ./admin_credentials -d @vsb_VideoStreaming.json -X POST http://$SLICER:8082/vs/catalogue/vsblueprint --header "Content-Type:application/json"
+curl -b ./admin_credentials -d @vsb_VideoStreaming.json -X POST http://$SLICER:8082/portal/catalogue/vsblueprint --header "Content-Type:application/json"
