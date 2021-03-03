@@ -11,19 +11,37 @@ Log into the VM and perform the below instructions in the order they appear
 ```
 cd ~
 git clone https://github.com/nextworks-it/slicer.git
-cd slicer
+cd slicer/INSTALL/vertical-slicer-docker
+```
+
+## Configure external ipaddress
+
+edit `environment/environments.ts` and replace with VM ipaddress
+
+```
+ baseUrl: 'http://<slicer external ipaddress>:8082/'
 ```
 
 ## Configure slicer nfvo drivers
 
 Configure slicer NFVO driver to use the `dummy` driver
 
-edit `SEBASTIAN/src/main/resources/application.properties` and set the dummy driver
+edit `sebastian/sebastian_application.properties` and set the dummy driver
 
 ```
-nfvo.type=DUMMY
+nfvo.lcm.type=DUMMY
 ```
 
-## Install backend and UI
+## Start the slicer
 
-Follow instructions at [slicer readme](https://github.com/nextworks-it/slicer/blob/master/README.md)
+**Note:** first run takes some time as the images get built
+
+```
+docker-compose up
+```
+
+## Browse to its GUI
+
+Point your browser to `http://<slicer external ipaddress>`
+
+Log in with `admin`/`admin`
