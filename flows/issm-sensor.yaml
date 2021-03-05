@@ -53,7 +53,7 @@ spec:
                   # Slicer service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: slicer_ip
-                    value: 172.15.0.190
+                    value: 172.15.0.191
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Callback parameters
@@ -235,8 +235,30 @@ spec:
                           # <VSB> attr in offer
                           value: "{{tasks.resource-vsb.outputs.result}}"
 
-                    - name: callback-complete
+                    - name: slicer-poll
                       dependencies: [slicer-create-vsi]
+                      templateRef:
+                        name: workflow-slice
+                        template: poll
+                      arguments:
+                        parameters:
+                        - name: poll
+                          value: "true"
+                        - name: slicer_ip
+                          value: "{{workflow.parameters.slicer_ip}}"
+                        - name: tenant_name
+                          value: "{{workflow.parameters.service_owner}}"
+                        - name: vsi_id
+                          value: "{{tasks.slicer-create-vsi.outputs.parameters.vsi_id}}"
+                        - name: jq_query
+                          value: ".status"
+                        - name: jq_query_value
+                          value: "INSTANTIATED"
+                        - name: timeout
+                          value: 60
+
+                    - name: callback-complete
+                      dependencies: [slicer-poll]
                       templateRef:
                         name: workflow-base
                         template: callback
@@ -247,7 +269,7 @@ spec:
                         - name: data
                           value: |
                             { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-                              "status": "completed", "pahse": "slicer-create-vsi" }
+                              "status": "{{tasks.slicer-poll.outputs.parameters.status}}", "phase": "slicer-create-vsi" }
 
                 - name: smart-discovery-application
                   inputs:
