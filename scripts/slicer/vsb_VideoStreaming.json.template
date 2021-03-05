@@ -1,0 +1,184 @@
+{
+  "vsBlueprint": {
+    "version": "0.1",
+    "name": "VideoStreaming",
+    "description": "Entertainment vCDN service",
+    "parameters": [{
+      "parameterId": "bandwidth",
+      "parameterName": "bandwidth",
+      "parameterType": "number",
+      "parameterDescription": "bandwidth in Mbps",
+      "applicabilityField": "entertainment"
+    }]
+  },
+  "nsds": [
+    {
+      "nsdIdentifier": "vCDN_NSD_v01",
+      "designer": "NXW",
+      "version": "0.1",
+      "nsdName": "vCDN Network Service",
+      "nsdInvariantId": "vCDN_TIMEO_BLUESPACE_01",
+      "vnfdId": ["vNFD_01"],
+      "pnfdId": [],
+      "sapd": [
+        {
+          "cpdId": "sap_mgmt",
+          "description": "Management SAP for all the vCDN VNFs",
+          "layerProtocol": "IPV4",
+          "cpRole": "ROOT",
+          "addressData": [
+            {
+              "addressType": "IP_ADDRESS",
+              "iPAddressAssignment": false,
+              "floatingIpActivated": true,
+              "iPAddressType": "IPv4",
+              "numberOfIpAddress": 1
+            }
+          ],
+          "sapAddressAssignment": false,
+          "nsVirtualLinkDescId": "vl_mgmt"
+        }
+      ],
+      "virtualLinkDesc": [
+        {
+          "virtualLinkDescId": "vl_mgmt",
+          "virtualLinkDescProvider": "NXW",
+          "virtuaLinkDescVersion": "0.1",
+          "connectivityType": {
+            "layerProtocol": "IPV4"
+          },
+          "virtualLinkDf": [
+            {
+              "flavourId": "vl_df_mgmt",
+              "qos": {
+                "latency": 0,
+                "packetDelayVariation": 0,
+                "packetLossRatio": 0,
+                "priority": 0
+              },
+              "serviceAvaibilityLevel": "LEVEL_1",
+              "bitrateRequirements": {
+                "root": 4,
+                "leaf": 1
+              }
+            }
+          ],
+          "description": "Management network"
+        }
+      ],
+      "nsDf": [
+        {
+          "nsDfId": "df_uhd",
+          "flavourKey": "df_vCDN",
+          "vnfProfile": [
+            {
+              "vnfProfileId": "vNFD_01_profile",
+              "vnfdId": "vNFD_01",
+              "flavourId": "df_vNFD_01",
+              "instantiationLevel": "il_vNFD_01",
+              "minNumberOfInstances": 1,
+              "maxNumberOfInstances": 1,
+              "nsVirtualLinkConnectivity": [
+                {
+                  "virtualLinkProfileId": "vl_profile_mgmt",
+                  "cpdId": [
+                    "vNFD_01_mgmt_ext"
+                  ]
+                }
+              ]
+            }
+          ],
+          "pnfProfile": [],
+          "virtualLinkProfile": [
+            {
+              "virtualLinkProfileId": "vl_profile_mgmt",
+              "virtualLinkDescId": "vl_mgmt",
+              "flavourId": "vl_df_mgmt",
+              "maxBitrateRequirements": {
+                "root": "1",
+                "leaf": "1"
+              },
+              "minBitrateRequirements": {
+                "root": "1",
+                "leaf": "1"
+              }
+            }
+          ],
+          "nsInstantiationLevel": [
+            {
+              "nsLevelId": "il_uhd",
+              "description": "UHD instantiation level for the vCDN",
+              "vnfToLevelMapping": [
+                {
+                  "vnfProfileId": "vNFD_01_profile",
+                  "numberOfInstances": 1
+                }
+              ],
+              "virtualLinkToLevelMapping": [
+                {
+                  "virtualLinkProfileId": "vl_profile_mgmt",
+                  "bitRateRequirements": {
+                    "root": "1",
+                    "leaf": "1"
+                  }
+                }
+              ]
+            }
+          ],
+          "defaultNsInstantiationLevelId": "il_uhd",
+          "nsProfile": [
+            {
+              "nsProfileId": "ns_profile_vCDN_uhd",
+              "nsdId": "vCDN_v01",
+              "nsDfId": "df_vCDN",
+              "nsInstantiationLevelId": "il_uhd",
+              "minNumberOfInstances": 1,
+              "maxNumberOfInstances": 1
+            }
+          ],
+          "dependencies": [
+            {
+              "primaryId": ["vNFD_01_profile"],
+              "secondaryId": ["vNFD_01_profile"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "translationRules": [
+    {
+      "nstId": "vCDN_NSD_nst",
+      "nsdId": "vCDN_NSD_v01",
+      "nsdVersion": "0.1",
+      "nsFlavourId": "df_uhd",
+      "nsInstantiationLevelId": "il_uhd",
+      "input": [
+        {
+          "parameterId": "bandwidth",
+          "minValue": "20",
+          "maxValue": "40"
+        }
+      ]
+    }
+  ],
+  "nsts": [
+    {
+      "nstId": "vCDN_NSD_nst",
+      "nstName": "vCDN Network Slice Template",
+      "nstVersion": "1.0",
+      "nstProvider": "NXW",
+      "nsdId": "vCDN_NSD_v01",
+      "nsdVersion": "0.1"
+    }
+  ],
+  "vnfPackages": [
+    {
+      "name": "CDN VNFD",
+      "version": "0.1",
+      "provider": "NXW",
+      "checksum": "nn",
+      "vnfPackagePath": "http://%SLICER%:8080/vnfd01.tar"
+    }
+  ] 
+}

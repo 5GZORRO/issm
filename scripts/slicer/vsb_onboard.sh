@@ -4,7 +4,6 @@
 # Helper script to onboared a given blueprint.
 #
 
-export SLICER="localhost"
 export BETWEEN=3
 
 echo ""

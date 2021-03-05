@@ -1,0 +1,118 @@
+{
+	"vnfdId": "vNFD_01",
+	"vnfProvider": "ATOS",
+	"vnfProductName": "CDN VNF",
+	"vnfSoftwareVersion": "0.1",
+	"vnfdVersion": "0.2",
+	"vnfProductInfoName": "vCDN VNF",
+	"vnfProductInfoDescription": "vCDN VNF",
+	"vnfmInfo": ["vEPC_VNFM"],
+	"vdu": [{
+		"vduId": "spr1_vdu",
+		"name": "spr1",
+		"description": "VDU of this VNF",
+		"intCpd": [{
+			"cpdId": "spr1MgtInt",
+			"layerProtocol": "IPV4",
+			"description": "Management CP of this VNF",
+			"addressData": [{
+				"addressType": "IP_ADDRESS",
+				"iPAddressAssignment": false,
+				"floatingIpActivated": true,
+				"management": true,
+				"iPAddressType": "IPv4",
+				"numberOfIpAddress": 1
+			}]
+		}
+	],
+		"virtualComputeDesc": "VCD_spr1",
+		"virtualStorageDesc": ["VSD_spr1"],
+		"swImageDesc": {
+			"id": "CDN_spr1_SWID",
+			"name": "SPR1_ATOS",
+			"version": "0.1",
+			"checksum": "TBD",
+			"containerFormat": "QCOW",
+			"diskFormat": "QCOW",
+			"minDisk": 1,
+			"minRam": 1,
+			"size": 50,
+			"swImage": "SPR1_ATOS",
+			"operatingSystem": "Ubuntu-10.04"
+		},
+		"configurableProperties": {}
+	}],
+	"virtualComputeDesc": [{
+		"virtualComputeDescId": "VCD_spr1",
+		"virtualMemory": {
+			"virtualMemSize": 4,
+			"virtualMemOversubscriptionPolicy": "asdasd",
+			"numaEnabled": false
+		},
+		"virtualCpu": {
+			"numVirtualCpu": 1,
+			"cpuArchitecture": "x86_64",
+			"virtualCpuClock": 0,
+			"virtualCpuOversubscriptionPolicy": "asdasd"
+		}
+		
+	}],
+	"virtualStorageDesc": [{
+		"id": "VSD_spr1",
+		"typeOfStorage": "VOLUME",
+		"sizeOfStorage": 50,
+		"swImageDesc": "CDN_spr1_SWID"
+	}],
+	"vnfExtCpd": [{
+		"cpdId": "spr1MgtExt",
+		"layerProtocol": "IPV4",
+		"description": "Management external CP of this VNF",
+		"addressData": [{
+			"addressType": "IP_ADDRESS",
+			"iPAddressAssignment": false,
+			"floatingIpActivated": true,
+			"management": true,
+			"iPAddressType": "IPv4",
+			"numberOfIpAddress": 1
+		}],
+		"intCpd": "spr1MgtInt"
+	}],
+	"deploymentFlavour": [{
+		"flavourId": "df_vNFD_01",
+		"description": "Standard deployment flavour of this CDN VNF",
+		"vduProfile": [{
+			"vduId": "spr1_vdu",
+			"minNumberOfInstances": 1,
+			"maxNumberOfInstances": 1
+		}],
+		"instantiationLevel": [{
+			"levelId": "il_vNFD_01",
+			"description": "Standard instantiation level of this CDN VNF",
+			"vduLevel": [{
+				"vduId": "spr1_vdu",
+				"numberOfInstances": 1
+			}]
+		}],
+		"vnfLcmOperationsConfiguration": {}
+	}],
+	"configurableProperties": {
+			"autoScalable": false,
+			"autoHealable": false,
+			"additionalConfigurableProperty": []
+	},
+	"modifiableAttributes": {},
+	"lifeCycleManagementScript": [{
+		"event": ["START_VNF_INSTANTIATION"],
+		"script": ""
+	}, {
+		"event": ["END_VNF_INSTANTIATION"],
+		"script": ""
+	}, {
+		"event": ["START_VNF_TERMINATION"],
+		"script": ""
+	}, {
+		"event": ["END_VNF_TERMINATION"],
+		"script": ""
+	}]
+}
+
