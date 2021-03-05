@@ -188,8 +188,22 @@ spec:
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
 
-                    - name: resource-vsb
+                    - name: slicer-create-sla
                       dependencies: [slicer-create-tenant]
+                      templateRef:
+                        name: workflow-slice
+                        template: create-sla
+                      arguments:
+                        parameters:
+                        - name: slicer_ip
+                          value: "{{workflow.parameters.slicer_ip}}"
+                        - name: group_name
+                          value: "5gzorro"
+                        - name: tenant_name
+                          value: "{{workflow.parameters.service_owner}}"
+
+                    - name: resource-vsb
+                      dependencies: [slicer-create-sla]
                       templateRef:
                         name: workflow-base
                         template: jq-script

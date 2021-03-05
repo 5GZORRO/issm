@@ -20,9 +20,6 @@ spec:
       - name: slicer_ip
       - name: group_name
       - name: tenant_name
-      - name: cpu
-      - name: ram
-      - name: disk
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
       command: [sh]
@@ -30,23 +27,23 @@ spec:
         generate_post_sla_create()
         {
           cat <<EOF
-          {
-            "slaStatus": "ENABLED",
-            "slaConstraints": [{
-              "maxResourceLimit": {
-                "diskStorage": 100,
-                "vCPU": 10,
-                "memoryRAM": 10240
-              },
-              "scope": "GLOBAL_VIRTUAL_RESOURCE"
-              }
-            ]
-          }
+        {
+                "slaStatus": "ENABLED",
+                "slaConstraints": [{
+                        "maxResourceLimit": {
+                                        "diskStorage": 100,
+                                        "vCPU": 10,
+                                        "memoryRAM": 10240
+                                },
+                        "scope": "GLOBAL_VIRTUAL_RESOURCE"
+                        }
+                ]
+        }
         EOF
         }
-        echo "Log in {{inputs.parameters.tenant_name}}.."
+        echo "Log in as admin.."
         curl -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/login
-        curl -b /tmp/a_c --write-out '%{http_code}' -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/admin/group/{{inputs.parameters.group_name}}/tenant/{{tenant_name}}/sla --data "$(generate_post_sla_create)" --header "Content-Type:application/json"
+        curl -b /tmp/a_c --write-out '%{http_code}' --data "$(generate_post_sla_create)" -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/admin/group/5gzorro/tenant/my-mno/sla --header "Content-Type:application/json"
 
   - name: create-tenant
     # Create new tenant in vertical slicer
