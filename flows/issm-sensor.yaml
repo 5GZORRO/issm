@@ -228,9 +228,6 @@ spec:
                         - name: blueprint_name
                           # VSB attr in offer
                           value: "{{tasks.resource-vsb.outputs.result}}"
-                        - name: name
-                          # <VSB> attr in offer
-                          value: "{{tasks.resource-vsb.outputs.result}}"
                         - name: parameters
                           value: "{{workflow.parameters.qos_parameters}}"
 
@@ -245,8 +242,10 @@ spec:
                           value: "{{workflow.parameters.slicer_ip}}"
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
-                        - name: descriptor_name
-                          # <VSB> attr in offer
+                        - name: vsd_id
+                          value: "{{tasks.slicer-create-vsd.outputs.parameters.vsd_id}}"
+                        - name: name
+                          # for now, <VSB> attr in offer
                           value: "{{tasks.resource-vsb.outputs.result}}"
 
                     - name: slicer-poll
