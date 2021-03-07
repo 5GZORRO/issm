@@ -1,4 +1,4 @@
-# scripts/slicer
+# Onboard Blueprint
 
 Log into the vertical slicer host and perform the below in this order
 

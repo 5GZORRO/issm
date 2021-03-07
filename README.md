@@ -91,7 +91,8 @@ kubectl create -f wf-templates/slice.yaml -n argo-events
 ## Trigger ISSM business flow
 
 **Important:**
-* the offers loaded into discovery application are of `VideoStreaming`, hence, ensure to [pre-onboard the blueprint](./scripts/slicer/README.md) into the vertical slicer.
+* the offers loaded into discovery application are of `VideoStreaming`, hence, ensure to [pre-onboard the corresponding blueprint](./scripts/slicer/onboard.md) into the vertical slicer.
+* service owner (i.e mno/tenant) should be pre-defined along with SLA, hence ensure to [create it](./scripts/slicer/define_tenant.md) in the vertical slicer.
 
 As an alternative to the below, an [actuation script](scrips/actuator/README.md) can be used which automates most of the below steps
 
