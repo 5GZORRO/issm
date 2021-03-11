@@ -55,7 +55,7 @@ def process_file(f, **kwargs):
         data['offered_price']
         data['latitude']
         data['longitude']
-        data['slice_segement']
+        data['slice_segment']
         data['category']
         return data
 

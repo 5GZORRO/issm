@@ -50,7 +50,7 @@ pip3 install gevent==1.2.1 kafka-python==2.0.2
     "offered_price": "1700",
     "latitude": "56",
     "longitude": "5",
-    "slice_segement": "edge",
+    "slice_segment": "edge",
     "category": "VideoStreaming",
     "qos_parameters": {
         "bandwidth": "30"

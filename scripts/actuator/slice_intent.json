@@ -2,7 +2,7 @@
     "offered_price": "1700",
     "latitude": "56",
     "longitude": "5",
-    "slice_segement": "edge",
+    "slice_segment": "edge",
     "category": "VideoStreaming",
     "qos_parameters": {
         "bandwidth": "30"
