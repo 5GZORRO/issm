@@ -5,6 +5,6 @@
     "slice_segment": "edge",
     "category": "VideoStreaming",
     "qos_parameters": {
-        "bandwidth": "30"
+        "users": "30"
     }
 }
