@@ -217,8 +217,8 @@ spec:
                         - name: vsd_id
                           value: "{{tasks.slicer-create-vsd.outputs.parameters.vsd_id}}"
                         - name: name
-                          # for now, <VSB> attr in offer
-                          value: "{{tasks.resource-vsb.outputs.result}}"
+                          # TODO: this should match the VSB attr in offer
+                          value: "mysql_mda_mon"
                         - name: userdata
                           value: |
                             { "product_id": "{{tasks.resource-id.outputs.result}}" }
