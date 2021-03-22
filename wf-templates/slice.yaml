@@ -294,7 +294,8 @@ spec:
               "timestampStep": "2m"
             }
           ],
-          "timestampStart": "2021-03-22T00:00:01"
+          "timestampStart": "{{inputs.parameters.timestamp_start}}",
+          "timestampEnd": "2021-12-31T23:59:59"
         }
         EOF
         }
