@@ -15,14 +15,14 @@ cd issm/scripts/slicer
 Update ipadress to the one in your environment
 
 ```
-export SLICER=10.4.3.10
+export SLICER=172.15.0.191
 ```
 
 ### Set tenant name
 
 ```
 export GROUP=5gzorro
-export TENANT=my-mno
+export TENANT=operator-a
 ```
 
 ### Define tenant SLA

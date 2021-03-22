@@ -63,7 +63,7 @@ Create `slice_intent.json` with the above content
 Run the below updating kafka_ip with ISSM Kafka ipaddress
 
 ```
-python agent.py --kafka_ip 10.20.3.4 --intent_file ./slice_intent.json --service_owner my-mno
+python agent.py --kafka_ip 172.15.0.195 --intent_file ./slice_intent.json --service_owner operator-a
 ```
 
 You should receive asynch callback notifications for this intent flow

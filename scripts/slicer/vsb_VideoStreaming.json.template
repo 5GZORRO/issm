@@ -9,7 +9,10 @@
       "parameterType": "number",
       "parameterDescription": "bandwidth in Mbps",
       "applicabilityField": "entertainment"
-    }]
+    }],
+    "configurableParameters" :[
+      "product_id"
+    ]
   },
   "nsds": [
     {

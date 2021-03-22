@@ -172,6 +172,7 @@ spec:
       - name: tenant_name
       - name: vsd_id
       - name: name
+      - name: userdata
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
       command: [sh]
@@ -183,7 +184,8 @@ spec:
           "name": "{{inputs.parameters.name}}",
           "description": "5G Zorro demo slice",
           "vsdId": "{{inputs.parameters.vsd_id}}",
-          "tenantId": "{{inputs.parameters.tenant_name}}"
+          "tenantId": "{{inputs.parameters.tenant_name}}",
+          "userData": {{inputs.parameters.userdata}}
         }
         EOF
         }
