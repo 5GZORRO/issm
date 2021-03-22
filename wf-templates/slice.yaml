@@ -255,3 +255,49 @@ spec:
         valueFrom:
           path: /tmp/status.txt
 
+  - name: mda-settings
+    inputs:
+      parameters:
+      - name: slicer_ip
+      - name: tenant_name
+      - name: vsi_id
+      - name: input_topic
+      - name: transaction_uuid
+      - name: timestamp_start
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      command: [sh]
+      source: |
+        generate_post_mda()
+        {
+          cat <<EOF
+        {
+          "businessID": "{{inputs.parameters.transaction_uuid}}",
+          "topic": "{{inputs.parameters.input_topic}}",
+          "networkID": "{{inputs.parameters.vsi_id}}",
+          "metrics": [{
+              "metricName": "cpu_utilization",
+              "metricType": "float",
+              "aggregationMethod": "",
+              "timestampStep": "30s"
+            },
+            {
+              "metricName": "ram_utilization",
+              "metricType": "float",
+              "aggregationMethod": "",
+              "timestampStep": "1m"
+            },
+            {
+              "metricName": "disk_usage",
+              "metricType": "float",
+              "aggregationMethod": "",
+              "timestampStep": "2m"
+            }
+          ],
+          "timestampStart": "2021-03-22T00:00:01"
+        }
+        EOF
+        }
+
+        echo "Send settings to MDA.."
+        curl --write-out '%{http_code}' --data "$(generate_post_mda)" -X POST http://{{inputs.parameters.slicer_ip}}:4000/settings --header "Content-Type:application/json"
