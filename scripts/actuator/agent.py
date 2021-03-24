@@ -105,7 +105,7 @@ def _consume_issm(kafka_ip, kafka_port, callback_topic):
         enable_auto_commit=True,
         api_version=KAFKA_API_VERSION)
 
-    consumer.subscribe(pattern=callback_topic)
+    consumer.subscribe(topics=(callback_topic))
     print ('\n\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-')
     print ("Starting Kafka thread..\n\n"
            "KAFKA_CLIENT_ID: '%s' \n"
