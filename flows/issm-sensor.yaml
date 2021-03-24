@@ -253,19 +253,16 @@ spec:
                         template: mda-settings
                       arguments:
                         parameters:
-                        # TODO: Use real values
                         - name: slicer_ip
                           value: "{{workflow.parameters.slicer_ip}}"
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
                         - name: vsi_id
-                          value: "123"
-                        - name: input_topic
-                          value: "a"
+                          value: "{{tasks.slicer-create-vsi.outputs.parameters.vsi_id}}"
                         - name: transaction_uuid
-                          value: "123"
+                          value: "{{workflow.parameters.transaction_uuid}}"
                         - name: timestamp_start
-                          value: "2021-03-22T00:00:01"
+                          value: "2021-03-01T00:00:01"
 
                     - name: callback-complete
                       dependencies: [slicer-poll]

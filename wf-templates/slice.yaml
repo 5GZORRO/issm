@@ -261,7 +261,6 @@ spec:
       - name: slicer_ip
       - name: tenant_name
       - name: vsi_id
-      - name: input_topic
       - name: transaction_uuid
       - name: timestamp_start
     script:
@@ -273,7 +272,6 @@ spec:
           cat <<EOF
         {
           "businessID": "{{inputs.parameters.transaction_uuid}}",
-          "topic": "{{inputs.parameters.input_topic}}",
           "networkID": "{{inputs.parameters.vsi_id}}",
           "metrics": [{
               "metricName": "cpu_utilization",
@@ -294,8 +292,7 @@ spec:
               "timestampStep": "2m"
             }
           ],
-          "timestampStart": "{{inputs.parameters.timestamp_start}}",
-          "timestampEnd": "2021-12-31T23:59:59"
+          "timestampStart": "{{inputs.parameters.timestamp_start}}"
         }
         EOF
         }
