@@ -10,9 +10,6 @@ ISSM runs on kubernetes. You can use [these instructions](https://github.com/5GZ
 * Install argo and argo-events per [these instructions](docs/argo.md)
 * Install vertical slicer per [these instructions](docs/slicer.md)
 * Install discovery application per [these instructions](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/blob/main/readme.txt)
-* Create kafka topic `issm-optimizer`:
-  * Log into ISSM Kafka container
-  * Invoke `/opt/kafka/bin/kafka-topics.sh --create --topic issm-optimizer --bootstrap-server localhost:9092`
 * Install optimizer service per [these instructions](https://github.com/5GZORRO/issm-optimizer/blob/master/README.md)
 
 ## Deploy
