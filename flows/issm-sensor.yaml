@@ -245,6 +245,46 @@ spec:
                         - name: timeout
                           value: 60
 
+                    - name: mda-settings
+                      dependencies: [slicer-poll]
+                      when: "{{tasks.slicer-poll.outputs.parameters.status}} == \"INSTANTIATED\""
+                      templateRef:
+                        name: workflow-slice
+                        template: mda-settings
+                      arguments:
+                        parameters:
+                        - name: slicer_ip
+                          value: "{{workflow.parameters.slicer_ip}}"
+                        - name: tenant_name
+                          value: "{{workflow.parameters.service_owner}}"
+                        - name: vsi_id
+                          value: "{{tasks.slicer-create-vsi.outputs.parameters.vsi_id}}"
+                        - name: transaction_uuid
+                          value: "{{workflow.parameters.transaction_uuid}}"
+                        - name: metrics
+                          # TODO: comes from service offer?
+                          value: |
+                            [{
+                               "metricName": "cpu_utilization",
+                               "metricType": "float",
+                               "aggregationMethod": "",
+                               "timestampStep": "30s"
+                             },
+                             {
+                               "metricName": "ram_utilization",
+                               "metricType": "float",
+                               "aggregationMethod": "",
+                               "timestampStep": "1m"
+                             },
+                             {
+                               "metricName": "disk_usage",
+                               "metricType": "float",
+                               "aggregationMethod": "",
+                               "timestampStep": "2m"
+                             }]                            
+                        - name: timestamp_start
+                          value: "2021-03-01T00:00:01"
+
                     - name: callback-complete
                       dependencies: [slicer-poll]
                       templateRef:

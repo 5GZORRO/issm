@@ -14,6 +14,8 @@ git clone https://github.com/nextworks-it/slicer.git
 cd slicer/INSTALL/vertical-slicer-docker
 ```
 
+**Note:** End to end tests use VS with commit id: a6ff0d8
+
 ## Configure external ipaddress
 
 edit `environment/environments.ts` and replace with VM ipaddress

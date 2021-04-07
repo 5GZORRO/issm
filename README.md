@@ -9,6 +9,7 @@ ISSM runs on kubernetes. You can use [these instructions](https://github.com/5GZ
 * Ensure you have kafka broker already installed. You can use [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md) to provision such a one
 * Install argo and argo-events per [these instructions](docs/argo.md)
 * Install vertical slicer per [these instructions](docs/slicer.md)
+* Install datalake services: TBD
 * Install discovery application per [these instructions](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/blob/main/readme.txt)
 * Install optimizer service per [these instructions](https://github.com/5GZORRO/issm-optimizer/blob/master/README.md)
 
@@ -90,6 +91,7 @@ kubectl create -f wf-templates/slice.yaml -n argo-events
 **Important:**
 * the offers loaded into discovery application are of `VideoStreaming`, hence, ensure to [pre-onboard the corresponding blueprint](./scripts/slicer/onboard.md) into the vertical slicer.
 * service owner (i.e mno/tenant) should be pre-defined along with SLA, hence ensure to [create it](./scripts/slicer/define_tenant.md) in the vertical slicer.
+* service owner (i.e mno/tenant) should pre-exist in datalake, hence ensure to create it: TBD
 
 As an alternative to the below, an [actuation script](scrips/actuator/README.md) can be used which automates most of the below steps
 
