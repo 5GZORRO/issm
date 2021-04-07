@@ -30,16 +30,16 @@ Follow the below procedure to onboard the blueprint
 
 ### Set slicer ipaddress
 
-Update ipadress to the one in your environment
+Set the ipadress of your nginx container. **Note:** it should be the external ipaddress so that the VS can access it
 
 ```
-export SLICER=10.4.3.10
+export NGINX=1.2.3.4
 ```
 
 ### Customize VSB 
 
 ```
-sed 's,%SLICER%,'${SLICER}',g' vsb_VideoStreaming.json.template > vsb_VideoStreaming.json
+sed 's,%NGINX%,'${NGINX}',g' vsb_VideoStreaming.json.template > vsb_VideoStreaming.json
 ```
 
 ### Onboard it
