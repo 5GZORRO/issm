@@ -9,7 +9,7 @@ ISSM runs on kubernetes. You can use [these instructions](https://github.com/5GZ
 * Ensure you have kafka broker already installed. You can use [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md) to provision such a one
 * Install argo and argo-events per [these instructions](docs/argo.md)
 * Install vertical slicer per [these instructions](docs/slicer.md)
-* Install datalake services: TBD
+* Install datalake services per [these instructions](docs/datalake.md)
 * Install discovery application per [these instructions](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/blob/main/readme.txt)
 * Install optimizer service per [these instructions](https://github.com/5GZORRO/issm-optimizer/blob/master/README.md)
 
@@ -91,14 +91,14 @@ kubectl create -f wf-templates/slice.yaml -n argo-events
 **Important:**
 * the offers loaded into discovery application are of `VideoStreaming`, hence, ensure to [pre-onboard the corresponding blueprint](./scripts/slicer/onboard.md) into the vertical slicer.
 * service owner (i.e mno/tenant) should be pre-defined along with SLA, hence ensure to [create it](./scripts/slicer/define_tenant.md) in the vertical slicer.
-* service owner (i.e mno/tenant) should pre-exist in datalake, hence ensure to create it: TBD
+* service owner (i.e mno/tenant) should pre-exist in datalake, hence ensure to [create it](docs/datalake.md#create-user) passing `operator-a` as parameter
 
-As an alternative to the below, an [actuation script](scrips/actuator/README.md) can be used which automates most of the below steps
+An [actuation script](scripts/actuator/README.md) can be used to publish a slice intent to ISSM (which automates the steps below)
 
 ### Manual steps
 
 **Important:**
-* ensure to [create](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md#create-topics) `my-mno-topic` on ISSM kafka bus before publishing the intent
+* ensure to [create](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md#create-topics) `operator-a` on ISSM kafka bus before publishing the intent
 
 In a new terminal, log into ISSM Kafka container
 
@@ -108,7 +108,7 @@ Invoke the below command to publish an intent on ISSM topic providing a callback
 /opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
 ```
 
->{"event_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "callback": {"type":"kafka", "kafka_topic": "my-mno-topic"}, "service_owner": "my-mno"}
+>{"event_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "callback": {"type":"kafka", "kafka_topic": "operator-a"}, "service_owner": "my-mno"}
 
 The flow is invoked automatically
 
@@ -123,5 +123,5 @@ In a new terminal, log into ISSM Kafka container
 Consume latest updates reported on callback's topic
 
 ```
-/opt/kafka/bin/kafka-console-consumer.sh --topic my-mno-topic --from-beginning --bootstrap-server localhost:9092
+/opt/kafka/bin/kafka-console-consumer.sh --topic operator-a --from-beginning --bootstrap-server localhost:9092
 ```

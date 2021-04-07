@@ -1,14 +1,8 @@
 # scripts/actuator
 
-Log into a VM that has a connectivity to ISSM Kafka (see [pre-requisites](https://github.com/5GZORRO/issm#pre-requisites))
-
 ## Actuator
 
-Setup the actuator which consists an invoker that publishes an intent to ISSM Workflow manager to consume and run a codified business flow for it.
-
-Currently the following intent operation is supported:
-
-* `submit_intent`
+Setup the actuator which consists an invoker that publishes an intent to ISSM Workflow manager
 
 ### Clone this repository
 
