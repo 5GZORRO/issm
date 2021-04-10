@@ -262,6 +262,7 @@ spec:
       - name: tenant_name
       - name: vsi_id
       - name: transaction_uuid
+      - name: topic
       - name: metrics
       - name: timestamp_start
     script:
@@ -272,10 +273,15 @@ spec:
         {
           cat <<EOF
         {
+          "tenantID": "{{inputs.parameters.tenant_name}}",
+          "topic": "{{inputs.parameters.topic}}",
           "businessID": "{{inputs.parameters.transaction_uuid}}",
+          "referenceID": "refID",
+          "resourceID": "resID",
           "networkID": "{{inputs.parameters.vsi_id}}",
           "metrics": {{inputs.parameters.metrics}},
-          "timestampStart": "{{inputs.parameters.timestamp_start}}"
+          "timestampStart": "{{inputs.parameters.timestamp_start}}",
+          "timestampEnd": "2021-12-31T23:59:59"
         }
         EOF
         }

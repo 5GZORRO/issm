@@ -261,6 +261,8 @@ spec:
                           value: "{{tasks.slicer-create-vsi.outputs.parameters.vsi_id}}"
                         - name: transaction_uuid
                           value: "{{workflow.parameters.transaction_uuid}}"
+                        - name: topic
+                          value: "{{workflow.parameters.service_owner}}-in-0"
                         - name: metrics
                           # TODO: comes from service offer?
                           value: |
@@ -268,22 +270,23 @@ spec:
                                "metricName": "cpu_utilization",
                                "metricType": "float",
                                "aggregationMethod": "",
-                               "timestampStep": "30s"
+                               "step": "30s"
                              },
                              {
                                "metricName": "ram_utilization",
                                "metricType": "float",
                                "aggregationMethod": "",
-                               "timestampStep": "1m"
+                               "step": "1m"
                              },
                              {
                                "metricName": "disk_usage",
                                "metricType": "float",
                                "aggregationMethod": "",
-                               "timestampStep": "2m"
-                             }]                            
+                               "step": "2m"
+                             }]
                         - name: timestamp_start
-                          value: "2021-03-01T00:00:01"
+                          # TODO: timestamp should be after 'now'
+                          value: "2021-04-10T09:35:00"
 
                     - name: callback-complete
                       dependencies: [slicer-poll]
