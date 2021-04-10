@@ -146,7 +146,20 @@
             }
           ]
         }
-      ]
+      ],
+       "monitoredInfo": [
+         {
+           "monitoringParameter": {
+             "monitoringParameterId": "mp_CurrentClientConnections.vNFD_01",
+             "name": "CurrentClientConnections.vNFD_01",
+             "performanceMetric": "CurrentClientConnections.vNFD_01",
+             "params": {
+               "aggregationMethod":"aggregationMethod",
+               "timestampStep": "30s"
+             }
+           }
+         }
+       ]
     }
   ],
   "translationRules": [
