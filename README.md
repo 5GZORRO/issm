@@ -45,6 +45,14 @@ envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n argo-even
 
 **Note:** Kafka `issm-topic` is automatically created during the creation of the event-source
 
+### Apply docker-secrete.yaml
+
+Apply docker-secrete.yaml created per [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes-private-dockerregistry.md)
+
+```
+kubectl apply -f docker-secrete.yaml -n argo-events
+```
+
 ## Onboard ISSM flow
 
 Depending on the flow context, you may need to customize it with access information to the 5G Zorro services the flow depends on
@@ -108,7 +116,7 @@ Invoke the below command to publish an intent on ISSM topic providing a callback
 /opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
 ```
 
->{"event_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "callback": {"type":"kafka", "kafka_topic": "operator-a"}, "service_owner": "my-mno"}
+>{"event_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "callback": {"type":"kafka", "kafka_topic": "operator-a"}, "service_owner": "operator-a"}
 
 The flow is invoked automatically
 
