@@ -221,7 +221,8 @@ spec:
                           value: "VideoStreaming"
                         - name: userdata
                           value: |
-                            { "product_id": "{{tasks.resource-id.outputs.result}}" }
+                            { "product_id": "{{tasks.resource-id.outputs.result}}",
+                              "transaction_uuid": "{{workflow.parameters.transaction_uuid}}" }
 
                     - name: slicer-poll
                       dependencies: [slicer-create-vsi]
