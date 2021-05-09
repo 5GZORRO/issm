@@ -11,7 +11,8 @@
       "applicabilityField": "entertainment"
     }],
     "configurableParameters" :[
-      "product_id"
+      "product_id",
+      "transaction_uuid"
     ]
   },
   "nsds": [
@@ -154,8 +155,8 @@
              "name": "CurrentClientConnections.vNFD_01",
              "performanceMetric": "CurrentClientConnections.vNFD_01",
              "params": {
-               "aggregationMethod":"aggregationMethod",
-               "timestampStep": "30s"
+               "aggregationMethod": null,
+               "step": "30s"
              }
            }
          }
