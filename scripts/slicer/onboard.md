@@ -33,7 +33,7 @@ Follow the below procedure to onboard the blueprint
 Set the ipadress of your nginx container. **Note:** it should be the external ipaddress so that the VS can access it
 
 ```
-export NGINX=1.2.3.4
+export NGINX=172.15.0.191
 ```
 
 ### Customize VSB 
@@ -45,5 +45,6 @@ sed 's,%NGINX%,'${NGINX}',g' vsb_VideoStreaming.json.template > vsb_VideoStreami
 ### Onboard it
 
 ```
+export SLICER=172.15.0.191
 ./vsb_onboard.sh
 ```

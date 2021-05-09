@@ -37,7 +37,7 @@ Update kafka url accordingly
 ```
 docker run -v ${KUBE_PATH_NAME}:/root/.kube -p 8080:8080 \
   --env KUBERNETES_URL='127.0.0.1:8443' \
-  --env KAFKA_URL='10.20.3.4:9092' \
+  --env KAFKA_URL='172.15.0.195:9092' \
   --env S3_URL='127.0.0.1:9000' \
   --env S3_ACCESS_KEY='user' \
   --env S3_SECRETE_KEY='password' \

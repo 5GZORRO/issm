@@ -263,25 +263,27 @@ spec:
                           value: "{{workflow.parameters.transaction_uuid}}"
                         - name: topic
                           value: "{{workflow.parameters.service_owner}}-in-0"
+                        - name: resource_id
+                          value: "{{tasks.resource-id.outputs.result}}"
                         - name: metrics
                           # TODO: comes from service offer?
                           value: |
                             [{
                                "metricName": "cpu_utilization",
                                "metricType": "float",
-                               "aggregationMethod": "",
+                               "aggregationMethod": null,
                                "step": "30s"
                              },
                              {
                                "metricName": "ram_utilization",
                                "metricType": "float",
-                               "aggregationMethod": "",
+                               "aggregationMethod": null,
                                "step": "1m"
                              },
                              {
                                "metricName": "disk_usage",
                                "metricType": "float",
-                               "aggregationMethod": "",
+                               "aggregationMethod": null,
                                "step": "2m"
                              }]
                         - name: timestamp_start
