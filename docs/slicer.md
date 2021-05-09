@@ -39,7 +39,7 @@ nfvo.lcm.type=DUMMY
 
 nfvo.lcm.external_monitoring.enable=true
 nfvo.lcm.external_monitoring.type=MDA
-domain_id=operator-a-in-0
+domain_id=operator-a
 nfvo.lcm.external_monitoring.address=http://172.15.0.191:4000
 ```
 
