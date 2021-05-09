@@ -1,0 +1,28 @@
+{
+	"businessID": "flow_123",
+	"topic": "operator-a-in-0",
+	"networkID": 123,
+	"tenantID": "operator-a",
+	"resourceID": "resource_123",
+	"referenceID": "offer_123",
+	"metrics": [
+		{
+			"metricName": "cpu_utilization",
+			"metricType": "float",
+			"aggregationMethod": null,
+			"step": "30s"
+		},
+		{
+			"metricName": "ram_utilization",
+			"metricType": "float",
+			"aggregationMethod": null,
+			"step": "1m"
+		},
+		{
+			"metricName": "disk_usage",
+			"metricType": "float",
+			"aggregationMethod": null,
+			"step": "2m"
+		}
+	]
+}
