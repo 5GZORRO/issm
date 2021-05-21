@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: issm-api
+  namespace: argo-events
+spec:
+  selector:
+    matchLabels:
+      app: issm-api
+  replicas: 1
+  minReadySeconds: 1
+  revisionHistoryLimit: 5
+  template:
+    metadata:
+      labels:
+        app: issm-api
+    spec:
+      imagePullSecrets:
+      - name: myregistrykey
+      containers:
+      - name: issm-api
+        image: "$IMAGE"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+          - name: ISSM_KAFKA_HOST
+            value: "$ISSM_KAFKA_HOST"
+          - name: ISSM_KAFKA_PORT
+            value: "$ISSM_KAFKA_PORT"

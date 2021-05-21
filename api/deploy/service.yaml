@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: issm-api
+  name: issm-api
+  namespace: argo-events
+spec:
+  ports:
+  - port: 8080
+    name: http-api
+    nodePort: 30080
+  selector:
+    app: issm-api
+  type: NodePort
