@@ -153,6 +153,7 @@ def main():
     PROCESSED_INTENT['operation'] = 'submit_intent'
 
     PROCESSED_INTENT['event_uuid'] = event_uuid
+    PROCESSED_INTENT['transaction_uuid'] = event_uuid
     PROCESSED_INTENT['callback'] = dict(type='kafka', kafka_topic=topic_name)
     PROCESSED_INTENT['service_owner'] = args.service_owner
 

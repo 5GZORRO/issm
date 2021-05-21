@@ -27,6 +27,13 @@ spec:
                 # (see event parameters below)
                 #
                 name: "OVERRIDE"
+                labels:
+                  #
+                  # transaction_uuid lable contains the transaction uuid of
+                  # bussiness flow. NOTE: there could be several instances with
+                  # a same transaction uuid
+                  #
+                  transaction_uuid: OVERRIDE
               spec:
                 entrypoint: handlerequest
                 imagePullSecrets:
@@ -370,9 +377,21 @@ spec:
 
           parameters:
             - src:
+                #
+                # event_uuid is treated as an instance uuid for this
+                # flow instance
                 dependencyName: test-dep
                 dataKey: body.event_uuid
               dest: metadata.name
+
+            - src:
+                #
+                # transaction_uuid is treated as the whole business trasaction
+                # that can contain several flows (i.e. several event_uuids)
+                #
+                dependencyName: test-dep
+                dataKey: body.transaction_uuid
+              dest: metadata.labels.transaction_uuid
 
             - src:
                 dependencyName: test-dep
@@ -436,5 +455,4 @@ spec:
             - src:
                 dependencyName: test-dep
                 dataKey: body.transaction_uuid
-                value: DEFAULT
               dest: spec.arguments.parameters.15.value

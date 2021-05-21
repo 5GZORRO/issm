@@ -116,7 +116,7 @@ Invoke the below command to publish an intent on ISSM topic providing a callback
 /opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
 ```
 
->{"event_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "callback": {"type":"kafka", "kafka_topic": "operator-a"}, "service_owner": "operator-a"}
+>{"event_uuid": "123", "transaction_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "callback": {"type":"kafka", "kafka_topic": "operator-a"}, "service_owner": "operator-a"}
 
 The flow is invoked automatically
 
