@@ -65,12 +65,6 @@ spec:
                     value: 8082
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Callback parameters
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: callback
-                    value: OVERRIDE
-
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Payload parameters
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: operation
@@ -152,7 +146,7 @@ spec:
                           value: |
                             { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}",
                               "resources": [{{tasks.smart-discovery-application.outputs.result}}],
-                              "callback": {{workflow.parameters.callback}}, "service_owner": "{{workflow.parameters.service_owner}}",
+                              "service_owner": "{{workflow.parameters.service_owner}}",
                               "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
                         - name: kafka_topic
                           value: "issm-optimizer"
@@ -261,20 +255,6 @@ spec:
                         - name: timeout
                           value: 60
 
-                    - name: callback-complete
-                      dependencies: [slicer-poll]
-                      templateRef:
-                        name: workflow-base
-                        template: callback
-                      arguments:
-                        parameters:
-                        - name: callback
-                          value: "{{workflow.parameters.callback}}"
-                        - name: data
-                          value: |
-                            { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-                              "status": "{{tasks.slicer-poll.outputs.parameters.status}}", "phase": "slicer-create-vsi" }
-
                 - name: smart-discovery-application
                   inputs:
                     parameters:
@@ -315,19 +295,6 @@ spec:
                           - name: offer_id
                             value: "{{inputs.parameters.offer_id}}"
 
-                    - - name: callback-acquire-fail
-                        templateRef:
-                          name: workflow-base
-                          template: callback
-                        when: "{{steps.acquire-resource.outputs.parameters.status}} == \"FAIL\""
-                        arguments:
-                          parameters:
-                          - name: callback
-                            value: "{{workflow.parameters.callback}}"
-                          - name: data
-                            value: |
-                              { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-                              "status": "fail", "offer_id": "{{inputs.parameters.offer_id}}" }
                     - - name: fail-flow
                         template: fail
                         when: "{{steps.acquire-resource.outputs.parameters.status}} == \"FAIL\""
@@ -403,64 +370,58 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.callback
-                value: DEFAULT
-              dest: spec.arguments.parameters.6.value
-
-            - src:
-                dependencyName: test-dep
                 dataKey: body.operation
-              dest: spec.arguments.parameters.7.value
+              dest: spec.arguments.parameters.6.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.category
                 value: DEFAULT
-              dest: spec.arguments.parameters.8.value
+              dest: spec.arguments.parameters.7.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.latitude
                 value: DEFAULT
-              dest: spec.arguments.parameters.9.value
+              dest: spec.arguments.parameters.8.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.longitude
                 value: DEFAULT
-              dest: spec.arguments.parameters.10.value
+              dest: spec.arguments.parameters.9.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.service_owner
                 value: DEFAULT
-              dest: spec.arguments.parameters.11.value
+              dest: spec.arguments.parameters.10.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.offered_price
                 value: DEFAULT
-              dest: spec.arguments.parameters.12.value
+              dest: spec.arguments.parameters.11.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.slice_segment
                 value: DEFAULT
-              dest: spec.arguments.parameters.13.value
+              dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.qos_parameters
                 value: DEFAULT
-              dest: spec.arguments.parameters.14.value
+              dest: spec.arguments.parameters.13.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resources
                 value: DEFAULT
-              dest: spec.arguments.parameters.15.value
+              dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.transaction_uuid
-              dest: spec.arguments.parameters.16.value
+              dest: spec.arguments.parameters.15.value

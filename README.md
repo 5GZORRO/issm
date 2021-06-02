@@ -97,31 +97,10 @@ kubectl create -f wf-templates/slice.yaml -n argo-events
 
 ### Manual steps
 
-**Important:**
-* ensure to [create](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md#create-topics) `operator-a` on ISSM kafka bus before publishing the intent
-
-In a new terminal, log into ISSM Kafka container
-
-Invoke the below command to publish an intent on ISSM topic providing a callback where progress and flow result are to be published.
-
-```
-/opt/kafka/bin/kafka-console-producer.sh --topic issm-topic --bootstrap-server localhost:9092
-```
-
->{"event_uuid": "1234", "transaction_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "callback": {"type":"kafka", "kafka_topic": "operator-a"}, "service_owner": "operator-a"}
+>{"event_uuid": "1234", "transaction_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "service_owner": "operator-a"}
 
 The flow is invoked automatically
 
 ## Watch flow progress using Argo GUI
 
 Browse to `http://<kubernetes master ipaddress>:2746`
-
-## Consume flow progress (via callback)
-
-In a new terminal, log into ISSM Kafka container
-
-Consume latest updates reported on callback's topic
-
-```
-/opt/kafka/bin/kafka-console-consumer.sh --topic operator-a --from-beginning --bootstrap-server localhost:9092
-```

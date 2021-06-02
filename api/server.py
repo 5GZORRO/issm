@@ -28,36 +28,6 @@ if not KAFKA_IP:
     raise sys.exit(1)
 
 
-def topic_create(kafka_ip, kafka_port, topic_name):
-    """
-    Helper method to create a kafka topic on kafka broker used by this agent. No
-    error returned if topic already exists
-
-    :param kafka_ip: kafka broker ipaddress
-    :type kafka_ip: ``str``
-
-    :param kafka_port: kafka broker port
-    :type kafka_port: ``int``
-
-    :param topic_name: kafka tpoic to create
-    :type topic_name: ``str``
-
-    """
-    print ('[INFO] Request to create topic [%s] on kafka [%s]' %
-          (topic_name, kafka_ip+':'+str(kafka_port)))
-    admin_client = KafkaAdminClient(bootstrap_servers="%s:%s" % (kafka_ip, kafka_port),
-    client_id='%s-%s' % (topic_name, 'client-id'))
-
-    topic_list = []
-    topic_list.append(NewTopic(name=topic_name, num_partitions=1,
-                               replication_factor=1))
-
-    try:
-        admin_client.create_topics(new_topics=topic_list, validate_only=False)
-    except TopicAlreadyExistsError as e:
-        print ('[DEBUG] Topic %s already exists' % topic_name)
-
-
 def publish_intent(kafka_ip, kafka_port, payload):
     """
     Send the intent to the ISSM kafka bus
@@ -113,9 +83,6 @@ class Proxy:
         :param intent: intent payload e.g. slice creation intent
         :type intent: ``dict``
         """
-        topic_create(kafka_ip=KAFKA_IP, kafka_port=KAFKA_PORT,
-                     topic_name=service_owner)
-
         event_uuid = str(uuid.uuid4()).replace('-','')
         print ('** event_uuid: %s' % event_uuid)
 
