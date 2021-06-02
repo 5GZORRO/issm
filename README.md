@@ -65,13 +65,14 @@ Update access info for:
                     value: 172.15.0.195
                   - name: kafka_port
                     value: 9092
-                  - name: discovery_service_ip
+                  - name: discovery_ip
                     value: 172.15.0.180
-                  - name: discovery_service_port
+                  - name: discovery_port
                     value: 80
                   - name: slicer_ip
                     value: 172.15.0.191
-
+                  - name: slicer_port
+                    value: 8082
 ```
 
 Onboard the flow
