@@ -9,6 +9,7 @@ spec:
     #
     # Parameters:
     # slicer_ip: ipaddress of the vertical slicer service (str)
+    # slicer_port: port of the vertical slicer service (str)
     # group_name: group name of the tenant (str)
     # tenant_name: tenant name (str)
     # cpu: ?? (str)
@@ -18,6 +19,7 @@ spec:
     inputs:
       parameters:
       - name: slicer_ip
+      - name: slicer_port
       - name: group_name
       - name: tenant_name
     script:
@@ -42,20 +44,22 @@ spec:
         EOF
         }
         echo "Log in as admin.."
-        curl -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/login
-        curl -b /tmp/a_c --write-out '%{http_code}' --data "$(generate_post_sla_create)" -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/admin/group/5gzorro/tenant/my-mno/sla --header "Content-Type:application/json"
+        curl -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/login
+        curl -b /tmp/a_c --write-out '%{http_code}' --data "$(generate_post_sla_create)" -X POST http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/vs/admin/group/5gzorro/tenant/my-mno/sla --header "Content-Type:application/json"
 
   - name: create-tenant
     # Create new tenant in vertical slicer
     #
     # Parameters:
     # slicer_ip: ipaddress of the vertical slicer service (str)
+    # slicer_port: port of the vertical slicer service (str)
     # group_name: group name the tenant will be created under (str)
     # tenant_name: the name of the vertical tenant to create (str)
     #
     inputs:
       parameters:
       - name: slicer_ip
+      - name: slicer_port
       - name: group_name
       - name: tenant_name
     script:
@@ -71,14 +75,15 @@ spec:
         }
         EOF
         }
-        curl -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/login
-        curl -b /tmp/a_c --write-out '%{http_code}' -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/admin/group/{{inputs.parameters.group_name}}/tenant --data "$(generate_post_tenant_create)" --header "Content-Type:application/json"
+        curl -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/login
+        curl -b /tmp/a_c --write-out '%{http_code}' -X POST http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/vs/admin/group/{{inputs.parameters.group_name}}/tenant --data "$(generate_post_tenant_create)" --header "Content-Type:application/json"
 
   - name: create-group
     # Create a new group in vertical slicer
     #
     # Parameters:
     # slicer_ip: ipaddress of the vertical slicer service (str)
+    # slicer_port: port of the vertical slicer service (str)
     # group_name: group name (str)
     #
     inputs:
@@ -89,14 +94,15 @@ spec:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
       command: [sh]
       source: |
-        curl  -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/login
-        curl  -b /tmp/a_c --write-out '%{http_code}' -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/admin/group/{{inputs.parameters.group_name}} --header "Content-Type:application/json"
+        curl  -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/login
+        curl  -b /tmp/a_c --write-out '%{http_code}' -X POST http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/vs/admin/group/{{inputs.parameters.group_name}} --header "Content-Type:application/json"
 
   - name: create-descriptor
     # Create a new VSD from the given blueprint name
     #
     # Parameters:
     # slicer_ip: ipaddress of the vertical slicer service (str)
+    # slicer_port: port of the vertical slicer service (str)    
     # tenant_name: the name of the vertical tenant (str)
     # blueprint_name: the name of the blueprint VSD is created from
     # name: VSD name
@@ -107,6 +113,7 @@ spec:
     inputs:
       parameters:
       - name: slicer_ip
+      - name: slicer_port
       - name: tenant_name
       - name: blueprint_name
       - name: parameters
@@ -133,21 +140,21 @@ spec:
         }
 
         echo "Log in admin.."
-        curl -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/login
+        curl -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/login
 
         echo "Retrieve blueprints.."
-        bp_list="$(curl -b /tmp/a_c http://{{inputs.parameters.slicer_ip}}:8082/portal/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
+        bp_list="$(curl -b /tmp/a_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/portal/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
 
         bp_id="$(echo $bp_list | jq -r '.[] | select(.name=="{{inputs.parameters.blueprint_name}}") | .vsBlueprintId')"
         echo "Blueprint id [$bp_id] matches blueprint_name [{{inputs.parameters.blueprint_name}}]"
 
         echo "Log in {{inputs.parameters.tenant_name}}.."
-        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/login
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/login
 
         # note: slicer does not accept two descriptors with same name
         echo "Create descriptor.."
         uuid=$(cat /proc/sys/kernel/random/uuid)
-        vsd_id="$(curl -b /tmp/t_c --data "$(generate_post_descriptor_create $uuid $bp_id)" -X POST http://{{inputs.parameters.slicer_ip}}:8082/portal/catalogue/vsdescriptor --header "Content-Type:application/json" 2>/dev/null)"
+        vsd_id="$(curl -b /tmp/t_c --data "$(generate_post_descriptor_create $uuid $bp_id)" -X POST http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/portal/catalogue/vsdescriptor --header "Content-Type:application/json" 2>/dev/null)"
         echo $vsd_id > /tmp/id.txt
     outputs:
       parameters:
@@ -161,6 +168,7 @@ spec:
     #
     # Parameters:
     # slicer_ip: ipaddress of the vertical slicer service (str)
+    # slicer_port: port of the vertical slicer service (str)
     # tenant_name: the name of the vertical tenant to create (str)
     # vsd_id: the id of the descriptor this VSI is created from (str)
     #
@@ -169,6 +177,7 @@ spec:
     inputs:
       parameters:
       - name: slicer_ip
+      - name: slicer_port
       - name: tenant_name
       - name: vsd_id
       - name: name
@@ -191,10 +200,10 @@ spec:
         }
 
         echo "Log in {{inputs.parameters.tenant_name}}.."
-        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/login
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/login
 
         echo "Create instance.."
-        vsi_id="$(curl -b /tmp/t_c --data "$(generate_post_instance_create $vsd_id)" -X POST http://{{inputs.parameters.slicer_ip}}:8082/vs/basic/vslcm/vs --header "Content-Type:application/json" 2>/dev/null)"
+        vsi_id="$(curl -b /tmp/t_c --data "$(generate_post_instance_create $vsd_id)" -X POST http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/vs/basic/vslcm/vs --header "Content-Type:application/json" 2>/dev/null)"
         echo $vsi_id > /tmp/id.txt
     outputs:
       parameters:
@@ -208,10 +217,11 @@ spec:
     # timeout is relevant for polling only
     #
     # Parameters:
-    # poll: whether or not to poll the VNFR (boolean). If false, then skip polling
-    # slicer_ip: ipaddress of OSM
-    # tenant_name: the name of the tenant
-    # vsi_id: VSI id
+    # poll: whether or not to poll (boolean). If false, then skip polling
+    # slicer_ip: ipaddress of the vertical slicer service (str)
+    # slicer_port: port of the vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant (str)
+    # vsi_id: VSI id (str)
     # jq_query: VSI attribute to poll/query (str in jq format)
     # jq_query_value: the conditional value of the attribute; applicable for polling mode (str)
     # timeout: polling timeout (seconds in integer)
@@ -221,6 +231,7 @@ spec:
       parameters:
       - name: poll
       - name: slicer_ip
+      - name: slicer_port
       - name: tenant_name
       - name: vsi_id
       - name: jq_query
@@ -231,11 +242,11 @@ spec:
       command: [sh]
       source: |
         echo "Log in {{inputs.parameters.tenant_name}}.."
-        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/login
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/login
       
         if [ {{inputs.parameters.poll}} = "true" ]; then
           i=0
-          until [ "$(curl -b /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
+          until [ "$(curl -b /tmp/t_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
              echo "Poll wait.. (1 sec)"
              sleep 1
              i=$((i+1))
@@ -244,10 +255,10 @@ spec:
             echo "TIMEOUT"
             echo "TIMEOUT" > /tmp/status.txt
           else
-            echo "$(curl -b /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+            echo "$(curl -b /tmp/t_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
           fi
         else  
-          echo "$(curl -b /tmp/t_c http://{{inputs.parameters.slicer_ip}}:8082/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+          echo "$(curl -b /tmp/t_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
         fi
     outputs:
       parameters:

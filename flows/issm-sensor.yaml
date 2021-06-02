@@ -61,6 +61,8 @@ spec:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: slicer_ip
                     value: 172.15.0.191
+                  - name: slicer_port
+                    value: 8082
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Callback parameters
@@ -202,6 +204,8 @@ spec:
                         parameters:
                         - name: slicer_ip
                           value: "{{workflow.parameters.slicer_ip}}"
+                        - name: slicer_port
+                          value: "{{workflow.parameters.slicer_port}}"
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
                         - name: blueprint_name
@@ -219,6 +223,8 @@ spec:
                         parameters:
                         - name: slicer_ip
                           value: "{{workflow.parameters.slicer_ip}}"
+                        - name: slicer_port
+                          value: "{{workflow.parameters.slicer_port}}"
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
                         - name: vsd_id
@@ -242,6 +248,8 @@ spec:
                           value: "true"
                         - name: slicer_ip
                           value: "{{workflow.parameters.slicer_ip}}"
+                        - name: slicer_port
+                          value: "{{workflow.parameters.slicer_port}}"
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
                         - name: vsi_id
@@ -397,62 +405,62 @@ spec:
                 dependencyName: test-dep
                 dataKey: body.callback
                 value: DEFAULT
-              dest: spec.arguments.parameters.5.value
+              dest: spec.arguments.parameters.6.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.operation
-              dest: spec.arguments.parameters.6.value
+              dest: spec.arguments.parameters.7.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.category
                 value: DEFAULT
-              dest: spec.arguments.parameters.7.value
+              dest: spec.arguments.parameters.8.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.latitude
                 value: DEFAULT
-              dest: spec.arguments.parameters.8.value
+              dest: spec.arguments.parameters.9.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.longitude
                 value: DEFAULT
-              dest: spec.arguments.parameters.9.value
+              dest: spec.arguments.parameters.10.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.service_owner
                 value: DEFAULT
-              dest: spec.arguments.parameters.10.value
+              dest: spec.arguments.parameters.11.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.offered_price
                 value: DEFAULT
-              dest: spec.arguments.parameters.11.value
+              dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.slice_segment
                 value: DEFAULT
-              dest: spec.arguments.parameters.12.value
+              dest: spec.arguments.parameters.13.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.qos_parameters
                 value: DEFAULT
-              dest: spec.arguments.parameters.13.value
+              dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resources
                 value: DEFAULT
-              dest: spec.arguments.parameters.14.value
+              dest: spec.arguments.parameters.15.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.transaction_uuid
-              dest: spec.arguments.parameters.15.value
+              dest: spec.arguments.parameters.16.value
