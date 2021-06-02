@@ -195,7 +195,7 @@
       "version": "0.1",
       "provider": "NXW",
       "checksum": "nn",
-      "vnfPackagePath": "http://%NGINX%:8080/vnfd01.tar"
+      "vnfPackagePath": "http://%NGINX_URL%/vnfd01.tar"
     }
   ] 
 }
