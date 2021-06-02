@@ -12,16 +12,28 @@ cd issm/scripts/slicer
 
 ## Expose VNFD for the vertical slicer to consume
 
-Tar the descriptor
+### Tar the descriptor
 
 ```
 tar -cvf vnfd01.tar vnfd01.json
 ```
 
-Start nginx ..
+### Start nginx..
+
+Locally
 
 ```
 docker run -it --rm -d -p 8080:80 --name web -v ${PWD}:/usr/share/nginx/html nginx
+```
+
+Or in kubernetes, following with copying the tar to nginx
+
+```
+kubectl create deployment vs-nginx --image=nginx
+```
+
+```
+cp ./vnfd01.tar vs-nginx-6b98fbb698-rr6zx:/usr/share/nginx/html
 ```
 
 ## Onboard VideoStreaming blueprint
@@ -30,7 +42,7 @@ Follow the below procedure to onboard the blueprint
 
 ### Set slicer ipaddress
 
-Set the ipadress of your nginx container. **Note:** it should be the external ipaddress so that the VS can access it
+Set the ipadress of your nginx container/pod. **Note:** VS should be able to access it
 
 ```
 export NGINX_URL=172.15.0.191:8080
