@@ -1,0 +1,412 @@
+{
+    "vsBlueprint": {
+        "version": "1.0",
+        "name": "vCDN_edge_ICOM",
+        "description": "vCDN edge cache service",
+        "sliceServiceType": "EMBB",
+        "embbServiceCategory": "DENSE_URBAN",
+        "parameters": [
+            {
+                "parameterId": "users",
+                "parameterName": "users",
+                "parameterType": "number",
+                "parameterDescription": "users",
+                "applicabilityField": "entertainment"
+            }
+        ],
+        "atomicComponents": [
+            {
+                "componentId": "edge_cache",
+                "serversNumber": 1,
+                "endPointsIds": [
+                    "sap_cdn",
+                    "sap_mgmt",
+                    "sap_upf"
+                    
+                ]
+            }, {
+                "componentId": "streaming_service",
+                "serversNumber": 1,
+                "endPointsIds": [
+                    "sap_origin",
+                    "sap_mgmt",
+                    "sap_cdn"
+                    
+                ]
+            }
+        ],
+        "endPoints": [
+            {
+                "endPointId": "sap_upf",
+                "external": true,
+                "management": false,
+                "ranConnection": true
+            },
+            {
+                "endPointId": "sap_mgmt",
+                "external": true,
+                "management": true,
+                "ranConnection": false
+            },
+            
+            {
+                "endPointId": "sap_origin",
+                "external": true,
+                "management": false,
+                "ranConnection": false
+            },
+            
+            {
+                "endPointId": "sap_cnd",
+                "external": true,
+                "management": false,
+                "ranConnection": false
+            }
+        ],
+         "connectivityServices": [
+            {
+                "endPointIds": [
+                    "sap_origin"
+                    
+                ],
+                "external": true
+            },
+             {
+                "endPointIds": [
+                    "sap_mgmt"
+                    
+                ],
+                "external": true
+            },
+            {
+                "endPointIds": [
+                    "sap_upf"
+                    
+                ],
+                "external": true
+            },
+            {
+                "endPointIds": [
+                    "sap_cdn"
+                    
+                ],
+                "external": true
+            }
+        ],
+        "configurableParameters" :[
+            "product_id", 
+            "transaction_id"
+        ]
+    },
+    "translationRules": [
+       
+    ],
+    "nsts": [
+        {
+            "nstId": "vcdn_e2e_nst",
+            "nstName": "vcdn e2e NST",
+            "nstVersion": "1.0",
+            "nstProvider": "ICOM",
+            "nsdId": "vcdn_nsd",
+            "nsdVersion": "1.0"
+        },
+        {
+            "nstId": "edge_cache_nst",
+            "nstName": "edge_cache_nst",
+            "nstVersion": "1.0",
+            "nstProvider": "ICOM",
+            "nsdId": "edge_cache_nsd",
+            "nsdVersion": "1.0"
+        }, {
+            "nstId": "vcdn_nst",
+            "nstName": "vcdn  NST",
+            "nstVersion": "1.0",
+            "nstProvider": "ICOM",
+            "nsdId": "vcdn_nsd",
+            "nsdVersion": "1.0"
+        }
+    ],
+    "nsds": [
+         {
+           "nsdIdentifier": "vcdn_nsd",
+           "designer": "ICOM",
+           "version": "1.0",
+           "nsdName": "vcdn_nsd",
+           "nsdInvariantId": "vcdn_nsd",
+           "pnfdId": [
+            ],
+           "vnfdId": [
+               "edge_cache_vnfd"
+           ],
+           "sapd": [
+               {
+                   "cpdId": "sap_users",
+                   "description": "edge cache users sap",
+                   "layerProtocol": "IPV4",
+                   "cpRole": "ROOT",
+                   "addressData": [
+                       {
+                           "addressType": "IP_ADDRESS",
+                           "iPAddressAssignment": false,
+                           "floatingIpActivated": true,
+                           "iPAddressType": "IPv4",
+                           "numberOfIpAddress": 1
+                       }
+                   ],
+                   "sapAddressAssignment": false,
+                   "nsVirtualLinkDescId": "vl_users"
+               },
+                {
+                   "cpdId": "sap_origin",
+                   "description": "edge cache origin sap",
+                   "layerProtocol": "IPV4",
+                   "cpRole": "ROOT",
+                   "addressData": [
+                       {
+                           "addressType": "IP_ADDRESS",
+                           "iPAddressAssignment": false,
+                           "floatingIpActivated": true,
+                           "iPAddressType": "IPv4",
+                           "numberOfIpAddress": 1
+                       }
+                   ],
+                   "sapAddressAssignment": false,
+                   "nsVirtualLinkDescId": "vl_origin"
+               },
+                {
+                   "cpdId": "sap_mgmt",
+                   "description": "edge cache mgmt sap",
+                   "layerProtocol": "IPV4",
+                   "cpRole": "ROOT",
+                   "addressData": [
+                       {
+                           "addressType": "IP_ADDRESS",
+                           "iPAddressAssignment": false,
+                           "floatingIpActivated": true,
+                           "iPAddressType": "IPv4",
+                           "numberOfIpAddress": 1
+                       }
+                   ],
+                   "sapAddressAssignment": false,
+                   "nsVirtualLinkDescId": "vl_mgmt"
+               }
+           ],
+           "virtualLinkDesc": [
+               {
+                   "virtualLinkDescId": "vl_users",
+                   "virtualLinkDescProvider": "ICOM",
+                   "virtuaLinkDescVersion": "0.1",
+                   "connectivityType": {
+                       "layerProtocol": "IPV4"
+                   },
+                   "virtualLinkDf": [
+                       {
+                           "flavourId": "vl_df_users",
+                           "qos": {
+                               "latency": 20,
+                               "packetDelayVariation": 0,
+                               "packetLossRatio": 0,
+                               "priority": 0
+                           },
+                           "serviceAvaibilityLevel": "LEVEL_1",
+                           "bitrateRequirements": {
+                               "root": 0,
+                               "leaf": 0
+                           }
+                       }
+                   ],
+                   "description": "Data link"
+               },
+                {
+                   "virtualLinkDescId": "vl_origin",
+                   "virtualLinkDescProvider": "ICOM",
+                   "virtuaLinkDescVersion": "0.1",
+                   "connectivityType": {
+                       "layerProtocol": "IPV4"
+                   },
+                   "virtualLinkDf": [
+                       {
+                           "flavourId": "vl_df_origin",
+                           "qos": {
+                               "latency": 20,
+                               "packetDelayVariation": 0,
+                               "packetLossRatio": 0,
+                               "priority": 0
+                           },
+                           "serviceAvaibilityLevel": "LEVEL_1",
+                           "bitrateRequirements": {
+                               "root": 0,
+                               "leaf": 0
+                           }
+                       }
+                   ],
+                   "description": "Data link"
+               },
+                {
+                   "virtualLinkDescId": "vl_mgmt",
+                   "virtualLinkDescProvider": "ICOM",
+                   "virtuaLinkDescVersion": "0.1",
+                   "connectivityType": {
+                       "layerProtocol": "IPV4"
+                   },
+                   "virtualLinkDf": [
+                       {
+                           "flavourId": "vl_df_mgmt",
+                           "qos": {
+                               "latency": 20,
+                               "packetDelayVariation": 0,
+                               "packetLossRatio": 0,
+                               "priority": 0
+                           },
+                           "serviceAvaibilityLevel": "LEVEL_1",
+                           "bitrateRequirements": {
+                               "root": 0,
+                               "leaf": 0
+                           }
+                       }
+                   ],
+                   "description": "Data link"
+               }
+           ],
+           "nsDf": [
+               {
+                   "nsDfId": "df_default",
+                   "flavourKey": "ns_fk",
+                   "vnfProfile": [
+                       {
+                           "vnfProfileId": "edge_cache_profile",
+                           "vnfdId": "edge_cache_vnfd",
+                           "flavourId": "edge_cache_df",
+                           "instantiationLevel": "edge_cache_df_il",
+                           "minNumberOfInstances": 1,
+                           "maxNumberOfInstances": 1,
+                           "nsVirtualLinkConnectivity": [
+                               {
+                                   "virtualLinkProfileId": "vl_profile_users",
+                                   "cpdId": [
+                                       "edge_cache_cp_users"
+                                   ]
+                               },
+                                {
+                                   "virtualLinkProfileId": "vl_profile_origin",
+                                   "cpdId": [
+                                       "edge_cache_cp_origin"
+                                   ]
+                               },
+                                {
+                                   "virtualLinkProfileId": "vl_profile_mgmt",
+                                   "cpdId": [
+                                       "edge_cache_cp_mgmt"
+                                   ]
+                               }
+                           ]
+                       }
+                   ],
+                   "virtualLinkProfile": [
+                       {
+                           "virtualLinkProfileId": "vl_profile_users",
+                           "virtualLinkDescId": "vl_users",
+                           "flavourId": "vl_df_users",
+                           "maxBitrateRequirements": {
+                               "root": "0",
+                               "leaf": "0"
+                           },
+                           "minBitrateRequirements": {
+                               "root": "0",
+                               "leaf": "0"
+                           }
+                       },
+                        {
+                           "virtualLinkProfileId": "vl_profile_origin",
+                           "virtualLinkDescId": "vl_origin",
+                           "flavourId": "vl_df_origin",
+                           "maxBitrateRequirements": {
+                               "root": "0",
+                               "leaf": "0"
+                           },
+                           "minBitrateRequirements": {
+                               "root": "0",
+                               "leaf": "0"
+                           }
+                       },
+                        {
+                           "virtualLinkProfileId": "vl_profile_mgmt",
+                           "virtualLinkDescId": "vl_mgmt",
+                           "flavourId": "vl_df_mgmt",
+                           "maxBitrateRequirements": {
+                               "root": "0",
+                               "leaf": "0"
+                           },
+                           "minBitrateRequirements": {
+                               "root": "0",
+                               "leaf": "0"
+                           }
+                       }
+                   ],
+                   "nsInstantiationLevel": [
+                       {
+                           "nsLevelId": "il_default",
+                           "description": "ns instantiation level",
+                           "vnfToLevelMapping": [
+                               {
+                                   "vnfProfileId": "edge_cache_profile",
+                                   "numberOfInstances": 1
+                               }
+                           ],
+                           "virtualLinkToLevelMapping": [
+                               {
+                                   "virtualLinkProfileId": "vl_profile_users",
+                                   "bitRateRequirements": {
+                                       "root": "0",
+                                       "leaf": "0"
+                                   }
+                               },
+                                {
+                                   "virtualLinkProfileId": "vl_profile_origin",
+                                   "bitRateRequirements": {
+                                       "root": "0",
+                                       "leaf": "0"
+                                   }
+                               },
+                                {
+                                   "virtualLinkProfileId": "vl_profile_mgmt",
+                                   "bitRateRequirements": {
+                                       "root": "0",
+                                       "leaf": "0"
+                                   }
+                               }
+                           ]
+                       }
+                   ],
+                   "defaultNsInstantiationLevelId": "il_default",
+                   "nsProfile": [],
+                   "dependencies": []
+               }
+           ],
+           "security": {
+               "signature": "EDGE_CACHE_NSD_SIGNATURE",
+               "algorithm": "EDGE_CACHE_NSD_ALGORITHM",
+               "certificate": "EDGE_CACHE_NSD_CERTIFICATE"
+           },
+           "monitoredInfo": [
+               {
+                   "monitoringParameter": {
+                    "monitoringParameterId": "mp_CurrentClientConnections.edge_cache",
+                    "name": "CurrentClientConnections.edge_cache",
+                    "performanceMetric": "CurrentClientConnections.edge_cache",
+                    "params":{
+                        "aggregationMethod":"aggregationMethod",
+                        "timestampStep": "30s",
+                        "step":"step",
+                        
+                    }
+                }
+                }
+           ],
+           "autoScalingRule": []
+       }
+
+
+
+    ]
+}
