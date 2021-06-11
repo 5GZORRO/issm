@@ -15,7 +15,7 @@ cd issm/scripts/slicer
 Update ipadress to the one in your environment
 
 ```
-export SLICER_URL=172.15.0.191:8082
+export SLICER_URL=172.28.3.42:31082
 ```
 
 ### Set tenant name

@@ -44,7 +44,7 @@ spec:
                   # ISSM kafka bus
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: kafka_ip
-                    value: 172.15.0.195
+                    value: 172.28.3.196
                   - name: kafka_port
                     value: 9092
 
@@ -60,9 +60,9 @@ spec:
                   # Slicer service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: slicer_ip
-                    value: 172.15.0.191
+                    value: 172.28.3.42
                   - name: slicer_port
-                    value: 8082
+                    value: 31082
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Payload parameters

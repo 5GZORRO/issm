@@ -28,7 +28,7 @@ kubectl create -n argo-events -f deploy/role.yaml
 Update ISSM kafka ip and port settings per your environment
 
 ```
-export KAFKA_HOST=172.15.0.195
+export KAFKA_HOST=172.28.3.196
 export KAFKA_PORT=9092
 ```
 
@@ -62,7 +62,7 @@ Update access info for:
                 arguments:
                   parameters:
                   - name: kafka_ip
-                    value: 172.15.0.195
+                    value: 172.28.3.196
                   - name: kafka_port
                     value: 9092
                   - name: discovery_ip
@@ -70,9 +70,9 @@ Update access info for:
                   - name: discovery_port
                     value: 80
                   - name: slicer_ip
-                    value: 172.15.0.191
+                    value: 172.28.3.42
                   - name: slicer_port
-                    value: 8082
+                    value: 31082
 ```
 
 Onboard the flow
