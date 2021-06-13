@@ -52,9 +52,9 @@ spec:
                   # Discovery service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: discovery_ip
-                    value: 172.15.0.180
+                    value: 172.28.3.42
                   - name: discovery_port
-                    value: 80
+                    value: 32492
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Slicer service
@@ -175,7 +175,7 @@ spec:
                         - name: json_str
                           value: "{{workflow.parameters.resources}}"
                         - name: jq_query
-                          value: '.[0].VSB'
+                          value: '.[0].name'
 
                     - name: resource-id
                       dependencies: [acquire]
@@ -204,7 +204,7 @@ spec:
                           value: "{{workflow.parameters.service_owner}}"
                         - name: blueprint_name
                           # TODO: this should match the VSB attr in offer
-                          value: "VideoStreaming"
+                          value: "{{tasks.resource-vsb.outputs.result}}"
                         - name: parameters
                           value: "{{workflow.parameters.qos_parameters}}"
 
@@ -225,7 +225,7 @@ spec:
                           value: "{{tasks.slicer-create-vsd.outputs.parameters.vsd_id}}"
                         - name: name
                           # TODO: this should match the VSB attr in offer
-                          value: "VideoStreaming"
+                          value: "{{tasks.resource-vsb.outputs.result}}"
                         - name: userdata
                           value: |
                             { "product_id": "{{tasks.resource-id.outputs.result}}",
@@ -273,7 +273,7 @@ spec:
                       import sys
 
                       headers = {'Content-Type': 'application/json'}
-                      r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer/{{inputs.parameters.offered_price}}"
+                      r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer?{{inputs.parameters.offered_price}}"
                           "lat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}computeandvirtual{{inputs.parameters.category}}",
                           headers=headers)
                       # return first offer
@@ -425,3 +425,4 @@ spec:
                 dependencyName: test-dep
                 dataKey: body.transaction_uuid
               dest: spec.arguments.parameters.15.value
+
