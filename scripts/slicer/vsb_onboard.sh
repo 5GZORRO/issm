@@ -21,4 +21,4 @@ echo "-=-=-=-=-=-= TRACE -=-=-=-=-=-=-=-=-=-"
 echo "Create blueprint"
 echo "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-"
 
-curl -b ./admin_credentials -d @vsb_VideoStreaming.json -X POST http://$SLICER_URL/portal/catalogue/vsblueprint --header "Content-Type:application/json"
+curl -b ./admin_credentials -d @vsb_vCDN_edge_ICOM.json -X POST http://$SLICER_URL/portal/catalogue/vsblueprint --header "Content-Type:application/json"
