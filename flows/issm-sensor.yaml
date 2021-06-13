@@ -255,6 +255,11 @@ spec:
                         - name: timeout
                           value: 60
 
+                    - name: poll-timeout
+                      dependencies: [slicer-poll]
+                      template: fail
+                      when: "{{tasks.slicer-poll.outputs.parameters.status}} == \"TIMEOUT\""
+
                 - name: smart-discovery-application
                   inputs:
                     parameters:
