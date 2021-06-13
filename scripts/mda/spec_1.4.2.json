@@ -1,0 +1,38 @@
+{
+    "business_id": "transaction_uuid_123",
+    "topic": "operator-a-in-0",
+    "monitoring_endpoint": "base_url",
+    "data_source_type": "OSM",
+    "tenant_id": "operator-a",
+    "context_ids": [
+        {
+            "resource_id": "cdn_edge_vache_vnfduuid_123",
+            "network_slice_id": "cdn_slice_uuid_789",
+            "parent_id": "vcdn_nsduuid_456"
+        }
+    ],
+    "reference_id": "NA",
+    "metrics": [
+        {
+            "metric_name": "cpu_utilization",
+            "metric_type": "float",
+            "aggregation_method": null,
+            "step": "30s",
+            "step_aggregation": null
+        },
+        {
+            "metric_name": "disk_usage",
+            "metric_type": "float",
+            "aggregation_method": null,
+            "step": "2m",
+            "step_aggregation": null
+        },
+        {
+            "metric_name": "ram_utilization",
+            "metric_type": "float",
+            "aggregation_method": null,
+            "step": "2m",
+            "step_aggregation": null
+        }
+    ]
+}
