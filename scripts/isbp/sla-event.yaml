@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: sla-event-
+spec:
+  entrypoint: handle
+  imagePullSecrets:
+  - name: myregistrykey
+  arguments:
+    parameters:
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # DL kafka bus
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    - name: kafka_ip
+      value: 172.28.3.196
+    - name: kafka_port
+      value: 9092
+    - name: kafka_topic
+      value: isbp-topic
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # payload attributes
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    - name: transaction_id
+      value: 123
+    - name: product_id
+      value: 456
+    - name: resource_id
+      value: 789
+    - name: instance_id
+      value: 012
+
+  templates:
+  - name: handle
+    steps:
+    - - name: send-sla-event
+        # publish discovered resources for the optimizer to consume
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "eventType": "new_SLA",
+                "transactionID": "{{workflow.parameters.transaction_id}}",
+                "productID": "{{workflow.parameters.product_id}}",
+                "resourceID": "{{workflow.parameters.resource_id}}",
+                "instanceID": "{{workflow.parameters.instance_id}}"
+              }
+          - name: kafka_topic
+            value: "{{workflow.parameters.kafka_topic}}"
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_port}}"
