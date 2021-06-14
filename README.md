@@ -23,7 +23,7 @@ Log into kuberneters master
 kubectl create -n argo-events -f deploy/role.yaml
 ```
 
-### Create ISSM kafka event source
+### Create ISSM kafka event sources
 
 Update ISSM kafka ip and port settings per your environment
 
@@ -34,9 +34,10 @@ export KAFKA_PORT=9092
 
 ```
 envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n argo-events -f -
+envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -n argo-events -f -
 ```
 
-**Note:** Kafka `issm-topic` is automatically created during the creation of the event-source
+**Note:** Kafka `issm-topic` , `isbp-topic-out` are automatically created during the creation of the event sources
 
 ### Apply docker-secrete.yaml
 
@@ -44,6 +45,12 @@ Create docker-secrete.yaml file [these instructions](https://github.com/5GZORRO/
 
 ```
 kubectl apply -f docker-secrete.yaml -n argo-events
+```
+
+## Onboard ISSM SLA breach sensor
+
+```
+kubectl apply -f flows/issm-sla-breach-sensor.yaml -n argo-events
 ```
 
 ## Onboard ISSM flow

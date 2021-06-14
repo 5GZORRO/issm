@@ -1,0 +1,81 @@
+#
+# Sensor that receives payload in the below format:
+#
+#{
+#"breachPredictionNotification" : {
+#  "slaID" : "678",
+#  "transactionID" : "7777",
+#  "productID" : "8888",
+#  "resourceID" : "3333",
+#  "instanceID" : "2",
+#  "ruleID" : "availability",
+#  "metric" : "http://www.provider.com/metrics/availability",
+#  "value" : 12345,
+#  "datetimeViolation" : "2020-08-19T00:00",
+#  "datetimePrediction" : "2020-08-19T00:00"
+#  }
+#}
+
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: issm-sla-breach
+spec:
+  template:
+    serviceAccountName: argo-events-sa
+  dependencies:
+    - name: breach-dep
+      eventSourceName: issm-sla-breach
+      eventName: sla-breach
+  triggers:
+    - template:
+        name: kafka-workflow-trigger
+        k8s:
+          group: argoproj.io
+          version: v1alpha1
+          resource: workflows
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: issm-sla-breach-
+              spec:
+                entrypoint: handlerequest
+                imagePullSecrets:
+                - name: myregistrykey
+                arguments:
+                  parameters:
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Payload parameters
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: breachPredictionNotification
+                    value: OVERRIDE
+
+                templates:
+                - name: handlerequest
+                  dag:
+                    tasks:
+                    - name: print-message
+                      template: whalesay
+                      arguments:
+                        parameters:
+                        - name: message
+                          value: "Received payload: {{workflow.parameters.breachPredictionNotification}}"
+
+                - name: whalesay
+                  inputs:
+                    parameters:
+                    - name: message
+                  container:
+                    image: docker/whalesay
+                    command: [cowsay]
+                    args: ["{{inputs.parameters.message}}"]
+
+          parameters:
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification
+                value: DEFAULT
+              dest: spec.arguments.parameters.0.value
