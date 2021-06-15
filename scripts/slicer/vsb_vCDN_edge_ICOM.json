@@ -141,11 +141,11 @@
     ],
     "nsds": [
          {
-           "nsdIdentifier": "vcdn_nsd",
+           "nsdIdentifier": "edge_cache_nsd",
            "designer": "ICOM",
            "version": "1.0",
-           "nsdName": "vcdn_nsd",
-           "nsdInvariantId": "vcdn_nsd",
+           "nsdName": "edge_cache_nsd",
+           "nsdInvariantId": "edge_cache_nsd",
            "pnfdId": [
             ],
            "vnfdId": [
@@ -409,8 +409,7 @@
                     "performanceMetric": "CurrentClientConnections.edge_cache",
                     "params":{
                         "aggregationMethod":"aggregationMethod",
-                        "timestampStep": "30s",
-                        "step":"step"
+                        "timestampStep": "30s"
                     }
                 }
                 }
