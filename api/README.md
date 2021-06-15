@@ -55,7 +55,7 @@ Return:
 Invocation example:
 
 ```
-curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a", "intent": {"offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"} }}' http://172.28.3.42:30080/instantiate
+curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a", "intent": {"offered_price": "1200", "latitude": "24", "longitude": "45", "slice_segment": "edge", "category": "CDN", "qos_parameters": {"bandwidth": "30"} }}' http://172.28.3.42:30080/instantiate
 
 {
   "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
