@@ -169,7 +169,7 @@ spec:
                       template: acquire
                       arguments:
                         parameters:
-                        - name: offer_id
+                        - name: product_id
                           value: "{{item.product_id}}"
                       withParam: "{{workflow.parameters.resources}}"
 
@@ -334,14 +334,14 @@ spec:
                   # or proceed as normal
                   inputs:
                     parameters:
-                    - name: offer_id
+                    - name: product_id
                   steps:
                     - - name: acquire-resource
                         template: acquire-simulator
                         arguments:
                           parameters:
-                          - name: offer_id
-                            value: "{{inputs.parameters.offer_id}}"
+                          - name: product_id
+                            value: "{{inputs.parameters.product_id}}"
 
                     - - name: fail-flow
                         template: fail
@@ -352,7 +352,7 @@ spec:
                   # fail/success status
                   inputs:
                     parameters:
-                    - name: offer_id
+                    - name: product_id
                   script:
                     image: python:alpine3.6
                     command: [python]
@@ -361,7 +361,7 @@ spec:
                       import random
                       import sys
                       status = "acquire_success"
-                      json.dump({"offer_id": "{{inputs.parameters.offer_id}}", "status": status}, sys.stdout)
+                      json.dump({"product_id": "{{inputs.parameters.product_id}}", "status": status}, sys.stdout)
                       with open("/tmp/status.txt", "a") as myfile:
                           myfile.write(status)
                   outputs:
