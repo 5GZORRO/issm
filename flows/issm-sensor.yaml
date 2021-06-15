@@ -273,8 +273,8 @@ spec:
                       import sys
 
                       headers = {'Content-Type': 'application/json'}
-                      r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer?{{inputs.parameters.offered_price}}"
-                          "lat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}computeandvirtual{{inputs.parameters.category}}",
+                      r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer"
+                          "lat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}price{{inputs.parameters.offered_price}}_edge_compute",
                           headers=headers)
                       # return first offer
                       json.dump(r.json()[0], sys.stdout)
