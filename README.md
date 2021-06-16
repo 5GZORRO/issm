@@ -111,3 +111,7 @@ The flow is invoked automatically
 ## Watch flow progress using Argo GUI
 
 Browse to `http://<kubernetes master ipaddress>:2746`
+
+## Licensing
+
+This 5GZORRO component is published under Apache 2.0 license. Please see the [LICENSE](./LICENSE) file for further details.
