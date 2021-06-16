@@ -38,6 +38,7 @@ spec:
                 entrypoint: handlerequest
                 imagePullSecrets:
                 - name: myregistrykey
+                - name: 5gzorroregistrykey
                 arguments:
                   parameters:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
