@@ -134,7 +134,7 @@ def instantiate():
     def _validate(intent):
         try:
             intent['qos_parameters']
-            intent['offered_price']
+            intent['requested_price']
             intent['latitude']
             intent['longitude']
             intent['slice_segment']

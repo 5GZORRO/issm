@@ -40,7 +40,7 @@ REST path:
 Data payload:
     service_owner      - the id of the service owner/tenant to perform this request (str)
     intent             - the intent to be submitted (json)
-        offered_price  - price of the slice/resource
+        requested_price  - price of the slice/resource
         latitude       - the desired location of the slice/resource
         longitude      - the desired location of the slice/resource
         slice_segment  - the segment of the slice (i.e, edge, core, ran)
@@ -55,7 +55,7 @@ Return:
 Invocation example:
 
 ```
-curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a", "intent": {"offered_price": "1200", "latitude": "24", "longitude": "45", "slice_segment": "edge", "category": "CDN", "qos_parameters": {"bandwidth": "30"} }}' http://172.28.3.42:30080/instantiate
+curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a", "intent": {"requested_price": "1200", "latitude": "24", "longitude": "45", "slice_segment": "edge", "category": "CDN", "qos_parameters": {"bandwidth": "30"} }}' http://172.28.3.42:30080/instantiate
 
 {
   "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
