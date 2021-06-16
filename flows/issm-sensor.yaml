@@ -146,9 +146,21 @@ spec:
                         - name: requested_price
                           value: "{{workflow.parameters.requested_price}}"
 
+                    - name: highest-score-offer
+                      dependencies: [smart-discovery-application]
+                      templateRef:
+                        name: workflow-base
+                        template: jq-script
+                      arguments:
+                        parameters:
+                        - name: json_str
+                          value: "{{tasks.smart-discovery-application.outputs.result}}"
+                        - name: jq_query
+                          value: '.[0]'
+
                     - name: send-resouces-to-optimizer
                       # publish discovered resources for the optimizer to consume
-                      dependencies: [smart-discovery-application]
+                      dependencies: [highest-score-offer]
                       template: produce-message
                       arguments:
                         parameters:
@@ -156,7 +168,7 @@ spec:
                           # note: transaction_uuid is the event_uuid passed to this flow
                           value: |
                             { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}",
-                              "resources": [{{tasks.smart-discovery-application.outputs.result}}],
+                              "resources": [{{tasks.highest-score-offer.outputs.result}}],
                               "service_owner": "{{workflow.parameters.service_owner}}",
                               "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
                         - name: kafka_topic
@@ -329,8 +341,8 @@ spec:
                       r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer/"
                           "cloudlat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}_" + str(price),
                           headers=headers)
-                      # return first offer
-                      json.dump(r.json()[0], sys.stdout)
+                      # return offers
+                      json.dump(r.json(), sys.stdout)
 
                 - name: acquire
                   # acquire is devided into two sub-tasks:
