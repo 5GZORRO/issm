@@ -89,6 +89,9 @@ spec:
                   - name: service_owner
                     value: OVERRIDE
 
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Range e.g. 1200-1400
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: requested_price
                     value: OVERRIDE
 
@@ -320,9 +323,11 @@ spec:
                       import json
                       import requests
                       import sys
+                      requested_price = str("{{inputs.parameters.requested_price}}")
+                      price = requested_price.split('-')[0]
                       headers = {'Content-Type': 'application/json'}
                       r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer/"
-                          "cloudlat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}_{{inputs.parameters.requested_price}}",
+                          "cloudlat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}_" + str(price),
                           headers=headers)
                       # return first offer
                       json.dump(r.json()[0], sys.stdout)
