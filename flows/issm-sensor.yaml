@@ -324,7 +324,7 @@ spec:
                               "resourceID": "{{tasks.resource-id.outputs.result}}",
                               "instanceID": "{{tasks.slicer-create-vsi.outputs.parameters.vsi_id}}",
                               "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
-                              "kafka_topic": "isbp-topic-out"
+                              "topic": "isbp-topic-out"
                             }
                         - name: kafka_topic
                           value: "isbp-topic"

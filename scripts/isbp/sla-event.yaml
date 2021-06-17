@@ -20,17 +20,19 @@ spec:
   entrypoint: handle
   imagePullSecrets:
   - name: myregistrykey
+  - name: 5gzorroregistrykey
   arguments:
     parameters:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # DL kafka bus
+    # DL kafka bus to publish sla event
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    - name: kafka_ip
+    - name: kafka_dl_ip
       value: 172.28.3.196
-    - name: kafka_port
+    - name: kafka_dl_port
       value: 9092
-    - name: kafka_topic
+    - name: kafka_dl_topic
       value: isbp-topic
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # payload attributes
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,6 +44,20 @@ spec:
       value: 789
     - name: instance_id
       value: 012
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # metadata attributes:
+    # issm kafka ip, port and topic
+    # of where to send breach
+    # notifications
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    - name: kafka_ip
+      value: 172.28.3.196
+    - name: kafka_port
+      value: 9092
+    - name: kafka_topic
+      # must match issm sla-breach es
+      value: isbp-topic-out
 
   templates:
   - name: handle
@@ -59,11 +75,14 @@ spec:
                 "transactionID": "{{workflow.parameters.transaction_id}}",
                 "productID": "{{workflow.parameters.product_id}}",
                 "resourceID": "{{workflow.parameters.resource_id}}",
-                "instanceID": "{{workflow.parameters.instance_id}}"
+                "instanceID": "{{workflow.parameters.instance_id}}",
+                "kafka_ip": "{{workflow.parameters.kafka_ip}}",
+                "kafka_port": "{{workflow.parameters.kafka_port}}",
+                "topic": "{{workflow.parameters.kafka_topic}}",
               }
           - name: kafka_topic
-            value: "{{workflow.parameters.kafka_topic}}"
+            value: "{{workflow.parameters.kafka_dl_topic}}"
           - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
+            value: "{{workflow.parameters.kafka_dl_ip}}"
           - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+            value: "{{workflow.parameters.kafka_dl_port}}"
