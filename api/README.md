@@ -16,7 +16,7 @@ Invoke the below in this order
 
 ```
 export REGISTRY=docker.pkg.github.com
-export IMAGE=$REGISTRY/5gzorro/issm/issm-api:1124dd4
+export IMAGE=$REGISTRY/5gzorro/issm/issm-api:8a4668a
 
 export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
