@@ -1,0 +1,40 @@
+{
+    "transaction_id": "5cdb3ae1a9f248ee8b6b108350cf8294",
+    "instance_id": "12",
+    "product_id": "PAnTByduyWkFJcoqsurweZ",
+    "topic": "operator-a-in-0",
+    "monitoring_endpoint": "http://osm:4500/",
+    "data_source_type": "OSM",
+    "tenant_id": "operator-a",
+    "context_ids": [
+        {
+            "resource_id": "250f91b5-a42b-46a5-94cd-419b1f3aa9e0",
+            "network_slice_id": "slice_id",
+            "parent_id": "parent_resource_id"
+        }
+    ],
+    "metrics": [
+        {
+            "metric_name": "cpu_utilization",
+            "metric_type": "float",
+            "aggregation_method": null,
+            "step": "30s",
+            "step_aggregation": null
+        },
+        {
+            "metric_name": "disk_usage",
+            "metric_type": "float",
+            "aggregation_method": null,
+            "step": "2m",
+            "step_aggregation": null
+        },
+        {
+            "metric_name": "ram_utilization",
+            "metric_type": "float",
+            "aggregation_method": "sum",
+            "step": "2m",
+            "step_aggregation": "5m"
+        }
+    ]
+}
+
