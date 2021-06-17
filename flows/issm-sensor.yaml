@@ -110,7 +110,7 @@ spec:
                   - name: requested_price
                     value: OVERRIDE
 
-                  - name: slice_segment
+                  - name: resource_type
                     value: OVERRIDE
 
                   - name: qos_parameters
@@ -152,6 +152,8 @@ spec:
                           value: "{{workflow.parameters.discovery_ip}}"
                         - name: service_port
                           value: "{{workflow.parameters.discovery_port}}"
+                        - name: resource_type
+                          value: "{{workflow.parameters.resource_type}}"
                         - name: category
                           value: "{{workflow.parameters.category}}"
                         - name: latitude
@@ -339,6 +341,7 @@ spec:
                     parameters:
                     - name: service_ip
                     - name: service_port
+                    - name: resource_type
                     - name: category
                     - name: latitude
                     - name: longitude
@@ -354,7 +357,7 @@ spec:
                       price = requested_price.split('-')[0]
                       headers = {'Content-Type': 'application/json'}
                       r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer/"
-                          "cloudlat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}_" + str(price),
+                          "{{inputs.parameters.resource_type}}lat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}_" + str(price),
                           headers=headers)
                       # return offers
                       json.dump(r.json(), sys.stdout)
@@ -485,7 +488,7 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.slice_segment
+                dataKey: body.resource_type
                 value: DEFAULT
               dest: spec.arguments.parameters.14.value
 

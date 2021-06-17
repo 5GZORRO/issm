@@ -1,4 +1,4 @@
-# Copyright 2020 – 2021 IBM Corporation
+# Copyright 2020 - 2021 IBM Corporation
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ def instantiate():
             intent['requested_price']
             intent['latitude']
             intent['longitude']
-            intent['slice_segment']
+            intent['resource_type']
             intent['category']
         except KeyError as e:
             raise Exception ('[ERROR] Failed schema validation: Missing '
@@ -165,7 +165,7 @@ def instantiate():
         service_owner=value['service_owner']
         operation='submit_intent'
         intent = value['intent']
-        _validate(intent=intent)
+        # _validate(intent=intent)
         response = flask.jsonify(
             proxy_server.instantiate(
                 service_owner=service_owner, operation=operation,
