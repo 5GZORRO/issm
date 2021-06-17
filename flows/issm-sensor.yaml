@@ -110,7 +110,7 @@ spec:
                   - name: requested_price
                     value: OVERRIDE
 
-                  - name: resource_type
+                  - name: resourceSpecCharacteristic
                     value: OVERRIDE
 
                   - name: qos_parameters
@@ -152,8 +152,8 @@ spec:
                           value: "{{workflow.parameters.discovery_ip}}"
                         - name: service_port
                           value: "{{workflow.parameters.discovery_port}}"
-                        - name: resource_type
-                          value: "{{workflow.parameters.resource_type}}"
+                        - name: resourceSpecCharacteristic
+                          value: "{{workflow.parameters.resourceSpecCharacteristic}}"
                         - name: category
                           value: "{{workflow.parameters.category}}"
                         - name: latitude
@@ -341,7 +341,7 @@ spec:
                     parameters:
                     - name: service_ip
                     - name: service_port
-                    - name: resource_type
+                    - name: resourceSpecCharacteristic
                     - name: category
                     - name: latitude
                     - name: longitude
@@ -356,8 +356,10 @@ spec:
                       requested_price = str("{{inputs.parameters.requested_price}}")
                       price = requested_price.split('-')[0]
                       headers = {'Content-Type': 'application/json'}
+                      # category: vnf
+                      # resourceSpecCharacteristic: CDN
                       r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer/"
-                          "{{inputs.parameters.resource_type}}lat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}_" + str(price),
+                          "{{inputs.parameters.category}}_lat{{inputs.parameters.latitude}}_long{{inputs.parameters.longitude}}_" + str(price) + "_{{inputs.parameters.resourceSpecCharacteristic}}",
                           headers=headers)
                       # return offers
                       json.dump(r.json(), sys.stdout)
@@ -488,7 +490,7 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resource_type
+                dataKey: body.resourceSpecCharacteristic
                 value: DEFAULT
               dest: spec.arguments.parameters.14.value
 
