@@ -255,7 +255,8 @@ spec:
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
                         - name: blueprint_name
-                          value: "{{tasks.resource-vsb.outputs.result}}"
+                          # TODO: offer should contain VSB_ID
+                          value: "vCDN_edge_ICOM"
                         - name: parameters
                           value: "{{workflow.parameters.qos_parameters}}"
 
@@ -275,11 +276,12 @@ spec:
                         - name: vsd_id
                           value: "{{tasks.slicer-create-vsd.outputs.parameters.vsd_id}}"
                         - name: name
-                          value: "{{tasks.resource-vsb.outputs.result}}"
+                          # TODO: offer should contain VSB_ID
+                          value: "vCDN_edge_ICOM"
                         - name: userdata
                           value: |
                             { "product_id": "{{tasks.product-id.outputs.result}}",
-                              "transaction_uuid": "{{workflow.parameters.transaction_uuid}}" }
+                              "transaction_id": "{{workflow.parameters.transaction_uuid}}" }
 
                     - name: slicer-poll
                       dependencies: [slicer-create-vsi]

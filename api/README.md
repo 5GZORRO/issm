@@ -45,7 +45,7 @@ Data payload:
         longitude      - the desired location of the slice/resource
         resourceSpecCharacteristic - the type of the resource (e.g, "CDN")
         category       - category (e.g "vnf")
-        qos_parameters - (json - e.g. {"bandwidth": "30"})
+        qos_parameters - (json - e.g. {"users": "10"})
 
 Return:
     status - 200
@@ -55,7 +55,7 @@ Return:
 Invocation example:
 
 ```
-curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a", "intent": {"requested_price": "15-25", "latitude": "43", "longitude": "10", "resourceSpecCharacteristic": "CDN", "category": "vnf", "qos_parameters": {"bandwidth": "30"} }}' http://172.28.3.42:30080/instantiate
+curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a", "intent": {"requested_price": "15-25", "latitude": "43", "longitude": "10", "resourceSpecCharacteristic": "CDN", "category": "vnf", "qos_parameters": {"users": "10"} }}' http://172.28.3.42:30080/instantiate
 
 {
   "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
