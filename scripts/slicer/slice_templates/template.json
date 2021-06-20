@@ -1,0 +1,27 @@
+[
+  {
+    "nstInfoId": "1bd96fbb-6a62-4c12-80e4-f9657b2898ad",
+    "nsTemplateId": "edge_cache_nst",
+    "name": "Edge Cache NST",
+    "nsTemplateVersion": "1.0",
+    "designer": "ICOM",
+    "nst": {
+      "nstId": "edge_cache_nst",
+      "nstName": "Edge Cache NST",
+      "nstVersion": "1.0",
+      "nstProvider": "ICOM",
+      "geographicalAreaInfoList": [],
+      "nsstIds": [],
+      "nsst": [],
+      "nsdId": "edge_cache_nsd",
+      "nsdVersion": "1.0",
+      "nstServiceProfile": null,
+      "nsstType": null
+    },
+    "operationalState": null,
+    "usageState": null,
+    "deletionPending": false,
+    "sst": null,
+    "userDefinedData": {}
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "vsDescriptorId": "24",
+  "name": "vcdn-vsd-mon",
+  "version": "1.0",
+  "vsBlueprintId": "17",
+  "managementType": "PROVIDER_MANAGED",
+  "qosParameters": {
+    "users": "10"
+  },
+  "sla": {
+    "serviceCreationTime": null,
+    "availabilityCoverage": null,
+    "lowCostRequired": false
+  },
+  "sliceServiceParameters": null
+}
+

@@ -1,0 +1,15 @@
+{
+  "name": "NS - vcdn_instance",
+  "description": "Network slice for VS vcdn_instance",
+  "nsiId": "26",
+  "nstId": "edge_cache_nst",
+  "nsdId": "edge_cache_nsd",
+  "nsdVersion": "1.0",
+  "dfId": "df_default",
+  "instantiationLevelId": "il_default",
+  "nfvNsId": "f526b770-adc5-420d-8d46-54b67c886c1f",
+  "soManaged": false,
+  "tenantId": "operator-a",
+  "status": "INSTANTIATED",
+  "errorMessage": null
+}
