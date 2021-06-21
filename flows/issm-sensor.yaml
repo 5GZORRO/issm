@@ -128,6 +128,14 @@ spec:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: transaction_uuid
                     value: OVERRIDE
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Id of the existing service
+                  # to extend
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: service_id
+                    value: OVERRIDE
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -186,7 +194,7 @@ spec:
                           value: |
                             { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}",
                               "resources": [{{tasks.highest-score-offer.outputs.result}}],
-                              "service_owner": "{{workflow.parameters.service_owner}}",
+                              "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
                               "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
                         - name: kafka_topic
                           value: "issm-optimizer"
@@ -281,7 +289,8 @@ spec:
                         - name: userdata
                           value: |
                             { "product_id": "{{tasks.product-id.outputs.result}}",
-                              "transaction_id": "{{workflow.parameters.transaction_uuid}}" }
+                              "transaction_id": "{{workflow.parameters.transaction_uuid}}",
+                              "vsi_id": "{{workflow.parameters.service_id}}" }
 
                     - name: slicer-poll
                       dependencies: [slicer-create-vsi]
@@ -305,16 +314,16 @@ spec:
                         - name: jq_query_value
                           value: "INSTANTIATED"
                         - name: timeout
-                          value: 60
+                          value: 180
 
-                    - name: poll-timeout
-                      dependencies: [slicer-poll]
-                      template: fail
-                      when: "{{tasks.slicer-poll.outputs.parameters.status}} == \"TIMEOUT\""
+#                    - name: poll-timeout
+#                      dependencies: [slicer-poll]
+#                      template: fail
+#                      when: "{{tasks.slicer-poll.outputs.parameters.status}} == \"TIMEOUT\""
 
                     - name: sla-event
                       dependencies: [slicer-poll]
-                      when: "{{tasks.slicer-poll.outputs.parameters.status}} != \"TIMEOUT\""
+                      # when: "{{tasks.slicer-poll.outputs.parameters.status}} != \"TIMEOUT\""
                       templateRef:
                         name: workflow-base
                         template: produce
@@ -513,3 +522,7 @@ spec:
                 dataKey: body.transaction_uuid
               dest: spec.arguments.parameters.17.value
 
+            - src:
+                dependencyName: test-dep
+                dataKey: body.service_id
+              dest: spec.arguments.parameters.18.value

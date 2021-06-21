@@ -168,7 +168,7 @@ spec:
         if [ {{inputs.parameters.poll}} = "true" ]; then
           i=0
           until [ "$(curl -b /tmp/t_c http://{{inputs.parameters.slicer_ip}}:{{inputs.parameters.slicer_port}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
-             echo "Poll wait.. (1 sec)"
+             echo "Poll wait for vsi_id: {{inputs.parameters.vsi_id}}.. (1 sec)"
              sleep 1
              i=$((i+1))
           done
