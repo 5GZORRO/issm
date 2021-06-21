@@ -171,21 +171,9 @@ spec:
                         - name: requested_price
                           value: "{{workflow.parameters.requested_price}}"
 
-                    - name: highest-score-offer
-                      dependencies: [smart-discovery-application]
-                      templateRef:
-                        name: workflow-base
-                        template: jq-script
-                      arguments:
-                        parameters:
-                        - name: json_str
-                          value: "{{tasks.smart-discovery-application.outputs.result}}"
-                        - name: jq_query
-                          value: '.[0]'
-
                     - name: send-resouces-to-optimizer
                       # publish discovered resources for the optimizer to consume
-                      dependencies: [highest-score-offer]
+                      dependencies: [smart-discovery-application]
                       template: produce-message
                       arguments:
                         parameters:
@@ -193,7 +181,7 @@ spec:
                           # note: transaction_uuid is the event_uuid passed to this flow
                           value: |
                             { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}",
-                              "resources": [{{tasks.highest-score-offer.outputs.result}}],
+                              "resources": {{tasks.smart-discovery-application.outputs.result}},
                               "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
                               "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
                         - name: kafka_topic
@@ -202,7 +190,20 @@ spec:
                 - name: submit-bp-flow
                   dag:
                     tasks:
+
+                    - name: highest-score-offer
+                      templateRef:
+                        name: workflow-base
+                        template: jq-script
+                      arguments:
+                        parameters:
+                        - name: json_str
+                          value: "{{workflow.parameters.resources}}"
+                        - name: jq_query
+                          value: '.[0]'
+
                     - name: acquire
+                      dependencies: [highest-score-offer]
                       # invokes acquire template for every entry in resources list
                       # waits for them to succeed and publishes status success for the
                       # service owner to consume
