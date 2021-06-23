@@ -23,5 +23,5 @@ Log into DL kafka host
 ```
 
 ```
-{"data": {"eventType": "new_SLA", "transactionID": "123", "productID": "456", "resourceID": "789", "instanceID": "10", "kafka_ip": "172.28.3.196", "kafka_port": "9092", "topic": "isbp-topic-out"}}
+{"data": {"eventType": "new_SLA", "transactionID": "aaefbe5e7024466bbc88f28e60afb5ab", "productID": "PAnTByduyWkFJcoqsurweZ", "resourceID": "250f91b5-a42b-46a5-94cd-419b1f3aa9e0", "instanceID": "37", "kafka_ip": "172.28.3.196", "kafka_port": "9092", "topic": "isbp-topic-out"}}
 ```

@@ -1,40 +1,24 @@
 {
-    "transaction_id": "5cdb3ae1a9f248ee8b6b108350cf8294",
-    "instance_id": "12",
-    "product_id": "PAnTByduyWkFJcoqsurweZ",
-    "topic": "operator-a-in-0",
-    "monitoring_endpoint": "http://osm:4500/",
-    "data_source_type": "OSM",
-    "tenant_id": "operator-a",
-    "context_ids": [
-        {
-            "resource_id": "250f91b5-a42b-46a5-94cd-419b1f3aa9e0",
-            "network_slice_id": "slice_id",
-            "parent_id": "parent_resource_id"
-        }
-    ],
-    "metrics": [
-        {
-            "metric_name": "cpu_utilization",
-            "metric_type": "float",
-            "aggregation_method": null,
-            "step": "30s",
-            "step_aggregation": null
-        },
-        {
-            "metric_name": "disk_usage",
-            "metric_type": "float",
-            "aggregation_method": null,
-            "step": "2m",
-            "step_aggregation": null
-        },
-        {
-            "metric_name": "ram_utilization",
-            "metric_type": "float",
-            "aggregation_method": "sum",
-            "step": "2m",
-            "step_aggregation": "5m"
-        }
-    ]
+  "transaction_id": "aaefbe5e7024466bbc88f28e60afb5ab",
+  "topic": "operator-b-in-0",
+  "monitoring_endpoint": "http://172.28.3.42:32012/",
+  "instance_id": "37",
+  "tenant_id": "operator-a",
+  "product_id": "PAnTByduyWkFJcoqsurweZ",
+  "metrics": [
+    {
+      "metric_name": "availability",
+      "metric_type": "availability",
+      "step": "1m",
+      "aggregation_method": "AVG",
+      "step_aggregation": "2m"
+    }
+  ],
+  "context_ids": [
+    {
+      "resource_id": "PAnTByduyWkFJcoqsurweZ",
+      "network_slice_id": "24"
+    }
+  ],
+  "data_source_type": "OSM"
 }
-
