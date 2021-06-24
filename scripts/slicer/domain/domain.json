@@ -1,0 +1,26 @@
+[
+  {
+    "domainId": "operator-b",
+    "name": "operator-b",
+    "description": "operator-b",
+    "owner": "domain_owner",
+    "admin": "domain_admin",
+    "domainStatus": "ACTIVE",
+    "domainInterface": {
+      "url": "http://172.28.3.42",
+      "port": 32082,
+      "auth": true,
+      "interfaceType": "HTTP"
+    },
+    "ownedLayers": [
+      {
+        "type": "NSP",
+        "domainLayerId": "operator-b-nsp",
+        "domainLayerType": "NETWORK_SLICE_PROVIDER",
+        "nspNbiType": "THREE_GPP",
+        "ranEnabled": false
+      }
+    ],
+    "domainsAgreement": []
+  }
+]

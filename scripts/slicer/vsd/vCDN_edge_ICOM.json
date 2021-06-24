@@ -1,0 +1,17 @@
+{
+  "vsDescriptorId": "34",
+  "name": "vCDN_edge_ICOM",
+  "version": "1.0",
+  "vsBlueprintId": "28",
+  "managementType": "PROVIDER_MANAGED",
+  "qosParameters": {
+    "users": "10"
+  },
+  "sla": {
+    "serviceCreationTime": null,
+    "availabilityCoverage": null,
+    "lowCostRequired": false
+  },
+  "sliceServiceParameters": null
+}
+

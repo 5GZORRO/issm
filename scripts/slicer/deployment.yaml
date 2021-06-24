@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.22.0 (955b78124)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: vs
+  name: vs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: vs
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.22.0 (955b78124)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: vs
+    spec:
+      containers:
+        - args:
+            - bash
+            - -c
+            - /usr/bin/java -jar /home/ubuntu/SEBASTIAN_CORE-0.0.2-SNAPSHOT.jar --spring.config.location=/home/ubuntu/sebastian_application.properties
+          image:  docker.pkg.github.com/5gzorro/nsso/vs:5gzorro-core-1.0-alfa
+          imagePullPolicy: Always
+          name: vs
+          ports:
+            - containerPort: 8082
+            - containerPort: 5005
+          resources: {}
+          env:
+            - name: domain_id
+              value: operator-a
+            - name: spring.jpa.hibernate.ddl-auto
+              value: create-drop
+            - name: spring.datasource.url
+              value: jdbc:postgresql://postgresql:5432/sebastian
+            - name: spring.datasource.username
+              value: postgres
+            - name: spring.datasource.password
+              value: mysecretpassword
+            - name: nfvo.catalogue.type
+              value: DUMMY
+            - name: nfvo.lcm.type
+              value: DUMMY
+            - name: nfvo.catalogue.address
+              value: https://172.28.3.17:9999
+            - name: nfvo.lcm.address
+              value: https://172.28.3.17:9999
+            - name: nfvo.lcm.username
+              value: admin
+            - name: nfvo.lcm.password
+              value: admin
+            - name: nfvo.catalogue.username
+              value: admin
+            - name: nfvo.catalogue.password
+              value: admin
+            - name: nfvo.lcm.elicensing.address
+              value: http://172.28.3.112:8080
+            - name: nfvo.lcm.external_monitoring.address
+              value: http://172.28.3.42:31859
+            - name: nfvo.lcm.vim
+              value: 3eb9f128-4ccf-4d40-bf4c-64e84a9c483c
+            - name: spring.rabbitmq.host
+              value: 172.28.3.112
+            - name: nfvo.lcm.elicensing.enable
+              value: "false"
+      restartPolicy: Always
+      imagePullSecrets:
+          - name: regcredstatus: {}

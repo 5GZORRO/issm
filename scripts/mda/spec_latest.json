@@ -1,0 +1,24 @@
+{
+  "transaction_id": "aaefbe5e7024466bbc88f28e60afb5ab",
+  "topic": "operator-b-in-0",
+  "monitoring_endpoint": "http://172.28.3.42:32012/",
+  "instance_id": "37",
+  "tenant_id": "operator-a",
+  "product_id": "PAnTByduyWkFJcoqsurweZ",
+  "metrics": [
+    {
+      "metric_name": "availability",
+      "metric_type": "availability",
+      "step": "1m",
+      "aggregation_method": "AVG",
+      "step_aggregation": "2m"
+    }
+  ],
+  "context_ids": [
+    {
+      "resource_id": "PAnTByduyWkFJcoqsurweZ",
+      "network_slice_id": "24"
+    }
+  ],
+  "data_source_type": "OSM"
+}

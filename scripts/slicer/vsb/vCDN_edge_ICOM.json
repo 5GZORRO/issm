@@ -1,0 +1,88 @@
+{
+  "vsBlueprintId": "17",
+  "vsBlueprintVersion": "1.1",
+  "name": "vCDN_edge_ICOM",
+  "vsBlueprint": {
+    "blueprintId": "17",
+    "version": "1.1",
+    "name": "vCDN_edge_ICOM",
+    "description": "vCDN edge cache service",
+    "parameters": [
+      {
+        "parameterId": "users",
+        "parameterName": "users",
+        "parameterType": "number",
+        "parameterDescription": "users",
+        "applicabilityField": "entertainment"
+      }
+    ],
+    "atomicComponents": [
+      {
+        "componentId": "edge_cache",
+        "serversNumber": 1,
+        "endPointsIds": [
+          "sap_upf-net",
+          "sap_mgmt",
+          "sap_cdn-net"
+        ],
+        "placement": null,
+        "type": null,
+        "compatibleSite": null
+      }
+    ],
+    "endPoints": [
+      {
+        "endPointId": "sap_upf-net",
+        "external": true,
+        "management": false,
+        "ranConnection": true
+      },
+      {
+        "endPointId": "sap_mgmt",
+        "external": true,
+        "management": true,
+        "ranConnection": false
+      },
+      {
+        "endPointId": "sap_cdn-net",
+        "external": true,
+        "management": false,
+        "ranConnection": false
+      }
+    ],
+    "connectivityServices": [
+      {
+        "endPointIds": [
+          "sap_upf-net"
+        ],
+        "external": true
+      },
+      {
+        "endPointIds": [
+          "sap_mgmt"
+        ],
+        "external": true
+      },
+      {
+        "endPointIds": [
+          "sap_cdn-net"
+        ],
+        "external": true
+      }
+    ],
+    "configurableParameters": [
+      "product_id",
+      "transaction_id"
+    ],
+    "interSite": false,
+    "sliceServiceType": "EMBB",
+    "embbServiceCategory": "DENSE_URBAN",
+    "urllcServiceCategory": null
+  },
+  "onBoardedNsdInfoId": [],
+  "onBoardedVnfPackageInfoId": [],
+  "onBoardedMecAppPackageInfoId": [],
+  "activeVsdId": [
+    "24"
+  ]
+}

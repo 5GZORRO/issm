@@ -1,0 +1,88 @@
+# Copyright 2020 – 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: sla-event-
+spec:
+  entrypoint: handle
+  imagePullSecrets:
+  - name: myregistrykey
+  - name: 5gzorroregistrykey
+  arguments:
+    parameters:
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # DL kafka bus to publish sla event
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    - name: kafka_dl_ip
+      value: 172.28.3.196
+    - name: kafka_dl_port
+      value: 9092
+    - name: kafka_dl_topic
+      value: isbp-topic
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # payload attributes
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    - name: transaction_id
+      value: 123
+    - name: product_id
+      value: 456
+    - name: resource_id
+      value: 789
+    - name: instance_id
+      value: 012
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # metadata attributes:
+    # issm kafka ip, port and topic
+    # of where to send breach
+    # notifications
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    - name: kafka_ip
+      value: 172.28.3.196
+    - name: kafka_port
+      value: 9092
+    - name: kafka_topic
+      # must match issm sla-breach es
+      value: isbp-topic-out
+
+  templates:
+  - name: handle
+    steps:
+    - - name: send-sla-event
+        # publish discovered resources for the optimizer to consume
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "eventType": "new_SLA",
+                "transactionID": "{{workflow.parameters.transaction_id}}",
+                "productID": "{{workflow.parameters.product_id}}",
+                "resourceID": "{{workflow.parameters.resource_id}}",
+                "instanceID": "{{workflow.parameters.instance_id}}",
+                "kafka_ip": "{{workflow.parameters.kafka_ip}}",
+                "kafka_port": "{{workflow.parameters.kafka_port}}",
+                "topic": "{{workflow.parameters.kafka_topic}}",
+              }
+          - name: kafka_topic
+            value: "{{workflow.parameters.kafka_dl_topic}}"
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_dl_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_dl_port}}"

@@ -16,9 +16,9 @@ Invoke the below in this order
 
 ```
 export REGISTRY=docker.pkg.github.com
-export IMAGE=$REGISTRY/5gzorro/issm/issm-api
+export IMAGE=$REGISTRY/5gzorro/issm/issm-api:8a4668a
 
-export ISSM_KAFKA_HOST=172.15.0.195
+export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
 ```
 
@@ -40,12 +40,13 @@ REST path:
 Data payload:
     service_owner      - the id of the service owner/tenant to perform this request (str)
     intent             - the intent to be submitted (json)
-        offered_price  - price of the slice/resource
+        requested_price  - price of the resource (range e.g. "15-25")
         latitude       - the desired location of the slice/resource
         longitude      - the desired location of the slice/resource
-        slice_segment  - the segment of the slice (i.e, edge, core, ran)
-        category       - category (e.g VideoStreaming)
-        qos_parameters - (json - e.g. {"bandwidth": "30"})
+        resourceSpecCharacteristic - the type of the resource (e.g, "CDN")
+        category       - category (e.g "vnf")
+        qos_parameters - (json - e.g. {"users": "10"})
+        service_id     - existing vertical service id to extend (e.g. "23")
 
 Return:
     status - 200
@@ -55,7 +56,7 @@ Return:
 Invocation example:
 
 ```
-curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a", "intent": {"offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"} }}' http://172.28.3.42:30080/instantiate
+curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a", "intent": {"requested_price": "15-25", "latitude": "43", "longitude": "10", "resourceSpecCharacteristic": "CDN", "category": "vnf", "qos_parameters": {"users": "10"}, "service_id": "23" }}' http://172.28.3.42:30080/instantiate
 
 {
   "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"

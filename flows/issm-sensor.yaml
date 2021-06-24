@@ -1,3 +1,17 @@
+# Copyright 2020 – 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
 metadata:
@@ -38,31 +52,40 @@ spec:
                 entrypoint: handlerequest
                 imagePullSecrets:
                 - name: myregistrykey
+                - name: 5gzorroregistrykey
                 arguments:
                   parameters:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # ISSM kafka bus
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: kafka_ip
-                    value: 172.15.0.195
+                    value: 172.28.3.196
                   - name: kafka_port
+                    value: 9092
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # DL kafka bus
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: kafka_dl_ip
+                    value: 172.28.3.196
+                  - name: kafka_dl_port
                     value: 9092
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Discovery service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: discovery_ip
-                    value: 172.15.0.180
+                    value: 172.28.3.42
                   - name: discovery_port
-                    value: 80
+                    value: 32000
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Slicer service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: slicer_ip
-                    value: 172.15.0.191
-                  - name: slicer_port
-                    value: 8082
+                  - name: nsso_ip
+                    value: 172.28.3.42
+                  - name: nsso_port
+                    value: 31082
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Payload parameters
@@ -81,10 +104,13 @@ spec:
                   - name: service_owner
                     value: OVERRIDE
 
-                  - name: offered_price
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Range e.g. 1200-1400
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: requested_price
                     value: OVERRIDE
 
-                  - name: slice_segment
+                  - name: resourceSpecCharacteristic
                     value: OVERRIDE
 
                   - name: qos_parameters
@@ -102,67 +128,90 @@ spec:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: transaction_uuid
                     value: OVERRIDE
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Id of the existing service
+                  # to extend
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: service_id
+                    value: OVERRIDE
+
                 templates:
                 - name: handlerequest
                   steps:
-                  - - name: submit-intent
+                  - - name: handle-new-intent-flow
                       # It is assumed that this is the starting point of the transaction
                       # meaning that event_uuid here is the transaction_uuid
-                      template: submit-intent-flow
+                      template: handle-new-intent
                       when: "{{workflow.parameters.operation}} == \"submit_intent\""
 
-                  - - name: submit-bp
-                      template: submit-bp-flow
+                  - - name: handle-best-offer-flow
+                      template: handle-best-offer
                       when: "{{workflow.parameters.operation}} == \"submit_bp\""
 
-                - name: submit-intent-flow
+                - name: handle-new-intent
                   dag:
                     tasks:
-                    - name: smart-discovery-application
-                      template: smart-discovery-application
+                    - name: srds-service
+                      template: srds-service
                       arguments:
                         parameters:
                         - name: service_ip
                           value: "{{workflow.parameters.discovery_ip}}"
                         - name: service_port
                           value: "{{workflow.parameters.discovery_port}}"
+                        - name: resourceSpecCharacteristic
+                          value: "{{workflow.parameters.resourceSpecCharacteristic}}"
                         - name: category
                           value: "{{workflow.parameters.category}}"
                         - name: latitude
                           value: "{{workflow.parameters.latitude}}"
                         - name: longitude
                           value: "{{workflow.parameters.longitude}}"
-                        - name: offered_price
-                          value: "{{workflow.parameters.offered_price}}"
+                        - name: requested_price
+                          value: "{{workflow.parameters.requested_price}}"
 
                     - name: send-resouces-to-optimizer
                       # publish discovered resources for the optimizer to consume
-                      dependencies: [smart-discovery-application]
-                      template: produce-message
+                      dependencies: [srds-service]
+                      template: publish-on-optimizer-kafka
                       arguments:
                         parameters:
                         - name: data
                           # note: transaction_uuid is the event_uuid passed to this flow
                           value: |
                             { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}",
-                              "resources": [{{tasks.smart-discovery-application.outputs.result}}],
-                              "service_owner": "{{workflow.parameters.service_owner}}",
+                              "resources": {{tasks.srds-service.outputs.result}},
+                              "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
                               "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
                         - name: kafka_topic
                           value: "issm-optimizer"
 
-                - name: submit-bp-flow
+                - name: handle-best-offer
                   dag:
                     tasks:
+
+                    - name: handle-best-offer
+                      templateRef:
+                        name: workflow-base
+                        template: jq-script
+                      arguments:
+                        parameters:
+                        - name: json_str
+                          value: "{{workflow.parameters.resources}}"
+                        - name: jq_query
+                          value: '.[0]'
+
                     - name: acquire
+                      dependencies: [handle-best-offer]
                       # invokes acquire template for every entry in resources list
                       # waits for them to succeed and publishes status success for the
                       # service owner to consume
                       template: acquire
                       arguments:
                         parameters:
-                        - name: offer_id
-                          value: "{{item.id}}"
+                        - name: product_id
+                          value: "{{item.product_id}}"
                       withParam: "{{workflow.parameters.resources}}"
 
                     - name: resource-vsb
@@ -175,7 +224,19 @@ spec:
                         - name: json_str
                           value: "{{workflow.parameters.resources}}"
                         - name: jq_query
-                          value: '.[0].VSB'
+                          value: '.[0].Blueprint_name'
+
+                    - name: product-id
+                      dependencies: [acquire]
+                      templateRef:
+                        name: workflow-base
+                        template: jq-script
+                      arguments:
+                        parameters:
+                        - name: json_str
+                          value: "{{workflow.parameters.resources}}"
+                        - name: jq_query
+                          value: '.[0].product_id'
 
                     - name: resource-id
                       dependencies: [acquire]
@@ -187,52 +248,53 @@ spec:
                         - name: json_str
                           value: "{{workflow.parameters.resources}}"
                         - name: jq_query
-                          value: '.[0].id'
+                          value: '.[0].resource_id'
 
-                    - name: slicer-create-vsd
-                      dependencies: [resource-vsb, resource-id]
+                    - name: nsso-create-vsd
+                      dependencies: [resource-vsb, product-id, resource-id]
                       templateRef:
                         name: workflow-slice
                         template: create-descriptor
                       arguments:
                         parameters:
-                        - name: slicer_ip
-                          value: "{{workflow.parameters.slicer_ip}}"
-                        - name: slicer_port
-                          value: "{{workflow.parameters.slicer_port}}"
+                        - name: nsso_ip
+                          value: "{{workflow.parameters.nsso_ip}}"
+                        - name: nsso_port
+                          value: "{{workflow.parameters.nsso_port}}"
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
                         - name: blueprint_name
-                          # TODO: this should match the VSB attr in offer
-                          value: "VideoStreaming"
+                          # TODO: offer should contain VSB_ID
+                          value: "vCDN_edge_ICOM"
                         - name: parameters
                           value: "{{workflow.parameters.qos_parameters}}"
 
-                    - name: slicer-create-vsi
-                      dependencies: [slicer-create-vsd]
+                    - name: nsso-create-vsi
+                      dependencies: [nsso-create-vsd]
                       templateRef:
                         name: workflow-slice
                         template: create-instance
                       arguments:
                         parameters:
-                        - name: slicer_ip
-                          value: "{{workflow.parameters.slicer_ip}}"
-                        - name: slicer_port
-                          value: "{{workflow.parameters.slicer_port}}"
+                        - name: nsso_ip
+                          value: "{{workflow.parameters.nsso_ip}}"
+                        - name: nsso_port
+                          value: "{{workflow.parameters.nsso_port}}"
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
                         - name: vsd_id
-                          value: "{{tasks.slicer-create-vsd.outputs.parameters.vsd_id}}"
+                          value: "{{tasks.nsso-create-vsd.outputs.parameters.vsd_id}}"
                         - name: name
-                          # TODO: this should match the VSB attr in offer
-                          value: "VideoStreaming"
+                          # TODO: offer should contain VSB_ID
+                          value: "vCDN_edge_ICOM"
                         - name: userdata
                           value: |
-                            { "product_id": "{{tasks.resource-id.outputs.result}}",
-                              "transaction_uuid": "{{workflow.parameters.transaction_uuid}}" }
+                            { "product_id": "{{tasks.product-id.outputs.result}}",
+                              "transaction_id": "{{workflow.parameters.transaction_uuid}}",
+                              "vsi_id": "{{workflow.parameters.service_id}}" }
 
-                    - name: slicer-poll
-                      dependencies: [slicer-create-vsi]
+                    - name: nsso-poll
+                      dependencies: [nsso-create-vsi]
                       templateRef:
                         name: workflow-slice
                         template: poll
@@ -240,35 +302,62 @@ spec:
                         parameters:
                         - name: poll
                           value: "true"
-                        - name: slicer_ip
-                          value: "{{workflow.parameters.slicer_ip}}"
-                        - name: slicer_port
-                          value: "{{workflow.parameters.slicer_port}}"
+                        - name: nsso_ip
+                          value: "{{workflow.parameters.nsso_ip}}"
+                        - name: nsso_port
+                          value: "{{workflow.parameters.nsso_port}}"
                         - name: tenant_name
                           value: "{{workflow.parameters.service_owner}}"
                         - name: vsi_id
-                          value: "{{tasks.slicer-create-vsi.outputs.parameters.vsi_id}}"
+                          value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
                         - name: jq_query
                           value: ".status"
                         - name: jq_query_value
                           value: "INSTANTIATED"
                         - name: timeout
-                          value: 60
+                          value: 180
 
-                    - name: poll-timeout
-                      dependencies: [slicer-poll]
-                      template: fail
-                      when: "{{tasks.slicer-poll.outputs.parameters.status}} == \"TIMEOUT\""
+#                    - name: poll-timeout
+#                      dependencies: [nsso-poll]
+#                      template: fail
+#                      when: "{{tasks.nsso-poll.outputs.parameters.status}} == \"TIMEOUT\""
 
-                - name: smart-discovery-application
+                    - name: sla-event
+                      dependencies: [nsso-poll]
+                      # when: "{{tasks.nsso-poll.outputs.parameters.status}} != \"TIMEOUT\""
+                      templateRef:
+                        name: workflow-base
+                        template: produce
+                      arguments:
+                        parameters:
+                        - name: data
+                          value: |
+                            { "eventType": "new_SLA",
+                              "transactionID": "{{workflow.parameters.transaction_uuid}}",
+                              "productID": "{{tasks.product-id.outputs.result}}",
+                              "resourceID": "{{tasks.resource-id.outputs.result}}",
+                              "instanceID": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}",
+                              "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
+                              "topic": "isbp-topic-out"
+                            }
+                        - name: kafka_topic
+                          value: "isbp-topic"
+                        - name: kafka_ip
+                          value: "{{workflow.parameters.kafka_dl_ip}}"
+                        - name: kafka_port
+                          value: "{{workflow.parameters.kafka_dl_port}}"
+
+
+                - name: srds-service
                   inputs:
                     parameters:
                     - name: service_ip
                     - name: service_port
+                    - name: resourceSpecCharacteristic
                     - name: category
                     - name: latitude
                     - name: longitude
-                    - name: offered_price
+                    - name: requested_price
                   script:
                     image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
                     command: [python]
@@ -276,13 +365,16 @@ spec:
                       import json
                       import requests
                       import sys
-
+                      requested_price = str("{{inputs.parameters.requested_price}}")
+                      price = requested_price.split('-')[0]
                       headers = {'Content-Type': 'application/json'}
-                      r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer/{{inputs.parameters.offered_price}}"
-                          "lat{{inputs.parameters.latitude}}long{{inputs.parameters.longitude}}computeandvirtual{{inputs.parameters.category}}",
+                      # category: vnf
+                      # resourceSpecCharacteristic: CDN
+                      r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer/"
+                          "{{inputs.parameters.category}}_lat{{inputs.parameters.latitude}}_long{{inputs.parameters.longitude}}_" + str(price) + "_{{inputs.parameters.resourceSpecCharacteristic}}",
                           headers=headers)
-                      # return first offer
-                      json.dump(r.json()[0], sys.stdout)
+                      # return offers
+                      json.dump(r.json(), sys.stdout)
 
                 - name: acquire
                   # acquire is devided into two sub-tasks:
@@ -291,14 +383,14 @@ spec:
                   # or proceed as normal
                   inputs:
                     parameters:
-                    - name: offer_id
+                    - name: product_id
                   steps:
                     - - name: acquire-resource
                         template: acquire-simulator
                         arguments:
                           parameters:
-                          - name: offer_id
-                            value: "{{inputs.parameters.offer_id}}"
+                          - name: product_id
+                            value: "{{inputs.parameters.product_id}}"
 
                     - - name: fail-flow
                         template: fail
@@ -309,7 +401,7 @@ spec:
                   # fail/success status
                   inputs:
                     parameters:
-                    - name: offer_id
+                    - name: product_id
                   script:
                     image: python:alpine3.6
                     command: [python]
@@ -318,7 +410,7 @@ spec:
                       import random
                       import sys
                       status = "acquire_success"
-                      json.dump({"offer_id": "{{inputs.parameters.offer_id}}", "status": status}, sys.stdout)
+                      json.dump({"product_id": "{{inputs.parameters.product_id}}", "status": status}, sys.stdout)
                       with open("/tmp/status.txt", "a") as myfile:
                           myfile.write(status)
                   outputs:
@@ -334,13 +426,13 @@ spec:
                     source: |
                       exit 123
 
-                - name: produce-message
+                - name: publish-on-optimizer-kafka
                   inputs:
                     parameters:
                     - name: data
                     - name: kafka_topic
                   steps:
-                    - - name: return-result
+                    - - name: publish-on-optimizer-kafka
                         templateRef:
                           name: workflow-base
                           template: produce
@@ -376,57 +468,62 @@ spec:
             - src:
                 dependencyName: test-dep
                 dataKey: body.operation
-              dest: spec.arguments.parameters.6.value
+              dest: spec.arguments.parameters.8.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.category
                 value: DEFAULT
-              dest: spec.arguments.parameters.7.value
+              dest: spec.arguments.parameters.9.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.latitude
                 value: DEFAULT
-              dest: spec.arguments.parameters.8.value
+              dest: spec.arguments.parameters.10.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.longitude
                 value: DEFAULT
-              dest: spec.arguments.parameters.9.value
+              dest: spec.arguments.parameters.11.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.service_owner
                 value: DEFAULT
-              dest: spec.arguments.parameters.10.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.offered_price
-                value: DEFAULT
-              dest: spec.arguments.parameters.11.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.slice_segment
-                value: DEFAULT
               dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.qos_parameters
+                dataKey: body.requested_price
                 value: DEFAULT
               dest: spec.arguments.parameters.13.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resources
+                dataKey: body.resourceSpecCharacteristic
                 value: DEFAULT
               dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.transaction_uuid
+                dataKey: body.qos_parameters
+                value: DEFAULT
               dest: spec.arguments.parameters.15.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resources
+                value: DEFAULT
+              dest: spec.arguments.parameters.16.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.transaction_uuid
+              dest: spec.arguments.parameters.17.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.service_id
+              dest: spec.arguments.parameters.18.value

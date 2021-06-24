@@ -9,7 +9,7 @@ export BETWEEN=3
 echo ""
 echo ""
 echo "-=-=-=-=-=-= TRACE -=-=-=-=-=-=-=-=-=-"
-echo "Login admin.."
+echo "Login operator-a.."
 echo "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-"
 
 curl -i -X POST -d username=admin -d password=admin -c ./admin_credentials http://$SLICER_URL/login 2>/dev/null
@@ -18,7 +18,7 @@ sleep $BETWEEN
 echo ""
 echo ""
 echo "-=-=-=-=-=-= TRACE -=-=-=-=-=-=-=-=-=-"
-echo "Create blueprint"
+echo "List VSIs"
 echo "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-"
 
-curl -b ./admin_credentials -d @vsb_vCDN_edge_ICOM.json -X POST http://$SLICER_URL/portal/catalogue/vsblueprint --header "Content-Type:application/json"
+curl -b ./admin_credentials -X GET http://$SLICER_URL/vs/basic/nslcm/ns/26 --header "Content-Type:application/json" | jq .
