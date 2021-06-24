@@ -1,21 +1,22 @@
-# ISSM (Intelligent slice and service manager)
+# ISSM
 
-**Note: This is a work in progress. Ensure to monitor this repository frequently**
-
-ISSM runs on kubernetes. You can use [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes.md) to provision such a one
+This is the __Intelligent slice and service manager__ component responsible for executing orchestration workflows in a context of a business transaction, such as extending a slice across a second domain in cooperation with the Network Slice and Service Orchestration.
 
 ## Pre-requisites
 
-* ISSM requires kafka broker. You can use [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md) to provision such a one
-* Install argo and argo-events per [these instructions](docs/argo.md)
-* Install vertical slicer per [these instructions](docs/slicer.md)
-* Install datalake services per [these instructions](docs/datalake.md)
-* Install discovery application per [these instructions](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/blob/main/readme.txt)
-* Install optimizer service per [these instructions](https://github.com/5GZORRO/issm-optimizer/blob/master/README.md)
+To install ISSM follow the installation guidelines per component following the below flow:
+1. **Provision kubernetes cluster**. The guidelines are available [here](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes.md).
+2. **Install kafka broker.** Follow the guidelines [here](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md).
+3. **Install Argo and Argo-events**. Follow the guidelines [here](docs/argo.md).
+4. **Install Datalake services**. Follow the guidelines [here](https://github.com/5GZORRO/datalake).
+5. **Install NSSO**. Follow the guidelines [here](https://github.com/5GZORRO/nsso).
+6. **Install SRSD**. Follow the guidelines [here](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/demo_June_21).
+7. **Install ISSM-API**. Follow the guidelines [here](api).
+8. **Install ISSM-O**. Follow the guidelines [here](https://github.com/5GZORRO/issm-optimizer).
 
 ## Deploy
 
-Log into kuberneters master
+Log into kuberneters master and perform the below in this order
 
 ### Set ISSM role
 
@@ -32,6 +33,8 @@ export KAFKA_HOST=172.28.3.196
 export KAFKA_PORT=9092
 ```
 
+create the sources
+
 ```
 envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n argo-events -f -
 envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -n argo-events -f -
@@ -41,29 +44,29 @@ envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -
 
 ### Apply docker-secrete.yaml
 
-Create docker-secrete.yaml file [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes-private-dockerregistry.md) and apply it
+Create docker-secrete.yaml file [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes-private-dockerregistry.md) and apply it. This secrete is for ISSM orchestrator to pull images from this repository
 
 ```
 kubectl apply -f docker-secrete.yaml -n argo-events
 ```
 
-## Onboard ISSM SLA breach sensor
+### Onboard SLA breach workflow
 
 ```
 kubectl apply -f flows/issm-sla-breach-sensor.yaml -n argo-events
 ```
 
-## Onboard ISSM flow
+### Onboard orchestration workflow
 
-You may need to customize the flow definition with access information to the 5G Zorro services
+First, customize the workflow with access information to the 5G Zorro services
 
 Open `flows/issm-sensor.yaml`
 
 Update access info for:
 
 * ISSM kafka bus
-* Discovery service
-* Vertical slicer service
+* Smart resource and service discovery
+* Network slice and service orchestration
 
 ```
                 arguments:
@@ -76,19 +79,21 @@ Update access info for:
                     value: 172.15.0.180
                   - name: discovery_port
                     value: 80
-                  - name: slicer_ip
+                  - name: nsso_ip
                     value: 172.28.3.42
-                  - name: slicer_port
+                  - name: nsso_port
                     value: 31082
 ```
 
-Onboard the flow
+then, onboard the flow
 
 ```
 kubectl apply -f flows/issm-sensor.yaml -n argo-events
 ```
 
-## Deploy common template libraries
+### Deploy common templates
+
+Deploy common utilities and NSSO libraries
 
 ```
 kubectl create -f wf-templates/base.yaml -n argo-events
@@ -97,20 +102,9 @@ kubectl create -f wf-templates/slice.yaml -n argo-events
 
 ## Trigger ISSM business flow
 
-**Important:**
-* the offers loaded into discovery application are of `VideoStreaming`, hence, ensure to [pre-onboard the corresponding blueprint](./scripts/slicer/onboard.md) into the vertical slicer.
-* service owner (i.e mno/tenant) should be pre-defined along with SLA, hence ensure to [create it](./scripts/slicer/define_tenant.md) in the vertical slicer.
-* service owner (i.e mno/tenant) should pre-exist in datalake, hence ensure to [create it](docs/datalake.md#create-user) passing `operator-a` as parameter
+Follow the guidelines [here](https://github.com/5GZORRO/issm/tree/master/api#api)
 
-### Manual steps
-
->{"event_uuid": "1234", "transaction_uuid": "123", "operation": "submit_intent", "offered_price": "1700", "latitude": "56", "longitude": "5", "slice_segment": "edge", "category": "VideoStreaming", "qos_parameters": {"bandwidth": "30"}, "service_owner": "operator-a"}
-
-The flow is invoked automatically
-
-## Watch flow progress using Argo GUI
-
-Browse to `http://<kubernetes master ipaddress>:2746`
+then watch business flow progress with Argo GUI (`http://<kubernetes master ipaddress>:2746`)
 
 ## Licensing
 
