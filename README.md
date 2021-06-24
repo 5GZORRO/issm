@@ -5,8 +5,8 @@ This is the __Intelligent slice and service manager__ component responsible for 
 ## Pre-requisites
 
 To install ISSM follow the installation guidelines per component following the below flow:
-1. **Provision kubernetes cluster**. The guidelines are available [here](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes.md).
-2. **Install kafka broker.** Follow the guidelines [here](https://github.com/5GZORRO/infrastructure/blob/master/docs/kafka.md).
+1. **Provision kubernetes cluster**. The guidelines are available [here](docs/kubernetes.md).
+2. **Install kafka broker.** Follow the guidelines [here](docs/kafka.md).
 3. **Install Argo and Argo-events**. Follow the guidelines [here](docs/argo.md).
 4. **Install Datalake services**. Follow the guidelines [here](https://github.com/5GZORRO/datalake).
 5. **Install NSSO**. Follow the guidelines [here](https://github.com/5GZORRO/nsso).
@@ -44,7 +44,7 @@ envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -
 
 ### Apply docker-secrete.yaml
 
-Create docker-secrete.yaml file [these instructions](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes-private-dockerregistry.md) and apply it. This secrete is for ISSM orchestrator to pull images from this repository
+Create docker-secrete.yaml file per [these instructions](docs/kubernetes-private-dockerregistry.md) and apply it. This secrete is for ISSM orchestrator to pull images from docker.pkg.github.com
 
 ```
 kubectl apply -f docker-secrete.yaml -n argo-events
@@ -65,6 +65,7 @@ Open `flows/issm-sensor.yaml`
 Update access info for:
 
 * ISSM kafka bus
+* Datalake kafka bus
 * Smart resource and service discovery
 * Network slice and service orchestration
 
@@ -75,10 +76,14 @@ Update access info for:
                     value: 172.28.3.196
                   - name: kafka_port
                     value: 9092
+                  - name: kafka_dl_ip
+                    value: 172.28.3.196
+                  - name: kafka_dl_port
+                    value: 9092
                   - name: discovery_ip
-                    value: 172.15.0.180
+                    value: 172.28.3.42
                   - name: discovery_port
-                    value: 80
+                    value: 32000
                   - name: nsso_ip
                     value: 172.28.3.42
                   - name: nsso_port
