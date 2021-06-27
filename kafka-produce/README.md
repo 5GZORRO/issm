@@ -1,7 +1,6 @@
 # python-kafka
 
-Base image to be used by argo `produce` template defined in ISSM common templates library.
-This image also contains the `requests` to be used by Argo steps/tasks to communicate with services via HTTP
+Base image used by ISSM `produce` template defined in common templates library. This image contains python `requests` library to be used by ISSM workflow to communicate with services via HTTP.
 
 ## Build and push docker images (**relevant for developers only**)
 

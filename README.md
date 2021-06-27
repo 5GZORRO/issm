@@ -10,7 +10,7 @@ To install ISSM follow the installation guidelines per component following the b
 3. **Install Argo and Argo-events**. Follow the guidelines [here](docs/argo.md).
 4. **Install Datalake services**. Follow the guidelines [here](https://github.com/5GZORRO/datalake).
 5. **Install NSSO**. Follow the guidelines [here](https://github.com/5GZORRO/nsso).
-6. **Install SRSD**. Follow the guidelines [here](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/demo_June_21).
+6. **Install SRSD**. Follow the guidelines [here](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/tree/main/demo_June_21).
 7. **Install ISSM-API**. Follow the guidelines [here](api).
 8. **Install ISSM-O**. Follow the guidelines [here](https://github.com/5GZORRO/issm-optimizer).
 

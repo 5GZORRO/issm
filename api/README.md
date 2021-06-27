@@ -1,5 +1,7 @@
 # issm-api
 
+Component responsible for providing management API endpoint service for ISSM.
+
 ## Deploy the service
 
 Log into kuberneters master where ISSM is installed

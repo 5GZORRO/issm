@@ -1,5 +1,7 @@
 # isbp
 
+Test script to emulate sending an SLA event to ISBP component.
+
 ## Test sla-event publication
 
 **Note:** it is assumed that topic `isbp-topic` already exists in DL kafka
