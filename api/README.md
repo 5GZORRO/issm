@@ -25,8 +25,8 @@ export ISSM_KAFKA_PORT=9092
 ```
 
 ```
-envsubst < deploy/deployment.yaml.template | kubectl apply -f -
-kubectl apply -f deploy/service.yaml
+envsubst < deploy/deployment.yaml.template | kubectl apply -n issm -f -
+kubectl apply -f deploy/service.yaml -n issm
 ```
 
 ## API
