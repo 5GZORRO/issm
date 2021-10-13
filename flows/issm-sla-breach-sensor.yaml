@@ -84,6 +84,7 @@ spec:
                     - name: message
                   container:
                     image: docker/whalesay
+                    imagePullPolicy: IfNotPresent
                     command: [cowsay]
                     args: ["{{inputs.parameters.message}}"]
 
