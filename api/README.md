@@ -14,7 +14,7 @@ Invoke the below in this order
 
 1. deployment uses myregistrykey secrete to pull image from private docker registry. Refer [here](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes-private-dockerregistry.md) to set it up
 
-1. ensure to create the secrete in `argo-events` namespace
+1. ensure to create the secrete in `issm` namespace
 
 ```
 export REGISTRY=docker.pkg.github.com
