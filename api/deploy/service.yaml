@@ -4,7 +4,6 @@ metadata:
   labels:
     name: issm-api
   name: issm-api
-  namespace: argo-events
 spec:
   ports:
   - port: 8080

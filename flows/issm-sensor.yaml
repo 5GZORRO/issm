@@ -360,6 +360,7 @@ spec:
                     - name: requested_price
                   script:
                     image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+                    imagePullPolicy: IfNotPresent
                     command: [python]
                     source: |
                       import json
@@ -404,6 +405,7 @@ spec:
                     - name: product_id
                   script:
                     image: python:alpine3.6
+                    imagePullPolicy: IfNotPresent
                     command: [python]
                     source: |
                       import json
@@ -422,6 +424,7 @@ spec:
                 - name: fail
                   script:
                     image: debian:9.4
+                    imagePullPolicy: IfNotPresent
                     command: [bash]
                     source: |
                       exit 123

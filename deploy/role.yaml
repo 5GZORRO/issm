@@ -1,7 +1,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
-  name: argo-k8s-resource-admin-role
+  name: issm-argo
+  namespace: issm
 rules:
 - apiGroups:
   - ""
@@ -18,29 +19,21 @@ rules:
   - update
   - patch
   - delete
-- apiGroups:
-  - "batch"
-  resources:
-  - jobs
-  verbs:
-  - create
-  - get
-  - list
-  - watch
-  - update
-  - patch
-  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
-  name: argo-k8s-resource-binding
+  name: issm-argo
+  namespace: issm
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: argo-k8s-resource-admin-role
+  kind: Role
+  name: issm-argo
 subjects:
 - kind: ServiceAccount
   name: default
-  namespace: argo-events
-
+  namespace: issm
+- kind: Group
+  name: system:serviceaccounts:default
+  apiGroup: rbac.authorization.k8s.io
+  namespace: issm

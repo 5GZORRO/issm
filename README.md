@@ -18,10 +18,32 @@ To install ISSM follow the installation guidelines per component following the b
 
 Log into kuberneters master and perform the below in this order
 
-### Set ISSM role
+### Create issm namespace
+
+All orchestration workflows will invoked under issm namespace
 
 ```
-kubectl create -n argo-events -f deploy/role.yaml
+kubectl create namespace issm
+```
+
+### Add namespaced roles
+
+Run the below to add additional roles to `default` service account in `issm` namespace. These roles are used by argo workflow
+
+```
+kubectl create -f deploy/role.yaml
+```
+
+### Add namespaced event roles
+
+```
+kubectl apply -f deploy/install-v1.1.0.yaml -n issm
+```
+
+### Create namespaced Eventbus
+
+```
+kubectl apply -n issm -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
 ```
 
 ### Create ISSM kafka event sources
@@ -36,8 +58,8 @@ export KAFKA_PORT=9092
 create the sources
 
 ```
-envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n argo-events -f -
-envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -n argo-events -f -
+envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n issm -f -
+envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -n issm -f -
 ```
 
 **Note:** Kafka `issm-topic` , `isbp-topic-out` are automatically created during the creation of the event sources
@@ -47,13 +69,13 @@ envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -
 Create docker-secrete.yaml file per [these instructions](docs/kubernetes-private-dockerregistry.md) and apply it. This secrete is for ISSM orchestrator to pull images from docker.pkg.github.com
 
 ```
-kubectl apply -f docker-secrete.yaml -n argo-events
+kubectl apply -f docker-secrete.yaml -n issm
 ```
 
 ### Onboard SLA breach workflow
 
 ```
-kubectl apply -f flows/issm-sla-breach-sensor.yaml -n argo-events
+kubectl apply -f flows/issm-sla-breach-sensor.yaml -n issm
 ```
 
 ### Onboard orchestration workflow
@@ -93,7 +115,7 @@ Update access info for:
 then, onboard the flow
 
 ```
-kubectl apply -f flows/issm-sensor.yaml -n argo-events
+kubectl apply -f flows/issm-sensor.yaml -n issm
 ```
 
 ### Deploy common templates
@@ -101,8 +123,8 @@ kubectl apply -f flows/issm-sensor.yaml -n argo-events
 Deploy common utilities and NSSO libraries
 
 ```
-kubectl create -f wf-templates/base.yaml -n argo-events
-kubectl create -f wf-templates/slice.yaml -n argo-events
+kubectl create -f wf-templates/base.yaml -n issm
+kubectl create -f wf-templates/slice.yaml -n issm
 ```
 
 ## Trigger ISSM business flow
