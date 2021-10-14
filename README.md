@@ -18,35 +18,66 @@ To install ISSM follow the installation guidelines per component following the b
 
 Log into kuberneters master and perform the below in this order
 
-### Create issm namespace
+### Create operator namespaces
 
-All orchestration workflows will invoked under issm namespace
+Orchestration workflows will invoked locally in the operator namespace
 
-```
-kubectl create namespace issm
-```
-
-### Add namespaced roles
-
-Run the below to add additional roles to `default` service account in `issm` namespace. These roles are used by argo workflow
+operator-a
 
 ```
-kubectl create -f deploy/role.yaml
+kubectl create namespace domain-operator-a
 ```
 
-### Add namespaced event roles
+and operator-b
 
 ```
-kubectl apply -f deploy/install-v1.1.0.yaml -n issm
+kubectl create namespace domain-operator-b
 ```
 
-### Create namespaced Eventbus
+### Add roles to operator namespaces
+
+Run the below to add additional roles to `default` service account of the operator namespace. These roles are used by argo workflow
+
+operator-a
 
 ```
-kubectl apply -n issm -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
+kubectl create -f deploy/role.yaml -n domain-operator-a
 ```
 
-### Create ISSM kafka event sources
+and operator-b
+
+```
+kubectl create -f deploy/role.yaml -n domain-operator-b
+```
+
+### Add argo-event roles to operator namespaces
+
+operator-a
+
+```
+kubectl apply -f deploy/install-v1.1.0.yaml -n domain-operator-a
+```
+
+and operator-b
+
+```
+kubectl apply -f deploy/install-v1.1.0.yaml -n domain-operator-b
+```
+
+### Create Eventbus in operator namespaces
+
+operator-a
+
+```
+kubectl apply -n domain-operator-a -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
+```
+and operator-b
+
+```
+kubectl apply -n domain-operator-b -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
+```
+
+### Create kafka event sources for ISSM bus
 
 Update ISSM kafka ip and port settings per your environment
 
@@ -58,11 +89,24 @@ export KAFKA_PORT=9092
 create the sources
 
 ```
-envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n issm -f -
 envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -n issm -f -
 ```
 
-**Note:** Kafka `issm-topic` , `isbp-topic-out` are automatically created during the creation of the event sources
+operator-a
+
+```
+export ISSM_DOMAIN_TOPIC=issm-operator-a
+envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n domain-operator-a -f -
+```
+
+and operator-b
+
+```
+export ISSM_DOMAIN_TOPIC=issm-operator-b
+envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n domain-operator-b -f -
+```
+
+**Note:** Kafka topics are automatically created during the creation of the event sources
 
 ### Apply docker-secrete.yaml
 
@@ -70,6 +114,8 @@ Create docker-secrete.yaml file per [these instructions](docs/kubernetes-private
 
 ```
 kubectl apply -f docker-secrete.yaml -n issm
+kubectl apply -f docker-secrete.yaml -n domain-operator-a
+kubectl apply -f docker-secrete.yaml -n domain-operator-b
 ```
 
 ### Onboard SLA breach workflow
@@ -106,25 +152,42 @@ Update access info for:
                     value: 172.28.3.42
                   - name: discovery_port
                     value: 32000
-                  - name: nsso_ip
-                    value: 172.28.3.42
-                  - name: nsso_port
-                    value: 31082
 ```
 
 then, onboard the flow
 
+operator-a
+
 ```
-kubectl apply -f flows/issm-sensor.yaml -n issm
+kubectl apply -f flows/issm-sensor.yaml -n domain-operator-a
+```
+
+and operator-b
+
+```
+kubectl apply -f flows/issm-sensor.yaml -n domain-operator-b
 ```
 
 ### Deploy common templates
 
 Deploy common utilities and NSSO libraries
 
+operator-a
+
 ```
-kubectl create -f wf-templates/base.yaml -n issm
-kubectl create -f wf-templates/slice.yaml -n issm
+kubectl create -f wf-templates/intent.yaml -n domain-operator-a
+kubectl create -f wf-templates/orchestration.yaml -n domain-operator-a
+kubectl create -f wf-templates/base.yaml -n domain-operator-a
+kubectl create -f wf-templates/slice.yaml -n domain-operator-a
+```
+
+and operator-b
+
+```
+kubectl create -f wf-templates/intent.yaml -n domain-operator-b
+kubectl create -f wf-templates/orchestration.yaml -n domain-operator-b
+kubectl create -f wf-templates/base.yaml -n domain-operator-b
+kubectl create -f wf-templates/slice.yaml -n domain-operator-b
 ```
 
 ## Trigger ISSM business flow

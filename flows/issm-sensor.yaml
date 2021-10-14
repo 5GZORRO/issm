@@ -12,15 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+#
+# Common sensor that invokes a workflow locally on the operator premises
+#
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
 metadata:
-  name: issm-kafka
+  name: issm-branch
 spec:
   template:
     serviceAccountName: argo-events-sa
   dependencies:
     - name: test-dep
+      # connects to platform bus
       eventSourceName: issm-kafka
       eventName: intent
   triggers:
@@ -83,9 +88,9 @@ spec:
                   # Slicer service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: nsso_ip
-                    value: 172.28.3.42
+                    value: vs
                   - name: nsso_port
-                    value: 31082
+                    value: 8082
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Payload parameters
@@ -142,313 +147,22 @@ spec:
                   - - name: handle-new-intent-flow
                       # It is assumed that this is the starting point of the transaction
                       # meaning that event_uuid here is the transaction_uuid
-                      template: handle-new-intent
+                      templateRef:
+                        name: intent-template
+                        template: handle-new-intent
                       when: "{{workflow.parameters.operation}} == \"submit_intent\""
 
                   - - name: handle-best-offer-flow
-                      template: handle-best-offer
+                      templateRef:
+                        name: intent-template
+                        template: handle-best-offer
                       when: "{{workflow.parameters.operation}} == \"submit_bp\""
 
-                - name: handle-new-intent
-                  dag:
-                    tasks:
-                    - name: srds-service
-                      template: srds-service
-                      arguments:
-                        parameters:
-                        - name: service_ip
-                          value: "{{workflow.parameters.discovery_ip}}"
-                        - name: service_port
-                          value: "{{workflow.parameters.discovery_port}}"
-                        - name: resourceSpecCharacteristic
-                          value: "{{workflow.parameters.resourceSpecCharacteristic}}"
-                        - name: category
-                          value: "{{workflow.parameters.category}}"
-                        - name: latitude
-                          value: "{{workflow.parameters.latitude}}"
-                        - name: longitude
-                          value: "{{workflow.parameters.longitude}}"
-                        - name: requested_price
-                          value: "{{workflow.parameters.requested_price}}"
-
-                    - name: send-resouces-to-optimizer
-                      # publish discovered resources for the optimizer to consume
-                      dependencies: [srds-service]
-                      template: publish-on-optimizer-kafka
-                      arguments:
-                        parameters:
-                        - name: data
-                          # note: transaction_uuid is the event_uuid passed to this flow
-                          value: |
-                            { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}",
-                              "resources": {{tasks.srds-service.outputs.result}},
-                              "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
-                              "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
-                        - name: kafka_topic
-                          value: "issm-optimizer"
-
-                - name: handle-best-offer
-                  dag:
-                    tasks:
-
-                    - name: handle-best-offer
+                  - - name: handle-orchestration
                       templateRef:
-                        name: workflow-base
-                        template: jq-script
-                      arguments:
-                        parameters:
-                        - name: json_str
-                          value: "{{workflow.parameters.resources}}"
-                        - name: jq_query
-                          value: '.[0]'
-
-                    - name: acquire
-                      dependencies: [handle-best-offer]
-                      # invokes acquire template for every entry in resources list
-                      # waits for them to succeed and publishes status success for the
-                      # service owner to consume
-                      template: acquire
-                      arguments:
-                        parameters:
-                        - name: product_id
-                          value: "{{item.product_id}}"
-                      withParam: "{{workflow.parameters.resources}}"
-
-                    - name: resource-vsb
-                      dependencies: [acquire]
-                      templateRef:
-                        name: workflow-base
-                        template: jq-script
-                      arguments:
-                        parameters:
-                        - name: json_str
-                          value: "{{workflow.parameters.resources}}"
-                        - name: jq_query
-                          value: '.[0].Blueprint_name'
-
-                    - name: product-id
-                      dependencies: [acquire]
-                      templateRef:
-                        name: workflow-base
-                        template: jq-script
-                      arguments:
-                        parameters:
-                        - name: json_str
-                          value: "{{workflow.parameters.resources}}"
-                        - name: jq_query
-                          value: '.[0].product_id'
-
-                    - name: resource-id
-                      dependencies: [acquire]
-                      templateRef:
-                        name: workflow-base
-                        template: jq-script
-                      arguments:
-                        parameters:
-                        - name: json_str
-                          value: "{{workflow.parameters.resources}}"
-                        - name: jq_query
-                          value: '.[0].resource_id'
-
-                    - name: nsso-create-vsd
-                      dependencies: [resource-vsb, product-id, resource-id]
-                      templateRef:
-                        name: workflow-slice
-                        template: create-descriptor
-                      arguments:
-                        parameters:
-                        - name: nsso_ip
-                          value: "{{workflow.parameters.nsso_ip}}"
-                        - name: nsso_port
-                          value: "{{workflow.parameters.nsso_port}}"
-                        - name: tenant_name
-                          value: "{{workflow.parameters.service_owner}}"
-                        - name: blueprint_name
-                          # TODO: offer should contain VSB_ID
-                          value: "vCDN_edge_ICOM"
-                        - name: parameters
-                          value: "{{workflow.parameters.qos_parameters}}"
-
-                    - name: nsso-create-vsi
-                      dependencies: [nsso-create-vsd]
-                      templateRef:
-                        name: workflow-slice
-                        template: create-instance
-                      arguments:
-                        parameters:
-                        - name: nsso_ip
-                          value: "{{workflow.parameters.nsso_ip}}"
-                        - name: nsso_port
-                          value: "{{workflow.parameters.nsso_port}}"
-                        - name: tenant_name
-                          value: "{{workflow.parameters.service_owner}}"
-                        - name: vsd_id
-                          value: "{{tasks.nsso-create-vsd.outputs.parameters.vsd_id}}"
-                        - name: name
-                          # TODO: offer should contain VSB_ID
-                          value: "vCDN_edge_ICOM"
-                        - name: userdata
-                          value: |
-                            { "product_id": "{{tasks.product-id.outputs.result}}",
-                              "transaction_id": "{{workflow.parameters.transaction_uuid}}",
-                              "vsi_id": "{{workflow.parameters.service_id}}" }
-
-                    - name: nsso-poll
-                      dependencies: [nsso-create-vsi]
-                      templateRef:
-                        name: workflow-slice
-                        template: poll
-                      arguments:
-                        parameters:
-                        - name: poll
-                          value: "true"
-                        - name: nsso_ip
-                          value: "{{workflow.parameters.nsso_ip}}"
-                        - name: nsso_port
-                          value: "{{workflow.parameters.nsso_port}}"
-                        - name: tenant_name
-                          value: "{{workflow.parameters.service_owner}}"
-                        - name: vsi_id
-                          value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
-                        - name: jq_query
-                          value: ".status"
-                        - name: jq_query_value
-                          value: "INSTANTIATED"
-                        - name: timeout
-                          value: 180
-
-#                    - name: poll-timeout
-#                      dependencies: [nsso-poll]
-#                      template: fail
-#                      when: "{{tasks.nsso-poll.outputs.parameters.status}} == \"TIMEOUT\""
-
-                    - name: sla-event
-                      dependencies: [nsso-poll]
-                      # when: "{{tasks.nsso-poll.outputs.parameters.status}} != \"TIMEOUT\""
-                      templateRef:
-                        name: workflow-base
-                        template: produce
-                      arguments:
-                        parameters:
-                        - name: data
-                          value: |
-                            { "eventType": "new_SLA",
-                              "transactionID": "{{workflow.parameters.transaction_uuid}}",
-                              "productID": "{{tasks.product-id.outputs.result}}",
-                              "resourceID": "{{tasks.resource-id.outputs.result}}",
-                              "instanceID": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}",
-                              "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
-                              "topic": "isbp-topic-out"
-                            }
-                        - name: kafka_topic
-                          value: "isbp-topic"
-                        - name: kafka_ip
-                          value: "{{workflow.parameters.kafka_dl_ip}}"
-                        - name: kafka_port
-                          value: "{{workflow.parameters.kafka_dl_port}}"
-
-
-                - name: srds-service
-                  inputs:
-                    parameters:
-                    - name: service_ip
-                    - name: service_port
-                    - name: resourceSpecCharacteristic
-                    - name: category
-                    - name: latitude
-                    - name: longitude
-                    - name: requested_price
-                  script:
-                    image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
-                    imagePullPolicy: IfNotPresent
-                    command: [python]
-                    source: |
-                      import json
-                      import requests
-                      import sys
-                      requested_price = str("{{inputs.parameters.requested_price}}")
-                      price = requested_price.split('-')[0]
-                      headers = {'Content-Type': 'application/json'}
-                      # category: vnf
-                      # resourceSpecCharacteristic: CDN
-                      r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/discoveroffer/"
-                          "{{inputs.parameters.category}}_lat{{inputs.parameters.latitude}}_long{{inputs.parameters.longitude}}_" + str(price) + "_{{inputs.parameters.resourceSpecCharacteristic}}",
-                          headers=headers)
-                      # return offers
-                      json.dump(r.json(), sys.stdout)
-
-                - name: acquire
-                  # acquire is devided into two sub-tasks:
-                  # 1. the acquire operation itself
-                  # 2. branch to inspect acquire status and either fail the flow
-                  # or proceed as normal
-                  inputs:
-                    parameters:
-                    - name: product_id
-                  steps:
-                    - - name: acquire-resource
-                        template: acquire-simulator
-                        arguments:
-                          parameters:
-                          - name: product_id
-                            value: "{{inputs.parameters.product_id}}"
-
-                    - - name: fail-flow
-                        template: fail
-                        when: "{{steps.acquire-resource.outputs.parameters.status}} == \"FAIL\""
-
-                - name: acquire-simulator
-                  # simulate a resource purchase with a return of a
-                  # fail/success status
-                  inputs:
-                    parameters:
-                    - name: product_id
-                  script:
-                    image: python:alpine3.6
-                    imagePullPolicy: IfNotPresent
-                    command: [python]
-                    source: |
-                      import json
-                      import random
-                      import sys
-                      status = "acquire_success"
-                      json.dump({"product_id": "{{inputs.parameters.product_id}}", "status": status}, sys.stdout)
-                      with open("/tmp/status.txt", "a") as myfile:
-                          myfile.write(status)
-                  outputs:
-                    parameters:
-                    - name: status
-                      valueFrom:
-                        path: /tmp/status.txt
-
-                - name: fail
-                  script:
-                    image: debian:9.4
-                    imagePullPolicy: IfNotPresent
-                    command: [bash]
-                    source: |
-                      exit 123
-
-                - name: publish-on-optimizer-kafka
-                  inputs:
-                    parameters:
-                    - name: data
-                    - name: kafka_topic
-                  steps:
-                    - - name: publish-on-optimizer-kafka
-                        templateRef:
-                          name: workflow-base
-                          template: produce
-                        arguments:
-                          parameters:
-                          - name: kafka_topic
-                            value: "{{inputs.parameters.kafka_topic}}"
-                          - name: kafka_ip
-                            value: "{{workflow.parameters.kafka_ip}}"
-                          - name: kafka_port
-                            value: "{{workflow.parameters.kafka_port}}"
-                          - name: data
-                            value: "{{inputs.parameters.data}}"
+                        name: orchestration-template
+                        template: handle-orchestration
+                      when: "{{workflow.parameters.operation}} == \"submit_orchestration\""
 
           parameters:
             - src:

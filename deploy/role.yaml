@@ -2,7 +2,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: issm-argo
-  namespace: issm
 rules:
 - apiGroups:
   - ""
@@ -24,7 +23,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: issm-argo
-  namespace: issm
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -32,8 +30,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: default
-  namespace: issm
 - kind: Group
   name: system:serviceaccounts:default
   apiGroup: rbac.authorization.k8s.io
-  namespace: issm

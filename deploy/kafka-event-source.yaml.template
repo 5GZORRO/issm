@@ -6,7 +6,7 @@ spec:
   kafka:
     intent:
       url: $KAFKA_HOST:$KAFKA_PORT
-      topic: issm-topic
+      topic: $ISSM_DOMAIN_TOPIC
       jsonBody: true
       partition: "0"
       connectionBackoff:
@@ -14,4 +14,3 @@ spec:
         steps: 5
         factor: 2
         jitter: 0.2
-

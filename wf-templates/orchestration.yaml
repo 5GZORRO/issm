@@ -1,0 +1,107 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: orchestration-template
+spec:
+  templates:
+  - name: handle-orchestration
+    dag:
+      tasks:
+      - name: nsso-create-vsd
+        dependencies: [resource-vsb, product-id, resource-id]
+        templateRef:
+          name: workflow-slice
+          template: create-descriptor
+        arguments:
+          parameters:
+          - name: nsso_ip
+            value: "{{workflow.parameters.nsso_ip}}"
+          - name: nsso_port
+            value: "{{workflow.parameters.nsso_port}}"
+          - name: tenant_name
+            value: "{{workflow.parameters.service_owner}}"
+          - name: blueprint_name
+            # TODO: offer should contain VSB_ID
+            value: "vCDN_edge_ICOM"
+          - name: parameters
+            value: "{{workflow.parameters.qos_parameters}}"
+
+      - name: nsso-create-vsi
+        dependencies: [nsso-create-vsd]
+        templateRef:
+          name: workflow-slice
+          template: create-instance
+        arguments:
+          parameters:
+          - name: nsso_ip
+            value: "{{workflow.parameters.nsso_ip}}"
+          - name: nsso_port
+            value: "{{workflow.parameters.nsso_port}}"
+          - name: tenant_name
+            value: "{{workflow.parameters.service_owner}}"
+          - name: vsd_id
+            value: "{{tasks.nsso-create-vsd.outputs.parameters.vsd_id}}"
+          - name: name
+            # TODO: offer should contain VSB_ID
+            value: "vCDN_edge_ICOM"
+          - name: userdata
+            value: |
+              { "product_id": "{{tasks.product-id.outputs.result}}",
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}",
+                "vsi_id": "{{workflow.parameters.service_id}}" }
+
+      - name: nsso-poll
+        dependencies: [nsso-create-vsi]
+        templateRef:
+          name: workflow-slice
+          template: poll
+        arguments:
+          parameters:
+          - name: poll
+            value: "true"
+          - name: nsso_ip
+            value: "{{workflow.parameters.nsso_ip}}"
+          - name: nsso_port
+            value: "{{workflow.parameters.nsso_port}}"
+          - name: tenant_name
+            value: "{{workflow.parameters.service_owner}}"
+          - name: vsi_id
+            value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+          - name: jq_query
+            value: ".status"
+          - name: jq_query_value
+            value: "INSTANTIATED"
+          - name: timeout
+            value: 180
+
+      - name: poll-timeout
+        dependencies: [nsso-poll]
+        templateRef:
+          name: workflow-base
+          template: fail
+        when: "{{tasks.nsso-poll.outputs.parameters.status}} == \"TIMEOUT\""
+
+      - name: sla-event
+        dependencies: [nsso-poll]
+        when: "{{tasks.nsso-poll.outputs.parameters.status}} != \"TIMEOUT\""
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "eventType": "new_SLA",
+                "transactionID": "{{workflow.parameters.transaction_uuid}}",
+                "productID": "{{tasks.product-id.outputs.result}}",
+                "resourceID": "{{tasks.resource-id.outputs.result}}",
+                "instanceID": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}",
+                "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
+                "topic": "isbp-topic-out"
+              }
+          - name: kafka_topic
+            value: "isbp-topic"
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_dl_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_dl_port}}"
