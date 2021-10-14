@@ -55,13 +55,13 @@ kubectl create -f deploy/role.yaml -n domain-operator-b
 operator-a
 
 ```
-kubectl apply -f deploy/install-v1.1.0.yaml -n domain-operator-a
+kubectl apply -f deploy/install-v1.1.0-operator-a.yaml
 ```
 
 and operator-b
 
 ```
-kubectl apply -f deploy/install-v1.1.0.yaml -n domain-operator-b
+kubectl apply -f deploy/install-v1.1.0-operator-b.yaml
 ```
 
 ### Create Eventbus in operator namespaces
