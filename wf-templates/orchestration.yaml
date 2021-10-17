@@ -73,16 +73,16 @@ spec:
           - name: timeout
             value: 30
 
-      - name: poll-timeout
-        dependencies: [nsso-poll]
-        templateRef:
-          name: workflow-base
-          template: fail
-        when: "{{tasks.nsso-poll.outputs.parameters.status}} == \"TIMEOUT\""
+#      - name: poll-timeout
+#        dependencies: [nsso-poll]
+#        templateRef:
+#          name: workflow-base
+#          template: fail
+#        when: "{{tasks.nsso-poll.outputs.parameters.status}} == \"TIMEOUT\""
 
       - name: sla-event
         dependencies: [nsso-poll]
-        when: "{{tasks.nsso-poll.outputs.parameters.status}} != \"TIMEOUT\""
+#        when: "{{tasks.nsso-poll.outputs.parameters.status}} != \"TIMEOUT\""
         templateRef:
           name: workflow-base
           template: produce

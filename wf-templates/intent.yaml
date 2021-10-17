@@ -35,11 +35,13 @@ spec:
         arguments:
           parameters:
           - name: data
+            # TODO: service_owner_target should be taken from PO
             # note: transaction_uuid is the event_uuid passed to this flow
             value: |
               { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}", "topic": "issm-domain-{{workflow.parameters.service_owner}}", 
                 "resources": {{tasks.srds-service.outputs.result}},
-                "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
+                "service_owner": "{{workflow.parameters.service_owner}}", "service_owner_target": "operator-a",
+                "service_id": "{{workflow.parameters.service_id}}",
                 "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
           - name: kafka_topic
             value: issm-optimizer
@@ -219,5 +221,4 @@ spec:
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
                   "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
             - name: kafka_topic
-              # TODO: hard coded
-              value: issm-domain-operator-b
+              value: "issm-domain-{{workflow.parameters.service_owner_target}}"
