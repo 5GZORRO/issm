@@ -109,7 +109,7 @@ spec:
                                  api_version=KAFKA_API_VERSION,
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
-        t = producer.send(KAFKA_TOPIC, {"data": {{inputs.parameters.data}} })
+        t = producer.send(KAFKA_TOPIC, {{inputs.parameters.data}})
         # Block for 'synchronous' send; set timeout on X seconds
         try:
             t.get(timeout=KAFKA_TIMEOUT)
