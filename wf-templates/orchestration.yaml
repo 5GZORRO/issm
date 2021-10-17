@@ -8,7 +8,6 @@ spec:
     dag:
       tasks:
       - name: nsso-create-vsd
-        dependencies: [resource-vsb, product-id, resource-id]
         templateRef:
           name: workflow-slice
           template: create-descriptor
@@ -46,7 +45,7 @@ spec:
             value: "vCDN_edge_ICOM"
           - name: userdata
             value: |
-              { "product_id": "{{tasks.product-id.outputs.result}}",
+              { "product_id": "{{workflow.parameters.product_id}}",
                 "transaction_id": "{{workflow.parameters.transaction_uuid}}",
                 "vsi_id": "{{workflow.parameters.service_id}}" }
 
@@ -72,7 +71,7 @@ spec:
           - name: jq_query_value
             value: "INSTANTIATED"
           - name: timeout
-            value: 180
+            value: 30
 
       - name: poll-timeout
         dependencies: [nsso-poll]
@@ -93,8 +92,8 @@ spec:
             value: |
               { "eventType": "new_SLA",
                 "transactionID": "{{workflow.parameters.transaction_uuid}}",
-                "productID": "{{tasks.product-id.outputs.result}}",
-                "resourceID": "{{tasks.resource-id.outputs.result}}",
+                "productID": "{{workflow.parameters.product_id}}",
+                "resourceID": "{{workflow.parameters.resource_id}}",
                 "instanceID": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}",
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
                 "topic": "isbp-topic-out"

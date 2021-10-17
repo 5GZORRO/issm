@@ -88,6 +88,7 @@ spec:
                   # Slicer service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: nsso_ip
+                    # service name to be used by the local issm instance
                     value: vs
                   - name: nsso_port
                     value: 8082
@@ -140,6 +141,14 @@ spec:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: service_id
                     value: OVERRIDE
+
+                  - name: product_id
+                    value: OVERRIDE
+                  - name: resource_id
+                    value: OVERRIDE
+                  - name: resource_vsb
+                    value: OVERRIDE
+
 
                 templates:
                 - name: handlerequest
@@ -244,3 +253,18 @@ spec:
                 dependencyName: test-dep
                 dataKey: body.service_id
               dest: spec.arguments.parameters.18.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.product_id
+              dest: spec.arguments.parameters.19.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resource_id
+              dest: spec.arguments.parameters.20.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resource_vsb
+              dest: spec.arguments.parameters.21.value

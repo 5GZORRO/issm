@@ -175,19 +175,19 @@ Deploy common utilities and NSSO libraries
 operator-a
 
 ```
-kubectl create -f wf-templates/intent.yaml -n domain-operator-a
-kubectl create -f wf-templates/orchestration.yaml -n domain-operator-a
-kubectl create -f wf-templates/base.yaml -n domain-operator-a
-kubectl create -f wf-templates/slice.yaml -n domain-operator-a
+kubectl apply -f wf-templates/intent.yaml -n domain-operator-a
+kubectl apply -f wf-templates/orchestration.yaml -n domain-operator-a
+kubectl apply -f wf-templates/base.yaml -n domain-operator-a
+kubectl apply -f wf-templates/slice.yaml -n domain-operator-a
 ```
 
 and operator-b
 
 ```
-kubectl create -f wf-templates/intent.yaml -n domain-operator-b
-kubectl create -f wf-templates/orchestration.yaml -n domain-operator-b
-kubectl create -f wf-templates/base.yaml -n domain-operator-b
-kubectl create -f wf-templates/slice.yaml -n domain-operator-b
+kubectl apply -f wf-templates/intent.yaml -n domain-operator-b
+kubectl apply -f wf-templates/orchestration.yaml -n domain-operator-b
+kubectl apply -f wf-templates/base.yaml -n domain-operator-b
+kubectl apply -f wf-templates/slice.yaml -n domain-operator-b
 ```
 
 ## Trigger ISSM business flow
