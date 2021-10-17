@@ -257,14 +257,17 @@ spec:
             - src:
                 dependencyName: test-dep
                 dataKey: body.product_id
+                value: DEFAULT
               dest: spec.arguments.parameters.19.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resource_id
+                value: DEFAULT
               dest: spec.arguments.parameters.20.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resource_vsb
+                value: DEFAULT
               dest: spec.arguments.parameters.21.value

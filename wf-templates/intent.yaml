@@ -37,7 +37,7 @@ spec:
           - name: data
             # note: transaction_uuid is the event_uuid passed to this flow
             value: |
-              { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}",
+              { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}", "topic": "issm-domain-{{workflow.parameters.service_owner}}", 
                 "resources": {{tasks.srds-service.outputs.result}},
                 "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
                 "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
@@ -212,11 +212,12 @@ spec:
             parameters:
             - name: data
               value: |
-                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.name}}",
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "operation": "submit_orchestration",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "resource_id": "{{inputs.parameters.resource_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
                   "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
             - name: kafka_topic
               # TODO: hard coded
-              value: issm-operator-b
+              value: issm-domain-operator-b

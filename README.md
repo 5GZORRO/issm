@@ -95,14 +95,14 @@ envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -
 operator-a
 
 ```
-export ISSM_DOMAIN_TOPIC=issm-operator-a
+export ISSM_DOMAIN_TOPIC=issm-domain-operator-a
 envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n domain-operator-a -f -
 ```
 
 and operator-b
 
 ```
-export ISSM_DOMAIN_TOPIC=issm-operator-b
+export ISSM_DOMAIN_TOPIC=issm-domain-operator-b
 envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n domain-operator-b -f -
 ```
 
