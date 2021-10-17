@@ -65,26 +65,31 @@ Assuming MNO is called `operator-a`
 kubectl create namespace domain-operator-a
 ```
 
+export it
+
+```
+export MNO_NAMESPACE=domain-operator-a
+```
+
+
 ### Add roles to MNO namespace
 
 Run the below to add additional roles to `default` service account of the operator namespace. These roles are used by argo workflow
 
 ```
-kubectl create -f deploy/role.yaml -n domain-operator-a
+kubectl create -f deploy/role.yaml -n $MNO_NAMESPACE
 ```
 
 ### Add argo-event roles to MNO namespace
 
-**TODO: use template file**
-
 ```
-kubectl apply -f deploy/install-v1.1.0-operator-a.yaml
+envsubst < deploy/install-v1.1.0-operator.yaml.template | kubectl create -f -
 ```
 
 ### Create Eventbus in MNO namespace
 
 ```
-kubectl apply -n domain-operator-a -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
+kubectl apply -n $MNO_NAMESPACE -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
 ```
 
 ### Create MNO kafka event source for ISSM bus
@@ -96,11 +101,11 @@ export KAFKA_HOST=172.28.3.196
 export KAFKA_PORT=9092
 ```
 
-**Note:** ensure to define topic with `issm-domain-` prefix
+**Note:** ensure to define topic with `issm-` prefix
 
 ```
-export ISSM_DOMAIN_TOPIC=issm-domain-operator-a
-envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n domain-operator-a -f -
+export ISSM_DOMAIN_TOPIC=issm-$MNO_NAMESPACE
+envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n $MNO_NAMESPACE -f -
 ```
 
 Kafka topics are automatically created during the creation of the event sources
@@ -138,7 +143,7 @@ Update access info for:
 then, onboard the flow
 
 ```
-kubectl apply -f flows/issm-sensor.yaml -n domain-operator-a
+kubectl apply -f flows/issm-sensor.yaml -n $MNO_NAMESPACE
 ```
 
 ### Deploy common templates
@@ -146,10 +151,10 @@ kubectl apply -f flows/issm-sensor.yaml -n domain-operator-a
 Deploy common and orchestration libraries
 
 ```
-kubectl apply -f wf-templates/intent.yaml -n domain-operator-a
-kubectl apply -f wf-templates/orchestration.yaml -n domain-operator-a
-kubectl apply -f wf-templates/base.yaml -n domain-operator-a
-kubectl apply -f wf-templates/slice.yaml -n domain-operator-a
+kubectl apply -f wf-templates/intent.yaml -n $MNO_NAMESPACE
+kubectl apply -f wf-templates/orchestration.yaml -n $MNO_NAMESPACE
+kubectl apply -f wf-templates/base.yaml -n $MNO_NAMESPACE
+kubectl apply -f wf-templates/slice.yaml -n $MNO_NAMESPACE
 ```
 
 ## Trigger ISSM business flow
