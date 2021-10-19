@@ -14,7 +14,10 @@ To install ISSM follow the installation guidelines per component following the b
 7. **Install ISSM-API**. Follow the guidelines [here](api).
 8. **Install ISSM-O**. Follow the guidelines [here](https://github.com/5GZORRO/issm-optimizer).
 
-ISSM is comprised of a centralized component and a local instance running at the MNO premises
+ISSM is comprised of a centralized component and a local instance running at the mobile network operator (MNO) premises
+
+![Testbed](images/distributed.png)
+
 
 ## Deploy ISSM centralized components
 
@@ -37,6 +40,12 @@ export KAFKA_PORT=9092
 
 ```
 envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -n issm -f -
+```
+
+### Add argo-event roles
+
+```
+envsubst < deploy/install-v1.1.0.yaml | kubectl create -f -
 ```
 
 ### Onboard SLA breach workflow
