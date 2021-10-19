@@ -16,7 +16,7 @@ To install ISSM follow the installation guidelines per component following the b
 
 ISSM is comprised of a centralized component and a local instance running at the mobile network operator (MNO) premises
 
-![Testbed](images/distributed.png)
+![Testbed](images/issm-distributed.png)
 
 
 ## Deploy ISSM centralized components
