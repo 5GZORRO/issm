@@ -39,13 +39,13 @@ export KAFKA_PORT=9092
 ```
 
 ```
-envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -n issm -f -
+envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl apply -n issm -f -
 ```
 
 ### Add argo-event roles
 
 ```
-envsubst < deploy/install-v1.1.0.yaml | kubectl create -f -
+kubectl apply -f deploy/install-v1.1.0.yaml
 ```
 
 ### Onboard SLA breach workflow
@@ -86,13 +86,13 @@ export MNO_NAMESPACE=domain-operator-a
 Run the below to add additional roles to `default` service account of the operator namespace. These roles are used by argo workflow
 
 ```
-kubectl create -f deploy/role.yaml -n $MNO_NAMESPACE
+kubectl apply -f deploy/role.yaml -n $MNO_NAMESPACE
 ```
 
 ### Add argo-event roles to MNO namespace
 
 ```
-envsubst < deploy/install-v1.1.0-operator.yaml.template | kubectl create -f -
+envsubst < deploy/install-v1.1.0-operator.yaml.template | kubectl apply -f -
 ```
 
 ### Create Eventbus in MNO namespace
@@ -114,7 +114,7 @@ export KAFKA_PORT=9092
 
 ```
 export ISSM_DOMAIN_TOPIC=issm-$MNO_NAMESPACE
-envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n $MNO_NAMESPACE -f -
+envsubst < deploy/kafka-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
 ```
 
 Kafka topics are automatically created during the creation of the event sources
