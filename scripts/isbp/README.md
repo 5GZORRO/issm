@@ -13,7 +13,7 @@ Log into kubernetes master where ISSM is running
 Invoke the below to publish "sla-event" into DL kafka (update flow parameters accordingly)
 
 ```
-argo submit ./sla-event.yaml -n argo-events
+argo submit ./sla-event.yaml -n issm
 ```
 
 ## manual publish

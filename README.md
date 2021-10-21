@@ -14,39 +14,22 @@ To install ISSM follow the installation guidelines per component following the b
 7. **Install ISSM-API**. Follow the guidelines [here](api).
 8. **Install ISSM-O**. Follow the guidelines [here](https://github.com/5GZORRO/issm-optimizer).
 
-## Deploy
+ISSM is comprised of a centralized component and a local instance running at the mobile network operator (MNO) premises
 
-Log into kuberneters master and perform the below in this order
+![Testbed](images/issm-distributed.png)
 
-### Create issm namespace
 
-All orchestration workflows will invoked under issm namespace
+## Deploy ISSM centralized components
+
+Log into 5GZorro platform kuberneters master
+
+### Create namespace
 
 ```
 kubectl create namespace issm
 ```
 
-### Add namespaced roles
-
-Run the below to add additional roles to `default` service account in `issm` namespace. These roles are used by argo workflow
-
-```
-kubectl create -f deploy/role.yaml
-```
-
-### Add namespaced event roles
-
-```
-kubectl apply -f deploy/install-v1.1.0.yaml -n issm
-```
-
-### Create namespaced Eventbus
-
-```
-kubectl apply -n issm -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
-```
-
-### Create ISSM kafka event sources
+### Create eventsource
 
 Update ISSM kafka ip and port settings per your environment
 
@@ -55,21 +38,14 @@ export KAFKA_HOST=172.28.3.196
 export KAFKA_PORT=9092
 ```
 
-create the sources
-
 ```
-envsubst < deploy/kafka-event-source.yaml.template | kubectl create -n issm -f -
-envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl create -n issm -f -
+envsubst < deploy/kafka-sla-breach-event-source.yaml.template | kubectl apply -n issm -f -
 ```
 
-**Note:** Kafka `issm-topic` , `isbp-topic-out` are automatically created during the creation of the event sources
-
-### Apply docker-secrete.yaml
-
-Create docker-secrete.yaml file per [these instructions](docs/kubernetes-private-dockerregistry.md) and apply it. This secrete is for ISSM orchestrator to pull images from docker.pkg.github.com
+### Add argo-event roles
 
 ```
-kubectl apply -f docker-secrete.yaml -n issm
+kubectl apply -f deploy/install-v1.1.0.yaml
 ```
 
 ### Onboard SLA breach workflow
@@ -77,6 +53,72 @@ kubectl apply -f docker-secrete.yaml -n issm
 ```
 kubectl apply -f flows/issm-sla-breach-sensor.yaml -n issm
 ```
+
+### ISSM-API service
+
+Follow the guidelines [here](api/README.md)
+
+## Deploy ISSM local instance
+
+Follow the instructions in this order to deploy it in a given MNO. Repeat for every MNO you manage
+
+Log into MNO kuberneters master
+
+### Create MNO namespace
+
+Assuming MNO is called `operator-a`
+
+**Note:** ensure to define namespace with `domain-` prefix
+
+```
+kubectl create namespace domain-operator-a
+```
+
+export it
+
+```
+export MNO_NAMESPACE=domain-operator-a
+```
+
+
+### Add roles to MNO namespace
+
+Run the below to add additional roles to `default` service account of the operator namespace. These roles are used by argo workflow
+
+```
+kubectl apply -f deploy/role.yaml -n $MNO_NAMESPACE
+```
+
+### Add argo-event roles to MNO namespace
+
+```
+envsubst < deploy/install-v1.1.0-operator.yaml.template | kubectl apply -f -
+```
+
+### Create Eventbus in MNO namespace
+
+```
+kubectl apply -n $MNO_NAMESPACE -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
+```
+
+### Create MNO kafka event source for ISSM bus
+
+Update ISSM kafka ip and port settings per your environment
+
+```
+export KAFKA_HOST=172.28.3.196
+export KAFKA_PORT=9092
+```
+
+**Note:** ensure to define topic with `issm-` prefix
+
+```
+export ISSM_DOMAIN_TOPIC=issm-$MNO_NAMESPACE
+envsubst < deploy/kafka-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
+```
+
+Kafka topics are automatically created during the creation of the event sources
+
 
 ### Onboard orchestration workflow
 
@@ -89,7 +131,6 @@ Update access info for:
 * ISSM kafka bus
 * Datalake kafka bus
 * Smart resource and service discovery
-* Network slice and service orchestration
 
 ```
                 arguments:
@@ -106,32 +147,30 @@ Update access info for:
                     value: 172.28.3.42
                   - name: discovery_port
                     value: 32000
-                  - name: nsso_ip
-                    value: 172.28.3.42
-                  - name: nsso_port
-                    value: 31082
 ```
 
 then, onboard the flow
 
 ```
-kubectl apply -f flows/issm-sensor.yaml -n issm
+kubectl apply -f flows/issm-sensor.yaml -n $MNO_NAMESPACE
 ```
 
 ### Deploy common templates
 
-Deploy common utilities and NSSO libraries
+Deploy common and orchestration libraries
 
 ```
-kubectl create -f wf-templates/base.yaml -n issm
-kubectl create -f wf-templates/slice.yaml -n issm
+kubectl apply -f wf-templates/intent.yaml -n $MNO_NAMESPACE
+kubectl apply -f wf-templates/orchestration.yaml -n $MNO_NAMESPACE
+kubectl apply -f wf-templates/base.yaml -n $MNO_NAMESPACE
+kubectl apply -f wf-templates/slice.yaml -n $MNO_NAMESPACE
 ```
 
 ## Trigger ISSM business flow
 
 Follow the guidelines [here](https://github.com/5GZORRO/issm/tree/master/api#api)
 
-then watch business flow progress with Argo GUI (`http://<kubernetes master ipaddress>:2746`)
+then watch business flow progress with Argo GUI (`http://<kubernetes master ipaddress>:2746`) running on the participated MNOs
 
 ## Licensing
 

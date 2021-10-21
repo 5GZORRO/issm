@@ -56,6 +56,25 @@ spec:
           - name: data
             value: "{{inputs.parameters.data}}"
 
+  - name: publish-on-kafka
+    inputs:
+      parameters:
+      - name: data
+      - name: kafka_topic
+    steps:
+      - - name: publish-on-kafka
+          template: produce
+          arguments:
+            parameters:
+            - name: kafka_topic
+              value: "{{inputs.parameters.kafka_topic}}"
+            - name: kafka_ip
+              value: "{{workflow.parameters.kafka_ip}}"
+            - name: kafka_port
+              value: "{{workflow.parameters.kafka_port}}"
+            - name: data
+              value: "{{inputs.parameters.data}}"
+
   - name: produce
     # Publish a message into kafka broker
     #
@@ -90,7 +109,7 @@ spec:
                                  api_version=KAFKA_API_VERSION,
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
-        t = producer.send(KAFKA_TOPIC, {"data": {{inputs.parameters.data}} })
+        t = producer.send(KAFKA_TOPIC, {{inputs.parameters.data}})
         # Block for 'synchronous' send; set timeout on X seconds
         try:
             t.get(timeout=KAFKA_TIMEOUT)
@@ -123,3 +142,20 @@ spec:
       command: [sh]
       source: |
         echo '{{inputs.parameters.json_str}}' | jq -r {{inputs.parameters.jq_query}}
+
+  - name: fail
+    script:
+      image: debian:9.4
+      imagePullPolicy: IfNotPresent
+      command: [bash]
+      source: |
+        exit 123
+
+  - name: event-uuid
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import uuid
+        print(str(uuid.uuid4()).replace('-',''))

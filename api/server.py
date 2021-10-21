@@ -31,7 +31,6 @@ from kafka.errors import KafkaError, TopicAlreadyExistsError
 
 KAFKA_API_VERSION = (0, 10, 1)
 KAFKA_TIMEOUT = 10  # seconds
-KAFKA_TOPIC = 'issm-topic'
 
 
 KAFKA_IP = os.getenv('ISSM_KAFKA_HOST')
@@ -42,7 +41,7 @@ if not KAFKA_IP:
     raise sys.exit(1)
 
 
-def publish_intent(kafka_ip, kafka_port, payload):
+def publish_intent(kafka_ip, kafka_port, topic, payload):
     """
     Send the intent to the ISSM kafka bus
 
@@ -60,7 +59,7 @@ def publish_intent(kafka_ip, kafka_port, payload):
                              value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
     print('[INTENT] %s' % payload)
-    t = producer.send(KAFKA_TOPIC, payload)
+    t = producer.send(topic, payload)
 
     # Block for 'synchronous' send; set timeout on X seconds
     try:
@@ -105,7 +104,8 @@ class Proxy:
                        operation=operation)
         payload['callback'] = dict(type='kafka', kafka_topic=service_owner)
         payload.update(intent)
-        publish_intent(KAFKA_IP, KAFKA_PORT, payload)
+        publish_intent(KAFKA_IP, KAFKA_PORT,
+                       topic='issm-domain-%s' % service_owner, payload=payload)
         return {'transaction_uuid': event_uuid}
 
 
