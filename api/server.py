@@ -141,6 +141,34 @@ class Proxy:
 
         return r.json()
 
+    def get_workflows_ref(self, service_owner):
+        """
+        Generate list of launch-in-context URL into Argo GUI for the given
+        service owner (i.e. namespace)
+        """
+        query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
+        "items.metadata.labels.transaction_uuid,items.status.phase&"\
+        "listOptions.labelSelector=operation=submit"
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.get("http://%(argo_server)s/api/v1/workflows/%(namespace)s?%(query)s" %
+                        {
+                           "argo_server": ARGO_SERVER,
+                           "namespace": "domain-"+service_owner,
+                           "query": query_str
+                        }, headers=headers)
+
+        r_json = r.json()
+        transaction_uuid_set = set()
+        for i in r_json.get('items', []):
+            t = i['metadata']['labels'].get('transaction_uuid')
+            if t:
+                transaction_uuid_set.add(t)
+        return {
+            'refs': ['http://%s/workflows/domain-%s?label=transaction_uuid=%s' % (LB_ARGO_SERVER, service_owner, t)
+                     for t in transaction_uuid_set]
+        }
+
     def get_workflow_ref(self, service_owner, transaction_uuid):
         """
         Generate a launch-in-context URL into Argo GUI for the given
@@ -233,6 +261,22 @@ def get_workflows(service_owner):
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
         return response
+
+
+@proxy.route("/get_workflows_ref/<service_owner>",  methods=['GET'])
+def get_workflows_ref(service_owner):
+    try:
+        flow_json = proxy_server.get_workflows_ref(service_owner)
+        response = flask.jsonify(flow_json)
+        response.status_code = 200
+        return response
+    except HTTPException as e:
+        return e
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+        return response
+
 
 @proxy.route("/get_workflow_ref/<service_owner>/<transaction_uuid>",  methods=['GET'])
 def get_workflow_ref(service_owner, transaction_uuid):

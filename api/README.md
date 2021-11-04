@@ -2,6 +2,13 @@
 
 Component responsible for providing management API endpoint service for ISSM.
 
+## Pre-requisites
+
+issm-api calls into argo-server REST endpoints.
+
+* Argo server is automatically installed with argo and is internally available within kubernetes
+* Expose argo-server externally via these [instructions](https://argoproj.github.io/argo-workflows/argo-server/#expose-a-loadbalancer)
+
 ## Deploy the service
 
 Log into 5GZorro platform kuberneters master (where ISSM platform is installed)
@@ -125,10 +132,44 @@ Invocation example:
     }
 ```
 
+### List workflows ref
+
+Returns launch-in-context URLs into flows invoked by the the service owner
+
+```
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflows_ref/<service_owner>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the id of the service owner/tenant that triggered the workflows (str)
+```
+
+Return:
+
+```
+    status - 200
+    refs - list of launch-in-context URLs (json)
+```
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/get_workflows_ref/operator-a
+    {
+      "refs": [
+        "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=98c97e113ed64d538c27c63a0c8fb152",
+        "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=6e0d611b3bff4839b19a05cf12dfa1eb",
+        "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=a0b47da58b29454794c6f54412a1c65b"
+      ]
+    }
+```
 
 ### Get workflow reference
 
-Returns a GUI URL for showing a transaction invoked by the service owner
+Returns a launch-in-context URL for a given transaction invoked by the service owner
 
 ```
 curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflow_ref/<service_owner>/<transaction_uuid>
