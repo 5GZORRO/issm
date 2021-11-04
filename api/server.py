@@ -15,6 +15,7 @@
 import flask
 import json
 import os
+import requests
 import sys
 import uuid
 
@@ -39,6 +40,13 @@ KAFKA_PORT = os.getenv('ISSM_KAFKA_PORT', 9092)
 if not KAFKA_IP:
     print ('ISSM_KAFKA_HOST not set')
     raise sys.exit(1)
+
+ARGO_SERVER = os.getenv('ARGO_SERVER')
+
+if not ARGO_SERVER:
+    print ('ARGO_SERVER not set')
+    raise sys.exit(1)
+
 
 
 def publish_intent(kafka_ip, kafka_port, topic, payload):
@@ -108,6 +116,51 @@ class Proxy:
                        topic='issm-in-%s' % service_owner, payload=payload)
         return {'transaction_uuid': event_uuid}
 
+    def get_workflows(self, service_owner):
+        """
+        Retrieve list of business workflows for the given service owner (i.e. namespace)
+        passing a predefined query.
+        """
+        query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
+        "items.metadata.labels.transaction_uuid,items.status.phase&"\
+        "listOptions.labelSelector=operation=submit"
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.get("http://%(argo_server)s/api/v1/workflows/%(namespace)s?%(query)s" %
+                        {
+                           "argo_server": ARGO_SERVER,
+                           "namespace": "domain-"+service_owner,
+                           "query": query_str
+                        }, headers=headers)
+
+        return r.json()
+
+    def get_workflow_ref(self, argo_url, service_owner, transaction_uuid):
+        """
+        Retrieve list of business workflows for the given service owner (i.e. namespace)
+        passing a predefined query.
+        """
+        query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
+        "items.metadata.labels.transaction_uuid,items.status.phase&"\
+        "listOptions.labelSelector=transaction_uuid=%s" % transaction_uuid
+
+        #headers = {'Content-Type': 'application/json'}
+        # transaction spans namespaces
+        #r = requests.get("http://%(argo_server)s/api/v1/workflows?%(query)s" %
+        #                {
+        #                   "argo_server": ARGO_SERVER,
+        #                   "namespace": "domain-"+service_owner,
+        #                   "query": query_str
+        #                }, headers=headers)
+
+        #return r.json()
+        return {
+            'ref': 'http://%(argo_server)s/workflows/?label=transaction_uuid=%(transaction_uuid)s' %
+                {
+                    'argo_server': argo_url, 
+                    'transaction_uuid': transaction_uuid
+                }
+        }
 
 proxy = flask.Flask(__name__)
 proxy.debug = True
@@ -166,6 +219,36 @@ def instantiate(service_owner):
     sys.stdout.write('Exit /instantiate %s\n' % str(response))
     return response
 
+
+@proxy.route("/get_workflows/<service_owner>",  methods=['GET'])
+def get_workflows(service_owner):
+    try:
+        flow_json = proxy_server.get_workflows(service_owner)
+        response = flask.jsonify(flow_json)
+        response.status_code = 200
+        return response
+    except HTTPException as e:
+        return e
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+        return response
+
+@proxy.route("/get_workflow_ref/<service_owner>/<transaction_uuid>",  methods=['POST'])
+def get_workflow_ref(service_owner, transaction_uuid):
+    try:
+        value = getMessagePayload()
+        argo_url = value.get('argo-server-url', '')
+        flow_json = proxy_server.get_workflow_ref(argo_url, service_owner, transaction_uuid)
+        response = flask.jsonify(flow_json)
+        response.status_code = 200
+        return response
+    except HTTPException as e:
+        return e
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+        return response
 
 def main():
     port = int(os.getenv('LISTEN_PORT', 8080))

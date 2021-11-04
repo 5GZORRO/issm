@@ -22,6 +22,7 @@ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
 
 export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
+export ARGO_SERVER=10.43.204.81:2746
 ```
 
 ```
@@ -34,7 +35,7 @@ kubectl apply -f deploy/service.yaml -n issm
 ### Submit slice intent
 
 ```
-curl -H "Content-type: application/json" -POST -d "@/path/to/intent.json" http://issm_api_ip_address:8080/instantiate/<service_owner>
+curl -H "Content-type: application/json" -POST -d "@/path/to/intent.json" http://issm_api_ip_address:30080/instantiate/<service_owner>
 ```
 
 REST path:
@@ -52,7 +53,7 @@ Return:
 
 ```
     status - 200
-    transaction_uuid - the transaction uuid of this business flow instance
+    transaction_uuid - the transaction uuid of this business flow instance (uuid)
 ```
 
 Invocation example:
@@ -62,6 +63,64 @@ Invocation example:
 
     {
         "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
+    }
+```
+
+### List workflows
+
+Return all workflows invoked by a given service owner
+
+```
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflows/<service_owner>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner      - the id of the service owner/tenant that triggered the workflows (str)
+```
+
+Return:
+
+```
+    status - 200
+    items - list of returned workflows (json)
+```
+
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/get_workflows/operator-a
+
+    {
+      "items": [
+        {
+          "metadata": {
+            "creationTimestamp": "2021-11-04T09:16:55Z",
+            "labels": {
+              "transaction_uuid": "98c97e113ed64d538c27c63a0c8fb152"
+            },
+            "name": "580be51686b144a6a468a97f8e3651a5"
+          },
+          "status": {
+            "phase": "Succeeded"
+          }
+        },
+        {
+          "metadata": {
+            "creationTimestamp": "2021-11-04T09:16:40Z",
+            "labels": {
+              "transaction_uuid": "98c97e113ed64d538c27c63a0c8fb152"
+            },
+            "name": "98c97e113ed64d538c27c63a0c8fb152"
+          },
+          "status": {
+            "phase": "Succeeded"
+          }
+        }
+      ]
     }
 ```
 
