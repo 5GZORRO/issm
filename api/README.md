@@ -18,7 +18,7 @@ Invoke the below in this order
 
 ```
 export REGISTRY=docker.pkg.github.com
-export IMAGE=$REGISTRY/5gzorro/issm/issm-api:c065565
+export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
 
 export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
@@ -31,26 +31,26 @@ kubectl apply -f deploy/service.yaml -n issm
 
 ## API
 
-Submit slice intent to ISSM kafka bus
+### Submit slice intent
 
 ```
-curl -H "Content-type: application/json" -POST -d '{"service_owner": "<service_owner>", "intent": {..}}' http://issm_api_ip_address:8080/instantiate
+curl -H "Content-type: application/json" -POST -d "@/path/to/intent.json" http://issm_api_ip_address:8080/instantiate/<service_owner>
+```
 
 REST path:
+
+```
     issm_api_ip_address - ipaddress ISSM API service.
+    service_owner      - the id of the service owner/tenant to perform this request (str)
+```
 
 Data payload:
-    service_owner      - the id of the service owner/tenant to perform this request (str)
-    intent             - the intent to be submitted (json)
-        requested_price  - price of the resource (range e.g. "15-25")
-        latitude       - the desired location of the slice/resource
-        longitude      - the desired location of the slice/resource
-        resourceSpecCharacteristic - the type of the resource (e.g, "CDN")
-        category       - category (e.g "vnf")
-        qos_parameters - (json - e.g. {"users": "10"})
-        service_id     - existing vertical service id to extend (e.g. "23")
+
+refer [here](payloads/intent.md) for current supported format
 
 Return:
+
+```
     status - 200
     transaction_uuid - the transaction uuid of this business flow instance
 ```
@@ -58,11 +58,11 @@ Return:
 Invocation example:
 
 ```
-curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a", "intent": {"requested_price": "15-25", "latitude": "43", "longitude": "10", "resourceSpecCharacteristic": "CDN", "category": "vnf", "qos_parameters": {"users": "10"}, "service_id": "23" }}' http://172.28.3.42:30080/instantiate
+    curl -H "Content-type: application/json" -POST -d "@payloads/intent.json" http://172.28.3.42:30080/instantiate/operator-a
 
-{
-  "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
-}
+    {
+        "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
+    }
 ```
 
 ## Build (**relevant for developers only**)
@@ -77,7 +77,7 @@ curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a
 1.  Set the `IMAGE` environment variable to hold the image.
 
     ```
-    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:c065565
+    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
     ```
 
 1.  Invoke the below command.

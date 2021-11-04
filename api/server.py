@@ -101,11 +101,11 @@ class Proxy:
 
         payload = dict(event_uuid=event_uuid, transaction_uuid=event_uuid,
                        service_owner=service_owner,
-                       operation=operation)
+                       operation=operation, sub_operation='new_intent')
         payload['callback'] = dict(type='kafka', kafka_topic=service_owner)
         payload.update(intent)
         publish_intent(KAFKA_IP, KAFKA_PORT,
-                       topic='issm-domain-%s' % service_owner, payload=payload)
+                       topic='issm-in-%s' % service_owner, payload=payload)
         return {'transaction_uuid': event_uuid}
 
 
@@ -143,29 +143,14 @@ def hello():
     return ("Greetings from the ISSM-API server! ")
 
 
-@proxy.route("/instantiate",  methods=['POST'])
-def instantiate():
-    def _validate(intent):
-        try:
-            intent['qos_parameters']
-            intent['requested_price']
-            intent['latitude']
-            intent['longitude']
-            intent['resource_type']
-            intent['category']
-        except KeyError as e:
-            raise Exception ('[ERROR] Failed schema validation: Missing '
-                   'key: "%s" in the supplied payload: %s' %
-                   (str(e), intent))
-
-    sys.stdout.write('Received flow instantiate request\n')
+@proxy.route("/instantiate/<service_owner>",  methods=['POST'])
+def instantiate(service_owner):
+    sys.stdout.write('Received flow instantiate request for [%s] \n' % service_owner)
     try:
         value = getMessagePayload()
 
-        service_owner=value['service_owner']
-        operation='submit_intent'
-        intent = value['intent']
-        # _validate(intent=intent)
+        operation='submit'
+        intent = value
         response = flask.jsonify(
             proxy_server.instantiate(
                 service_owner=service_owner, operation=operation,

@@ -1,9 +1,25 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: intent-template
+  name: submit-template
 spec:
   templates:
+  - name: handle-submit
+    steps:
+    - - name: handle-new-intent
+        template: handle-new-intent
+        when: "{{workflow.parameters.sub_operation}} == \"new_intent\""
+
+    - - name: handle-best-offer
+        template: handle-best-offer
+        when: "{{workflow.parameters.sub_operation}} == \"submit_bp\""
+
+    - - name: handle-orchestration
+        templateRef:
+          name: orchestration-template
+          template: handle-orchestration
+        when: "{{workflow.parameters.sub_operation}} == \"submit_orchestration\""
+
   - name: handle-new-intent
     dag:
       tasks:
@@ -36,10 +52,9 @@ spec:
           parameters:
           - name: data
             # TODO: service_owner_target should be taken from PO
-            # note: transaction_uuid is the event_uuid passed to this flow
             value: |
-              { "event_uuid": "{{workflow.name}}", "transaction_uuid": "{{workflow.name}}", "topic": "issm-domain-{{workflow.parameters.service_owner}}", 
-                "resources": {{tasks.srds-service.outputs.result}},
+              { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
+                "resources": {{tasks.srds-service.outputs.result}}, "operation": "submit", "sub_operation": "submit_bp",
                 "service_owner": "{{workflow.parameters.service_owner}}", "service_owner_target": "operator-a",
                 "service_id": "{{workflow.parameters.service_id}}",
                 "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
@@ -215,10 +230,10 @@ spec:
             - name: data
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-                  "operation": "submit_orchestration",
+                  "operation": "submit", "sub_operation": "submit_orchestration",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "resource_id": "{{inputs.parameters.resource_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
                   "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
             - name: kafka_topic
-              value: "issm-domain-{{workflow.parameters.service_owner_target}}"
+              value: "issm-in-{{workflow.parameters.service_owner_target}}"
