@@ -22,7 +22,12 @@ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
 
 export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
+
+# cluster-IP
 export ARGO_SERVER=10.43.204.81:2746
+
+# externally accessed argo-server
+export LB_ARGO_SERVER=172.28.3.42:32026
 ```
 
 ```
@@ -121,6 +126,40 @@ Invocation example:
           }
         }
       ]
+    }
+```
+
+
+### Get workflow reference
+
+Returns a GUI URL into a single transaction invoked by a given service owner
+
+```
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflow_ref/<service_owner>/<transaction_uuid>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner      - the id of the service owner/tenant that triggered the workflows (str)
+    transaction_uuid - the transaction uuid of this business flow instance (uuid)
+```
+
+Return:
+
+```
+    status - 200
+    items - list of returned workflows (json)
+```
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/get_workflow_ref/operator-a/98c97e113ed64d538c27c63a0c8fb152
+
+    {
+      "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=98c97e113ed64d538c27c63a0c8fb152"
     }
 ```
 

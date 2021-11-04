@@ -29,4 +29,6 @@ spec:
             value: "$ISSM_KAFKA_PORT"
           - name: ARGO_SERVER
             value: "$ARGO_SERVER"
+          - name: LB_ARGO_SERVER
+            value: "$LB_ARGO_SERVER"
 

@@ -47,6 +47,12 @@ if not ARGO_SERVER:
     print ('ARGO_SERVER not set')
     raise sys.exit(1)
 
+LB_ARGO_SERVER = os.getenv('LB_ARGO_SERVER')
+
+if not LB_ARGO_SERVER:
+    print ('LB_ARGO_SERVER not set')
+    raise sys.exit(1)
+
 
 
 def publish_intent(kafka_ip, kafka_port, topic, payload):
@@ -94,7 +100,7 @@ class Proxy:
         """
         Instantiate ISSM flow with the given intent on-behalf of the service_owner.
 
-        :param service_owner: the name of the service owner e.g. tenant name.
+        :param service_owner: the name of the service owner.
         :type service_owner: ``str``
 
         :param operation: the operation for this flow. Currently
@@ -135,32 +141,26 @@ class Proxy:
 
         return r.json()
 
-    def get_workflow_ref(self, argo_url, service_owner, transaction_uuid):
+    def get_workflow_ref(self, service_owner, transaction_uuid):
         """
-        Retrieve list of business workflows for the given service owner (i.e. namespace)
-        passing a predefined query.
+        Generate a launch-in-context URL into Argo GUI for the given
+        transaction uuid of the service owner
+
+        :param service_owner: the name of the service owner.
+        :type service_owner: ``str``
+
+        :param transaction_uuid: the transaction uuid.
+        :type transaction_uuid: ``str`` in uuid format
         """
-        query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
-        "items.metadata.labels.transaction_uuid,items.status.phase&"\
-        "listOptions.labelSelector=transaction_uuid=%s" % transaction_uuid
-
-        #headers = {'Content-Type': 'application/json'}
-        # transaction spans namespaces
-        #r = requests.get("http://%(argo_server)s/api/v1/workflows?%(query)s" %
-        #                {
-        #                   "argo_server": ARGO_SERVER,
-        #                   "namespace": "domain-"+service_owner,
-        #                   "query": query_str
-        #                }, headers=headers)
-
-        #return r.json()
         return {
-            'ref': 'http://%(argo_server)s/workflows/?label=transaction_uuid=%(transaction_uuid)s' %
+            'ref': 'http://%(argo_server)s/workflows/domain-%(service_owner)s?label=transaction_uuid=%(transaction_uuid)s' %
                 {
-                    'argo_server': argo_url, 
+                    'argo_server': LB_ARGO_SERVER,
+                    'service_owner': service_owner,
                     'transaction_uuid': transaction_uuid
                 }
         }
+
 
 proxy = flask.Flask(__name__)
 proxy.debug = True
@@ -234,12 +234,10 @@ def get_workflows(service_owner):
         response.status_code = 500
         return response
 
-@proxy.route("/get_workflow_ref/<service_owner>/<transaction_uuid>",  methods=['POST'])
+@proxy.route("/get_workflow_ref/<service_owner>/<transaction_uuid>",  methods=['GET'])
 def get_workflow_ref(service_owner, transaction_uuid):
     try:
-        value = getMessagePayload()
-        argo_url = value.get('argo-server-url', '')
-        flow_json = proxy_server.get_workflow_ref(argo_url, service_owner, transaction_uuid)
+        flow_json = proxy_server.get_workflow_ref(service_owner, transaction_uuid)
         response = flask.jsonify(flow_json)
         response.status_code = 200
         return response
