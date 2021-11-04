@@ -4,17 +4,11 @@ Component responsible for providing management API endpoint service for ISSM.
 
 ## Deploy the service
 
-Log into kuberneters master where ISSM is installed
+Log into 5GZorro platform kuberneters master (where ISSM platform is installed)
 
 Invoke the below in this order
 
-**Note:**
-
-1. you may need to update below settings according to your environment
-
-1. deployment uses myregistrykey secrete to pull image from private docker registry. Refer [here](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes-private-dockerregistry.md) to set it up
-
-1. ensure to create the secrete in `issm` namespace
+**Note:** you may need to update below settings according to your environment
 
 ```
 export REGISTRY=docker.pkg.github.com
@@ -29,6 +23,8 @@ export ARGO_SERVER=10.43.204.81:2746
 # externally accessed argo-server
 export LB_ARGO_SERVER=172.28.3.42:32026
 ```
+
+Deploy
 
 ```
 envsubst < deploy/deployment.yaml.template | kubectl apply -n issm -f -
@@ -73,7 +69,7 @@ Invocation example:
 
 ### List workflows
 
-Return all workflows invoked by a given service owner
+Returns the workflows invoked by the service owner
 
 ```
 curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflows/<service_owner>
@@ -83,7 +79,7 @@ REST path:
 
 ```
     issm_api_ip_address - ipaddress ISSM API service.
-    service_owner      - the id of the service owner/tenant that triggered the workflows (str)
+    service_owner       - the id of the service owner/tenant that triggered the workflows (str)
 ```
 
 Return:
@@ -132,7 +128,7 @@ Invocation example:
 
 ### Get workflow reference
 
-Returns a GUI URL into a single transaction invoked by a given service owner
+Returns a GUI URL for showing a transaction invoked by the service owner
 
 ```
 curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflow_ref/<service_owner>/<transaction_uuid>
@@ -142,8 +138,8 @@ REST path:
 
 ```
     issm_api_ip_address - ipaddress ISSM API service.
-    service_owner      - the id of the service owner/tenant that triggered the workflows (str)
-    transaction_uuid - the transaction uuid of this business flow instance (uuid)
+    service_owner       - the id of the service owner that triggered the workflows (str)
+    transaction_uuid    - the transaction uuid of this business flow instance (uuid)
 ```
 
 Return:
