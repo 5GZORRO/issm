@@ -99,6 +99,9 @@ spec:
                   - name: operation
                     value: OVERRIDE
 
+                  - name: sub_operation
+                    value: OVERRIDE
+
                   - name: category
                     value: OVERRIDE
 
@@ -112,7 +115,7 @@ spec:
 
                   - name: service_owner_target
                     # target mno to extend slice/service
-                    # (applicable for full orchestration mode)
+                    # (applicable for symetric orchestration)
                     value: OVERRIDE
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,9 +130,6 @@ spec:
                   - name: qos_parameters
                     value: OVERRIDE
 
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # operation == submit_bp
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: resources
                     value: OVERRIDE
 
@@ -158,25 +158,13 @@ spec:
                 templates:
                 - name: handlerequest
                   steps:
-                  - - name: handle-new-intent-flow
-                      # It is assumed that this is the starting point of the transaction
+                  - - name: submit
+                      # This is the starting point of the transaction
                       # meaning that event_uuid here is the transaction_uuid
                       templateRef:
-                        name: intent-template
-                        template: handle-new-intent
-                      when: "{{workflow.parameters.operation}} == \"submit_intent\""
-
-                  - - name: handle-best-offer-flow
-                      templateRef:
-                        name: intent-template
-                        template: handle-best-offer
-                      when: "{{workflow.parameters.operation}} == \"submit_bp\""
-
-                  - - name: handle-orchestration
-                      templateRef:
-                        name: orchestration-template
-                        template: handle-orchestration
-                      when: "{{workflow.parameters.operation}} == \"submit_orchestration\""
+                        name: submit-template
+                        template: handle-submit
+                      when: "{{workflow.parameters.operation}} == \"submit\""
 
           parameters:
             - src:
@@ -189,7 +177,7 @@ spec:
 
             - src:
                 #
-                # transaction_uuid is treated as the whole business trasaction
+                # transaction_uuid is treated as the whole business transaction
                 # that can contain several flows (i.e. several event_uuids)
                 #
                 dependencyName: test-dep
@@ -203,82 +191,95 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.category
+                dataKey: body.operation
+              dest: metadata.labels.operation
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.sub_operation
                 value: DEFAULT
               dest: spec.arguments.parameters.9.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.latitude
+                dataKey: body.category
                 value: DEFAULT
               dest: spec.arguments.parameters.10.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.longitude
+                dataKey: body.latitude
                 value: DEFAULT
               dest: spec.arguments.parameters.11.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.service_owner
+                dataKey: body.longitude
                 value: DEFAULT
               dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.service_owner_target
+                dataKey: body.service_owner
                 value: DEFAULT
               dest: spec.arguments.parameters.13.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.requested_price
+                dataKey: body.service_owner_target
                 value: DEFAULT
               dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resourceSpecCharacteristic
+                dataKey: body.requested_price
                 value: DEFAULT
               dest: spec.arguments.parameters.15.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.qos_parameters
+                dataKey: body.resourceSpecCharacteristic
                 value: DEFAULT
               dest: spec.arguments.parameters.16.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resources
+                dataKey: body.qos_parameters
                 value: DEFAULT
               dest: spec.arguments.parameters.17.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.transaction_uuid
+                dataKey: body.resources
+                value: DEFAULT
               dest: spec.arguments.parameters.18.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.service_id
+                dataKey: body.transaction_uuid
+                value: notapplicable
               dest: spec.arguments.parameters.19.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.product_id
+                dataKey: body.service_id
                 value: DEFAULT
               dest: spec.arguments.parameters.20.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resource_id
+                dataKey: body.product_id
                 value: DEFAULT
               dest: spec.arguments.parameters.21.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resource_vsb
+                dataKey: body.resource_id
                 value: DEFAULT
               dest: spec.arguments.parameters.22.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resource_vsb
+                value: DEFAULT
+              dest: spec.arguments.parameters.23.value

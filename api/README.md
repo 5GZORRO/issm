@@ -2,27 +2,36 @@
 
 Component responsible for providing management API endpoint service for ISSM.
 
+## Pre-requisites
+
+issm-api calls into argo-server REST endpoints.
+
+* Argo server is automatically installed with argo and is internally available within kubernetes
+* Expose argo-server externally via these [instructions](https://argoproj.github.io/argo-workflows/argo-server/#expose-a-loadbalancer)
+
 ## Deploy the service
 
-Log into kuberneters master where ISSM is installed
+Log into 5GZorro platform kuberneters master (where ISSM platform is installed)
 
 Invoke the below in this order
 
-**Note:**
-
-1. you may need to update below settings according to your environment
-
-1. deployment uses myregistrykey secrete to pull image from private docker registry. Refer [here](https://github.com/5GZORRO/infrastructure/blob/master/docs/kubernetes-private-dockerregistry.md) to set it up
-
-1. ensure to create the secrete in `issm` namespace
+**Note:** you may need to update below settings according to your environment
 
 ```
 export REGISTRY=docker.pkg.github.com
-export IMAGE=$REGISTRY/5gzorro/issm/issm-api:c065565
+export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
 
 export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
+
+# cluster-IP
+export ARGO_SERVER=10.43.204.81:2746
+
+# externally accessed argo-server
+export LB_ARGO_SERVER=172.28.3.42:32026
 ```
+
+Deploy
 
 ```
 envsubst < deploy/deployment.yaml.template | kubectl apply -n issm -f -
@@ -31,38 +40,164 @@ kubectl apply -f deploy/service.yaml -n issm
 
 ## API
 
-Submit slice intent to ISSM kafka bus
+### Submit slice intent
 
 ```
-curl -H "Content-type: application/json" -POST -d '{"service_owner": "<service_owner>", "intent": {..}}' http://issm_api_ip_address:8080/instantiate
+curl -H "Content-type: application/json" -POST -d "@/path/to/intent.json" http://issm_api_ip_address:30080/instantiate/<service_owner>
+```
 
 REST path:
+
+```
     issm_api_ip_address - ipaddress ISSM API service.
+    service_owner      - the id of the service owner/tenant to perform this request (str)
+```
 
 Data payload:
-    service_owner      - the id of the service owner/tenant to perform this request (str)
-    intent             - the intent to be submitted (json)
-        requested_price  - price of the resource (range e.g. "15-25")
-        latitude       - the desired location of the slice/resource
-        longitude      - the desired location of the slice/resource
-        resourceSpecCharacteristic - the type of the resource (e.g, "CDN")
-        category       - category (e.g "vnf")
-        qos_parameters - (json - e.g. {"users": "10"})
-        service_id     - existing vertical service id to extend (e.g. "23")
+
+refer [here](payloads/intent.md) for current supported format
 
 Return:
+
+```
     status - 200
-    transaction_uuid - the transaction uuid of this business flow instance
+    transaction_uuid - the transaction uuid of this business flow instance (uuid)
 ```
 
 Invocation example:
 
 ```
-curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a", "intent": {"requested_price": "15-25", "latitude": "43", "longitude": "10", "resourceSpecCharacteristic": "CDN", "category": "vnf", "qos_parameters": {"users": "10"}, "service_id": "23" }}' http://172.28.3.42:30080/instantiate
+    curl -H "Content-type: application/json" -POST -d "@payloads/intent.json" http://172.28.3.42:30080/instantiate/operator-a
 
-{
-  "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
-}
+    {
+        "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
+    }
+```
+
+### List workflows
+
+Returns the workflows invoked by the service owner
+
+```
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflows/<service_owner>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the id of the service owner/tenant that triggered the workflows (str)
+```
+
+Return:
+
+```
+    status - 200
+    items - list of returned workflows (json)
+```
+
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/get_workflows/operator-a
+
+    {
+      "items": [
+        {
+          "metadata": {
+            "creationTimestamp": "2021-11-04T09:16:55Z",
+            "labels": {
+              "transaction_uuid": "98c97e113ed64d538c27c63a0c8fb152"
+            },
+            "name": "580be51686b144a6a468a97f8e3651a5"
+          },
+          "status": {
+            "phase": "Succeeded"
+          }
+        },
+        {
+          "metadata": {
+            "creationTimestamp": "2021-11-04T09:16:40Z",
+            "labels": {
+              "transaction_uuid": "98c97e113ed64d538c27c63a0c8fb152"
+            },
+            "name": "98c97e113ed64d538c27c63a0c8fb152"
+          },
+          "status": {
+            "phase": "Succeeded"
+          }
+        }
+      ]
+    }
+```
+
+### List workflows ref
+
+Returns launch-in-context URLs into flows invoked by the the service owner
+
+```
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflows_ref/<service_owner>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the id of the service owner/tenant that triggered the workflows (str)
+```
+
+Return:
+
+```
+    status - 200
+    refs - list of launch-in-context URLs (json)
+```
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/get_workflows_ref/operator-a
+    {
+      "refs": [
+        "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=98c97e113ed64d538c27c63a0c8fb152",
+        "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=6e0d611b3bff4839b19a05cf12dfa1eb",
+        "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=a0b47da58b29454794c6f54412a1c65b"
+      ]
+    }
+```
+
+### Get workflow reference
+
+Returns a launch-in-context URL for a given transaction invoked by the service owner
+
+```
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflow_ref/<service_owner>/<transaction_uuid>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the id of the service owner that triggered the workflows (str)
+    transaction_uuid    - the transaction uuid of this business flow instance (uuid)
+```
+
+Return:
+
+```
+    status - 200
+    items - list of returned workflows (json)
+```
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/get_workflow_ref/operator-a/98c97e113ed64d538c27c63a0c8fb152
+
+    {
+      "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=98c97e113ed64d538c27c63a0c8fb152"
+    }
 ```
 
 ## Build (**relevant for developers only**)
@@ -77,7 +212,7 @@ curl -H "Content-type: application/json" -POST -d '{"service_owner": "operator-a
 1.  Set the `IMAGE` environment variable to hold the image.
 
     ```
-    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:c065565
+    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
     ```
 
 1.  Invoke the below command.

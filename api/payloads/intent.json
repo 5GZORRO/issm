@@ -1,0 +1,11 @@
+{
+    "requested_price": "15-25",
+    "latitude": "43",
+    "longitude": "10",
+    "resourceSpecCharacteristic": "CDN",
+    "category": "vnf",
+    "qos_parameters": {
+        "users": "10"
+    },
+    "service_id": "23"
+}
