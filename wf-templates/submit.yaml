@@ -10,8 +10,8 @@ spec:
         template: handle-new-intent
         when: "{{workflow.parameters.sub_operation}} == \"new_intent\""
 
-    - - name: handle-best-offer
-        template: handle-best-offer
+    - - name: handle-best-offers
+        template: handle-best-offers
         when: "{{workflow.parameters.sub_operation}} == \"submit_bp\""
 
     - - name: handle-orchestration
@@ -61,10 +61,11 @@ spec:
           - name: kafka_topic
             value: issm-optimizer
 
-  - name: handle-best-offer
+  - name: handle-best-offers
     dag:
       tasks:
-      - name: handle-best-offer
+      - name: handle-best-offers
+        # this step is mainly for pretty print
         templateRef:
           name: workflow-base
           template: jq-script
@@ -73,10 +74,58 @@ spec:
           - name: json_str
             value: "{{workflow.parameters.resources}}"
           - name: jq_query
-            value: '.[0]'
+            value: '.'
+
+      - name: loop-best-offers
+        dependencies: [handle-best-offers]
+        template: loop-best-offers
+        arguments:
+          parameters:
+          - name: best_offer
+            value: "{{item}}"
+        withParam: "{{workflow.parameters.resources}}"
+
+  - name: loop-best-offers
+    inputs:
+      parameters:
+      - name: best_offer
+    dag:
+      tasks:
+      - name: resource-vsb
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.Blueprint_name'
+
+      - name: product-id
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.product_id'
+
+      - name: resource-id
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.resource_id'
 
       - name: acquire
-        dependencies: [handle-best-offer]
+        dependencies: [resource-vsb, product-id, resource-id]
         # invokes acquire template for every entry in resources list
         # waits for them to succeed and publishes status success for the
         # service owner to consume
@@ -84,47 +133,10 @@ spec:
         arguments:
           parameters:
           - name: product_id
-            value: "{{item.product_id}}"
-        withParam: "{{workflow.parameters.resources}}"
-
-      - name: resource-vsb
-        dependencies: [acquire]
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{workflow.parameters.resources}}"
-          - name: jq_query
-            value: '.[0].Blueprint_name'
-
-      - name: product-id
-        dependencies: [acquire]
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{workflow.parameters.resources}}"
-          - name: jq_query
-            value: '.[0].product_id'
-
-      - name: resource-id
-        dependencies: [acquire]
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{workflow.parameters.resources}}"
-          - name: jq_query
-            value: '.[0].resource_id'
+            value: "{{tasks.product-id.outputs.result}}"
 
       - name: trigger-orchestration-workflow
-        dependencies: [resource-vsb, product-id, resource-id]
+        dependencies: [acquire]
         template: trigger-orchestration-workflow
         arguments:
           parameters:
