@@ -172,10 +172,16 @@ kubectl apply -f flows/issm-sensor.yaml -n $MNO_NAMESPACE
 
 ### Deploy common templates
 
-Deploy common and orchestration libraries
+Deploy common libraries according to your orchestration stack the mno supports
 
 ```
-kubectl apply -f wf-templates -n $MNO_NAMESPACE
+wf-templates/apply.sh NSSO
+```
+
+or
+
+```
+wf-templates/apply.sh ISSM-MEC
 ```
 
 ## Trigger ISSM business flow
