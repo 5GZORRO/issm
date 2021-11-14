@@ -159,3 +159,15 @@ spec:
       source: |
         import uuid
         print(str(uuid.uuid4()).replace('-',''))
+
+  - name: correct-mno-name
+    # TODO: remove this once unified format is applied
+    inputs:
+      parameters:
+      - name: mno_name
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        print(str("{{inputs.parameters.mno_name}}").replace('_','-'))
