@@ -21,9 +21,9 @@ spec:
           - name: sd
             value: "112233"
           - name: cluster_core
-            value: cluster-1
-          - name: cluster_edge
             value: cluster-2
+          - name: cluster_edge
+            value: cluster-1
 
           - name: network_name
             value: gilan
@@ -35,6 +35,25 @@ spec:
             value: 10.20.0.2
           - name: network_end
             value: 10.20.0.50
+
+          - name: networks
+            value: |
+              [
+                {
+                  "name": "sbi",
+                  "master": "ens3",
+                  "range": "10.100.200.0/24",
+                  "start": "10.100.200.21",
+                  "end": "10.100.200.40"
+                },
+                {
+                  "name": "up",
+                  "master": "ens3",
+                  "range": "192.168.1.0/24",
+                  "start": "192.168.1.251",
+                  "end": "192.168.1.253"
+                }
+              ]              
 
       - name: mec-cnmp-poll
         dependencies: [mec-cnmp-create-nssi]
@@ -106,6 +125,8 @@ spec:
       - name: network_start
       - name: network_end
 
+      - name: networks
+
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
       imagePullPolicy: IfNotPresent
@@ -123,7 +144,8 @@ spec:
           "network_master": "{{inputs.parameters.network_master}}",
           "network_range": "{{inputs.parameters.network_range}}",
           "network_start": "{{inputs.parameters.network_start}}",
-          "network_end": "{{inputs.parameters.network_end}}"
+          "network_end": "{{inputs.parameters.network_end}}",
+          "networks": {{inputs.parameters.networks}}
         }
         EOF
         }
