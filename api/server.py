@@ -124,27 +124,10 @@ class Proxy:
 
     def get_workflows(self, service_owner):
         """
-        Retrieve list of business workflows for the given service owner (i.e. namespace)
-        passing a predefined query.
-        """
-        query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
-        "items.metadata.labels.transaction_uuid,items.status.phase&"\
-        "listOptions.labelSelector=operation=submit"
+        Generate a list of transactions that are built from sub-flows.
 
-        headers = {'Content-Type': 'application/json'}
-        r = requests.get("http://%(argo_server)s/api/v1/workflows/%(namespace)s?%(query)s" %
-                        {
-                           "argo_server": ARGO_SERVER,
-                           "namespace": "domain-"+service_owner,
-                           "query": query_str
-                        }, headers=headers)
-
-        return r.json()
-
-    def get_workflows_ref(self, service_owner):
-        """
-        Generate list of launch-in-context URL into Argo GUI for the given
-        service owner (i.e. namespace)
+        :param service_owner: the service owner to list its transactions
+        :type service_owner: ``str``
         """
         query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
         "items.metadata.labels.transaction_uuid,items.status.phase&"\
@@ -159,35 +142,35 @@ class Proxy:
                         }, headers=headers)
 
         r_json = r.json()
-        transaction_uuid_set = set()
+        transactions = dict()
         for i in r_json.get('items', []):
-            t = i['metadata']['labels'].get('transaction_uuid')
-            if t:
-                transaction_uuid_set.add(t)
-        return {
-            'refs': ['http://%s/workflows/domain-%s?label=transaction_uuid=%s' % (LB_ARGO_SERVER, service_owner, t)
-                     for t in transaction_uuid_set]
-        }
+            # transaction key points to list of its subflows
+            transactions.setdefault(i['metadata']['labels']['transaction_uuid'], []).append(i)
+        # prepare the output
+        res = []
+        for k in transactions:
+            subflows = transactions[k]
+            status_set = set()
+            for sf in subflows:
+                status_set.add(sf['status']['phase'])
+            # at least one Failed
+            if 'Failed' in status_set:
+                status = 'Failed'
 
-    def get_workflow_ref(self, service_owner, transaction_uuid):
-        """
-        Generate a launch-in-context URL into Argo GUI for the given
-        transaction uuid of the service owner
+            # at least one Running
+            elif 'Running' in status_set:
+                status = 'Running'
 
-        :param service_owner: the name of the service owner.
-        :type service_owner: ``str``
+            # all Succeeded
+            elif len(status_set) == 1 and 'Succeeded' in status_set:
+                status = 'Succeeded'
 
-        :param transaction_uuid: the transaction uuid.
-        :type transaction_uuid: ``str`` in uuid format
-        """
-        return {
-            'ref': 'http://%(argo_server)s/workflows/domain-%(service_owner)s?label=transaction_uuid=%(transaction_uuid)s' %
-                {
-                    'argo_server': LB_ARGO_SERVER,
-                    'service_owner': service_owner,
-                    'transaction_uuid': transaction_uuid
-                }
-        }
+            res.append(
+                dict(transaction_uuid=k, status=status,
+                    ref='http://%s/workflows/domain-%s?label=transaction_uuid=%s'
+                    % (LB_ARGO_SERVER, service_owner, k)))
+
+        return res
 
 
 proxy = flask.Flask(__name__)
@@ -248,8 +231,8 @@ def instantiate(service_owner):
     return response
 
 
-@proxy.route("/get_workflows/<service_owner>",  methods=['GET'])
-def get_workflows(service_owner):
+@proxy.route("/get_workflows_ref/<service_owner>",  methods=['GET'])
+def get_workflows_ref(service_owner):
     try:
         flow_json = proxy_server.get_workflows(service_owner)
         response = flask.jsonify(flow_json)
@@ -262,35 +245,6 @@ def get_workflows(service_owner):
         response.status_code = 500
         return response
 
-
-@proxy.route("/get_workflows_ref/<service_owner>",  methods=['GET'])
-def get_workflows_ref(service_owner):
-    try:
-        flow_json = proxy_server.get_workflows_ref(service_owner)
-        response = flask.jsonify(flow_json)
-        response.status_code = 200
-        return response
-    except HTTPException as e:
-        return e
-    except Exception as e:
-        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
-        response.status_code = 500
-        return response
-
-
-@proxy.route("/get_workflow_ref/<service_owner>/<transaction_uuid>",  methods=['GET'])
-def get_workflow_ref(service_owner, transaction_uuid):
-    try:
-        flow_json = proxy_server.get_workflow_ref(service_owner, transaction_uuid)
-        response = flask.jsonify(flow_json)
-        response.status_code = 200
-        return response
-    except HTTPException as e:
-        return e
-    except Exception as e:
-        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
-        response.status_code = 500
-        return response
 
 def main():
     port = int(os.getenv('LISTEN_PORT', 8080))
