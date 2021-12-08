@@ -19,7 +19,7 @@ Invoke the below in this order
 
 ```
 export REGISTRY=docker.pkg.github.com
-export IMAGE=$REGISTRY/5gzorro/issm/issm-api:d8ed311
+export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
 
 export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
@@ -132,6 +132,31 @@ Invocation example:
     ]
 ```
 
+
+### Delete workflow
+
+Deletes a single transaction owned by the service owner
+
+```
+curl -H "Content-type: application/json" -X DELETE http://issm_api_ip_address:30080/delete_workflow_ref/<service_owner>/<transaction_uuid>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the id of the service owner/tenant that owned the workflows (str)
+    transaction_uuid    - the uuid of the transaction (str in uuid format)
+```
+
+Return:
+
+```
+    status - 200
+```
+
+
+
 ## Build (**relevant for developers only**)
 
 1.  Set the `REGISTRY` environment variable to hold the name of your docker registry. The following command sets it
@@ -144,7 +169,7 @@ Invocation example:
 1.  Set the `IMAGE` environment variable to hold the image.
 
     ```
-    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:d8ed311
+    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
     ```
 
 1.  Invoke the below command.

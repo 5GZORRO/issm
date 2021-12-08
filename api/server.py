@@ -129,6 +129,8 @@ class Proxy:
         :param service_owner: the service owner to list its transactions
         :type service_owner: ``str``
         """
+        sys.stdout.write ('Enter get_workflows [service_owner=%s]\n' % service_owner)
+
         query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
         "items.metadata.labels.transaction_uuid,items.status.phase&"\
         "listOptions.labelSelector=operation=submit"
@@ -141,9 +143,10 @@ class Proxy:
                            "query": query_str
                         }, headers=headers)
 
-        r_json = r.json()
+        sys.stdout.write ('Parsing result [r.json=%s]..\n' % r.json())
+        items = r.json()['items'] if r.json().get('items') is not None else []
         transactions = dict()
-        for i in r_json.get('items', []):
+        for i in items:
             # transaction key points to list of its subflows
             transactions.setdefault(i['metadata']['labels']['transaction_uuid'], []).append(i)
         # prepare the output
@@ -171,6 +174,52 @@ class Proxy:
                     % (LB_ARGO_SERVER, service_owner, k)))
 
         return res
+
+
+    def delete_workflow(self, service_owner, transaction_uuid):
+        """
+        Delete a transaction of a given service owner.
+
+        Delete all subflows belonging to the given transaction uuid.
+
+        :param service_owner: the service owner owning the transaction
+        :type service_owner: ``str``
+
+        :param transaction_uuid: the transaction uuid
+        :type transaction_uuid: ``str`` in uuid format
+        """
+        sys.stdout.write ('Enter delete_workflow [transaction_uuid=%s]\n' % transaction_uuid)
+
+        headers = {'Content-Type': 'application/json'}
+        query_str = "fields=items.metadata.name,"\
+        "items.metadata.labels.transaction_uuid&"\
+        "listOptions.labelSelector=transaction_uuid=%s" % transaction_uuid
+
+        sys.stdout.write ('Retrieve workflows [namespace=%s] [query=%s]' %
+                          ('domain'+service_owner, query_str))
+        r = requests.get("http://%(argo_server)s/api/v1/workflows/%(namespace)s?%(query)s" %
+                       {
+                          "argo_server": ARGO_SERVER,
+                          "namespace": "domain-"+service_owner,
+                          "query": query_str
+                       }, headers=headers)
+        sys.stdout.write ('Parsing result [r.json=%s]..\n' % r.json())
+
+        items = r.json()['items'] if r.json().get('items') is not None else []
+        if not items:
+            raise Exception(
+                "[transaction_uuid=%s] does not exist for [service_owner=%s]" %
+                (transaction_uuid, service_owner))
+
+        for i in items:
+            name = i['metadata']['name']
+            sys.stdout.write ('Deleting workflow [name=%s]..\n' % name)
+            requests.delete("http://%(argo_server)s/api/v1/workflows/%(namespace)s/%(name)s" %
+                        {
+                            "argo_server": ARGO_SERVER,
+                            "namespace": "domain-"+service_owner,
+                            "name": name
+                        }, headers=headers)
 
 
 proxy = flask.Flask(__name__)
@@ -246,6 +295,19 @@ def get_workflows_ref(service_owner):
         return response
 
 
+@proxy.route("/delete_workflow_ref/<service_owner>/<transaction_uuid>",  methods=['DELETE'])
+def delete_workflow_ref(service_owner, transaction_uuid):
+    try:
+        proxy_server.delete_workflow(service_owner, transaction_uuid)
+        return ('OK', 200)
+    except HTTPException as e:
+        return e
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+        return response
+
+
 def main():
     port = int(os.getenv('LISTEN_PORT', 8080))
     server = WSGIServer(('0.0.0.0', port), proxy, log=None)
@@ -256,7 +318,7 @@ def main():
            "KAFKA_API_VERSION '%s' " %
            (int(port), KAFKA_IP, str(KAFKA_PORT), KAFKA_API_VERSION))
     print ('-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n')
-    
+
     server.serve_forever()
 
 
