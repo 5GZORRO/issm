@@ -53,6 +53,10 @@ spec:
                   # a same transaction uuid
                   #
                   transaction_uuid: OVERRIDE
+                  #
+                  # to denote that this wf belongs to ISSM component to be used
+                  # by ISSM-API queries
+                  issm: "true"
               spec:
                 entrypoint: handlerequest
                 imagePullSecrets:
@@ -97,6 +101,7 @@ spec:
                   # Payload parameters
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: operation
+                    # instantiate, scaleout
                     value: OVERRIDE
 
                   - name: sub_operation
@@ -164,7 +169,7 @@ spec:
                       templateRef:
                         name: submit-template
                         template: handle-submit
-                      when: "{{workflow.parameters.operation}} == \"submit\""
+                      when: "{{workflow.parameters.operation}} == \"scaleout\""
 
           parameters:
             - src:

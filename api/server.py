@@ -54,6 +54,7 @@ if not LB_ARGO_SERVER:
     raise sys.exit(1)
 
 
+TRANSACTION_TYPES = ['instantiate', 'scaleout']
 
 def publish_intent(kafka_ip, kafka_port, topic, payload):
     """
@@ -96,16 +97,16 @@ class Proxy:
 #         self.core_api = kubernetes.client.CoreV1Api()
         sys.stdout.write('ISSM-API initialized\n')
 
-    def instantiate(self, service_owner, operation, intent):
+    def instantiate(self, service_owner, transaction_type, intent):
         """
         Instantiate ISSM flow with the given intent on-behalf of the service_owner.
 
         :param service_owner: the name of the service owner.
         :type service_owner: ``str``
 
-        :param operation: the operation for this flow. Currently
-                          'submit_intent' is supported
-        :type operation: ``str``
+        :param transaction_type: the operation for this flow. Currently 'instantiate',
+                          'scaleout' are supported.
+        :type transaction_type: ``str``
 
         :param intent: intent payload e.g. slice creation intent
         :type intent: ``dict``
@@ -115,25 +116,34 @@ class Proxy:
 
         payload = dict(event_uuid=event_uuid, transaction_uuid=event_uuid,
                        service_owner=service_owner,
-                       operation=operation, sub_operation='new_intent')
+                       operation=transaction_type, sub_operation='new_intent')
         payload['callback'] = dict(type='kafka', kafka_topic=service_owner)
         payload.update(intent)
         publish_intent(KAFKA_IP, KAFKA_PORT,
                        topic='issm-in-%s' % service_owner, payload=payload)
         return {'transaction_uuid': event_uuid}
 
-    def get_workflows(self, service_owner):
+    def get_transactions(self, service_owner, transaction_type=None):
         """
-        Generate a list of transactions that are built from sub-flows.
+        Return a list of transactions belonging to the given service owner.
 
-        :param service_owner: the service owner to list its transactions
+        :param service_owner: the service owner
         :type service_owner: ``str``
+
+        :param transaction_type: the transaction type
+        :type transaction_type: ``str``
         """
-        sys.stdout.write ('Enter get_workflows [service_owner=%s]\n' % service_owner)
+        sys.stdout.write (
+            'Enter get_transactions [service_owner=%s, transaction_type=%s]\n' %
+                          (service_owner, transaction_type))
 
         query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
         "items.metadata.labels.transaction_uuid,items.status.phase&"\
-        "listOptions.labelSelector=operation=submit"
+        "listOptions.labelSelector=issm=true"
+
+        if transaction_type:
+            query_str = query_str + \
+                ",operation=%s" % transaction_type
 
         headers = {'Content-Type': 'application/json'}
         r = requests.get("http://%(argo_server)s/api/v1/workflows/%(namespace)s?%(query)s" %
@@ -176,11 +186,12 @@ class Proxy:
         return res
 
 
-    def delete_workflow(self, service_owner, transaction_uuid):
+    def delete_transaction(self, service_owner, transaction_uuid):
         """
         Delete a transaction of a given service owner.
 
-        Delete all subflows belonging to the given transaction uuid.
+        Delete all subflows belonging to the given transaction uuid for this
+        service owner.
 
         :param service_owner: the service owner owning the transaction
         :type service_owner: ``str``
@@ -188,7 +199,9 @@ class Proxy:
         :param transaction_uuid: the transaction uuid
         :type transaction_uuid: ``str`` in uuid format
         """
-        sys.stdout.write ('Enter delete_workflow [transaction_uuid=%s]\n' % transaction_uuid)
+        sys.stdout.write (
+            'Enter delete_transaction [service_owner=%s, transaction_uuid=%s]\n' %
+            (service_owner, transaction_uuid))
 
         headers = {'Content-Type': 'application/json'}
         query_str = "fields=items.metadata.name,"\
@@ -256,9 +269,11 @@ def hello():
     return ("Greetings from the ISSM-API server! ")
 
 
-@proxy.route("/instantiate/<service_owner>",  methods=['POST'])
-def instantiate(service_owner):
-    sys.stdout.write('Received flow instantiate request for [%s] \n' % service_owner)
+@proxy.route("/transactions/<service_owner>/<transaction_type>",  methods=['POST'])
+def transactions_submit(service_owner, transaction_type):
+    sys.stdout.write('Received submit request for '
+                     '[service_owner=%s, transaction_type=%s] \n' %
+                     (service_owner, transaction_type))
     try:
         value = getMessagePayload()
 
@@ -270,41 +285,74 @@ def instantiate(service_owner):
                 intent=intent))
 
         response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         response.status_code = 500
 
     sys.stdout.write('Exit /instantiate %s\n' % str(response))
     return response
 
 
-@proxy.route("/get_workflows_ref/<service_owner>",  methods=['GET'])
-def get_workflows_ref(service_owner):
+@proxy.route("/transactions/<service_owner>",  methods=['GET'])
+def transactions_get_all(service_owner):
+    sys.stdout.write('Received get request for '
+                     '[service_owner=%s] \n' % service_owner)
     try:
-        flow_json = proxy_server.get_workflows(service_owner)
+        flow_json = proxy_server.get_transactions(service_owner)
         response = flask.jsonify(flow_json)
         response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
     except HTTPException as e:
         return e
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
 
 
-@proxy.route("/delete_workflow_ref/<service_owner>/<transaction_uuid>",  methods=['DELETE'])
-def delete_workflow_ref(service_owner, transaction_uuid):
+@proxy.route("/transactions/<service_owner>/<transaction_type>",  methods=['GET'])
+def transactions_get(service_owner, transaction_type):
+    sys.stdout.write('Received get request for '
+                     '[service_owner=%s, transaction_type=%s] \n' %
+                     (service_owner, transaction_type))
     try:
-        proxy_server.delete_workflow(service_owner, transaction_uuid)
-        return ('OK', 200)
+        flow_json = proxy_server.get_transactions(service_owner, transaction_type)
+        response = flask.jsonify(flow_json)
+        response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        return response
     except HTTPException as e:
         return e
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        return response
+
+
+@proxy.route("/transactions/<service_owner>/<transaction_uuid>",  methods=['DELETE'])
+def transactions_delete(service_owner, transaction_uuid):
+    sys.stdout.write('Received delete request for '
+                     '[service_owner=%s, transaction_uuid=%s] \n' %
+                     (service_owner, transaction_uuid))
+    try:
+        proxy_server.delete_transaction(service_owner, transaction_uuid)
+        response = flask.jsonify({})
+        response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        return response
+    except HTTPException as e:
+        return e
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
 
 
