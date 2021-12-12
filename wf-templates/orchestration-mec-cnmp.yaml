@@ -175,7 +175,7 @@ spec:
       source: |
         if [ {{inputs.parameters.poll}} = "true" ]; then
           i=0
-          until [ "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/subnetslice/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
+          until [ "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/core_subnetslice/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
              echo "Poll wait for nssi_id: {{inputs.parameters.nssi_id}}.. (1 sec)"
              sleep 1
              i=$((i+1))
@@ -184,10 +184,10 @@ spec:
             echo "TIMEOUT"
             echo "TIMEOUT" > /tmp/status.txt
           else
-            echo "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/subnetslice/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+            echo "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/core_subnetslice/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
           fi
         else  
-          echo "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/subnetslice/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+          echo "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/core_subnetslice/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
         fi
     outputs:
       parameters:
