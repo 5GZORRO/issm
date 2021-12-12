@@ -150,7 +150,7 @@ spec:
         EOF
         }
         echo "Create instance.."
-        nssi_id="$(curl --data "$(generate_post_instance_create)" -X POST http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/subnetslice --header "Content-Type:application/json" 2>/dev/null | jq -r .subnet_name)"
+        nssi_id="$(curl --data "$(generate_post_instance_create)" -X POST http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/subnetslice --header "Content-Type:application/json" 2>/dev/null | jq -r .name)"
         echo $nssi_id > /tmp/id.txt
     outputs:
       parameters:
