@@ -19,7 +19,7 @@ Invoke the below in this order
 
 ```
 export REGISTRY=docker.pkg.github.com
-export IMAGE=$REGISTRY/5gzorro/issm/issm-api:fc4343f
+export IMAGE=$REGISTRY/5gzorro/issm/issm-api:dfbbc7c
 
 export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
@@ -40,17 +40,20 @@ kubectl apply -f deploy/service.yaml -n issm
 
 ## API
 
-### Submit slice intent
+### Submit transaction (slice intent)
+
+Submit a transaction for the given service owner
 
 ```
-curl -H "Content-type: application/json" -POST -d "@/path/to/intent.json" http://issm_api_ip_address:30080/instantiate/<service_owner>
+curl -H "Content-type: application/json" -POST -d "@/path/to/intent.json" http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_type>
 ```
 
 REST path:
 
 ```
     issm_api_ip_address - ipaddress ISSM API service.
-    service_owner      - the id of the service owner/tenant to perform this request (str)
+    service_owner       - the service owner (str)
+    transaction_type    - the type of the transaction to submit (e.g. scaleout)
 ```
 
 Data payload:
@@ -67,138 +70,133 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -POST -d "@payloads/intent.json" http://172.28.3.42:30080/instantiate/operator-a
+    curl -H "Content-type: application/json" -POST -d "@payloads/intent.json" http://172.28.3.42:30080/transactions/operator-a/scaleout
 
     {
         "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
     }
 ```
 
-### List workflows
+### List transactions
 
-Returns the workflows invoked by the service owner
-
-```
-curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflows/<service_owner>
-```
-
-REST path:
+Returns all transactions of the service owner
 
 ```
-    issm_api_ip_address - ipaddress ISSM API service.
-    service_owner       - the id of the service owner/tenant that triggered the workflows (str)
-```
-
-Return:
-
-```
-    status - 200
-    items - list of returned workflows (json)
-```
-
-
-Invocation example:
-
-```
-    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/get_workflows/operator-a
-
-    {
-      "items": [
-        {
-          "metadata": {
-            "creationTimestamp": "2021-11-04T09:16:55Z",
-            "labels": {
-              "transaction_uuid": "98c97e113ed64d538c27c63a0c8fb152"
-            },
-            "name": "580be51686b144a6a468a97f8e3651a5"
-          },
-          "status": {
-            "phase": "Succeeded"
-          }
-        },
-        {
-          "metadata": {
-            "creationTimestamp": "2021-11-04T09:16:40Z",
-            "labels": {
-              "transaction_uuid": "98c97e113ed64d538c27c63a0c8fb152"
-            },
-            "name": "98c97e113ed64d538c27c63a0c8fb152"
-          },
-          "status": {
-            "phase": "Succeeded"
-          }
-        }
-      ]
-    }
-```
-
-### List workflows ref
-
-Returns launch-in-context URLs into flows invoked by the the service owner
-
-```
-curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflows_ref/<service_owner>
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/transactions/<service_owner>
 ```
 
 REST path:
 
 ```
     issm_api_ip_address - ipaddress ISSM API service.
-    service_owner       - the id of the service owner/tenant that triggered the workflows (str)
+    service_owner       - the service owner (str)
 ```
 
 Return:
 
 ```
     status - 200
-    refs - list of launch-in-context URLs (json)
+    list of dictionaries (json):
+        transaction_uuid - transaction uuid
+        status - overall status of the transaction
+        ref - launch-in-context URLs into Argo UI's service owner view
 ```
 
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/get_workflows_ref/operator-a
-    {
-      "refs": [
-        "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=98c97e113ed64d538c27c63a0c8fb152",
-        "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=6e0d611b3bff4839b19a05cf12dfa1eb",
-        "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=a0b47da58b29454794c6f54412a1c65b"
-      ]
-    }
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/transactions/operator-a
+    [
+      {
+        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=c5df607af95f469ca058919989968a33",
+        "status": "Running",
+        "transaction_type": "scaleout",
+        "transaction_uuid": "c5df607af95f469ca058919989968a33"
+      },
+      {
+        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=a547d8726e7049b6bd7eee4cf3b93831",
+        "status": "Succeeded",
+        "transaction_type": "instantiate",
+        "transaction_uuid": "a547d8726e7049b6bd7eee4cf3b93831"
+      },
+      {
+        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=6261754de98c4537ba08bd6b3c8d7d36",
+        "status": "Succeeded",
+        "transaction_type": "scaleout",
+        "transaction_uuid": "6261754de98c4537ba08bd6b3c8d7d36"
+      }
+    ]
 ```
 
-### Get workflow reference
+### List transactions from a given type
 
-Returns a launch-in-context URL for a given transaction invoked by the service owner
+Returns transactions of a given type of the service owner
 
 ```
-curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflow_ref/<service_owner>/<transaction_uuid>
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_type>
 ```
 
 REST path:
 
 ```
     issm_api_ip_address - ipaddress ISSM API service.
-    service_owner       - the id of the service owner that triggered the workflows (str)
-    transaction_uuid    - the transaction uuid of this business flow instance (uuid)
+    service_owner       - the service owner (str)
+    transaction_type    - the type of the transaction (e.g. scaleout)
 ```
 
 Return:
 
 ```
     status - 200
-    items - list of returned workflows (json)
+    list of dictionaries (json):
+        transaction_uuid - transaction uuid
+        status - overall status of the transaction
+        ref - launch-in-context URLs into Argo UI's service owner view
 ```
 
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/get_workflow_ref/operator-a/98c97e113ed64d538c27c63a0c8fb152
-
-    {
-      "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=98c97e113ed64d538c27c63a0c8fb152"
-    }
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/transactions/operator-a/scaleout
+    [
+      {
+        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=c5df607af95f469ca058919989968a33",
+        "status": "Running",
+        "transaction_type": "scaleout",
+        "transaction_uuid": "c5df607af95f469ca058919989968a33"
+      },
+      {
+        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=6261754de98c4537ba08bd6b3c8d7d36",
+        "status": "Succeeded",
+        "transaction_type": "scaleout",
+        "transaction_uuid": "6261754de98c4537ba08bd6b3c8d7d36"
+      }
+    ]
 ```
+
+### Delete transaction
+
+Deletes a single transaction owned by the service owner
+
+```
+curl -H "Content-type: application/json" -X DELETE http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_uuid>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the service owner (str)
+    transaction_uuid    - the uuid of the transaction (str in uuid format)
+```
+
+Return:
+
+```
+    status - 200
+```
+
+
 
 ## Build (**relevant for developers only**)
 
@@ -212,7 +210,7 @@ Invocation example:
 1.  Set the `IMAGE` environment variable to hold the image.
 
     ```
-    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:fc4343f
+    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:dfbbc7c
     ```
 
 1.  Invoke the below command.

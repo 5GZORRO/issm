@@ -54,6 +54,7 @@ if not LB_ARGO_SERVER:
     raise sys.exit(1)
 
 
+TRANSACTION_TYPES = ['instantiate', 'scaleout']
 
 def publish_intent(kafka_ip, kafka_port, topic, payload):
     """
@@ -96,16 +97,16 @@ class Proxy:
 #         self.core_api = kubernetes.client.CoreV1Api()
         sys.stdout.write('ISSM-API initialized\n')
 
-    def instantiate(self, service_owner, operation, intent):
+    def instantiate(self, service_owner, transaction_type, intent):
         """
         Instantiate ISSM flow with the given intent on-behalf of the service_owner.
 
         :param service_owner: the name of the service owner.
         :type service_owner: ``str``
 
-        :param operation: the operation for this flow. Currently
-                          'submit_intent' is supported
-        :type operation: ``str``
+        :param transaction_type: the operation for this flow. Currently 'instantiate',
+                          'scaleout' are supported.
+        :type transaction_type: ``str``
 
         :param intent: intent payload e.g. slice creation intent
         :type intent: ``dict``
@@ -115,79 +116,126 @@ class Proxy:
 
         payload = dict(event_uuid=event_uuid, transaction_uuid=event_uuid,
                        service_owner=service_owner,
-                       operation=operation, sub_operation='new_intent')
+                       operation=transaction_type, sub_operation='new_intent')
         payload['callback'] = dict(type='kafka', kafka_topic=service_owner)
         payload.update(intent)
         publish_intent(KAFKA_IP, KAFKA_PORT,
                        topic='issm-in-%s' % service_owner, payload=payload)
         return {'transaction_uuid': event_uuid}
 
-    def get_workflows(self, service_owner):
+    def get_transactions(self, service_owner, transaction_type=None):
         """
-        Retrieve list of business workflows for the given service owner (i.e. namespace)
-        passing a predefined query.
-        """
-        query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
-        "items.metadata.labels.transaction_uuid,items.status.phase&"\
-        "listOptions.labelSelector=operation=submit"
+        Return a list of transactions belonging to the given service owner.
+        If transaction_type supplied then filter by operation.
 
-        headers = {'Content-Type': 'application/json'}
-        r = requests.get("http://%(argo_server)s/api/v1/workflows/%(namespace)s?%(query)s" %
-                        {
-                           "argo_server": ARGO_SERVER,
-                           "namespace": "domain-"+service_owner,
-                           "query": query_str
-                        }, headers=headers)
-
-        return r.json()
-
-    def get_workflows_ref(self, service_owner):
-        """
-        Generate list of launch-in-context URL into Argo GUI for the given
-        service owner (i.e. namespace)
-        """
-        query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
-        "items.metadata.labels.transaction_uuid,items.status.phase&"\
-        "listOptions.labelSelector=operation=submit"
-
-        headers = {'Content-Type': 'application/json'}
-        r = requests.get("http://%(argo_server)s/api/v1/workflows/%(namespace)s?%(query)s" %
-                        {
-                           "argo_server": ARGO_SERVER,
-                           "namespace": "domain-"+service_owner,
-                           "query": query_str
-                        }, headers=headers)
-
-        r_json = r.json()
-        transaction_uuid_set = set()
-        for i in r_json.get('items', []):
-            t = i['metadata']['labels'].get('transaction_uuid')
-            if t:
-                transaction_uuid_set.add(t)
-        return {
-            'refs': ['http://%s/workflows/domain-%s?label=transaction_uuid=%s' % (LB_ARGO_SERVER, service_owner, t)
-                     for t in transaction_uuid_set]
-        }
-
-    def get_workflow_ref(self, service_owner, transaction_uuid):
-        """
-        Generate a launch-in-context URL into Argo GUI for the given
-        transaction uuid of the service owner
-
-        :param service_owner: the name of the service owner.
+        :param service_owner: the service owner
         :type service_owner: ``str``
 
-        :param transaction_uuid: the transaction uuid.
+        :param transaction_type: the transaction type
+        :type transaction_type: ``str``
+        """
+        sys.stdout.write (
+            'Enter get_transactions [service_owner=%s, transaction_type=%s]\n' %
+                          (service_owner, transaction_type))
+
+        query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
+        "items.metadata.labels.transaction_uuid,"\
+        "items.metadata.labels.operation,items.status.phase&"\
+        "listOptions.labelSelector=issm=true"
+
+        if transaction_type:
+            query_str = query_str + \
+                ",operation=%s" % transaction_type
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.get("http://%(argo_server)s/api/v1/workflows/%(namespace)s?%(query)s" %
+                        {
+                           "argo_server": ARGO_SERVER,
+                           "namespace": "domain-"+service_owner,
+                           "query": query_str
+                        }, headers=headers)
+
+        sys.stdout.write ('Parsing result [r.json=%s]..\n' % r.json())
+        items = r.json()['items'] if r.json().get('items') is not None else []
+        transactions = dict()
+        for i in items:
+            # transaction key points to list of its subflows
+            transactions.setdefault(i['metadata']['labels']['transaction_uuid'], []).append(i)
+        # prepare the output
+        res = []
+        for k in transactions:
+            subflows = transactions[k]
+            status_set = set()
+            t_type = subflows[0]['metadata']['labels']['operation']
+            for sf in subflows:
+                status_set.add(sf['status']['phase'])
+            # at least one Failed
+            if 'Failed' in status_set:
+                status = 'Failed'
+
+            # at least one Running
+            elif 'Running' in status_set:
+                status = 'Running'
+
+            # all Succeeded
+            elif len(status_set) == 1 and 'Succeeded' in status_set:
+                status = 'Succeeded'
+
+            res.append(
+                dict(transaction_uuid=k, transaction_type=t_type, status=status,
+                    ref='http://%s/workflows/domain-%s?label=transaction_uuid=%s'
+                    % (LB_ARGO_SERVER, service_owner, k)))
+
+        return res
+
+
+    def delete_transaction(self, service_owner, transaction_uuid):
+        """
+        Delete a transaction of a given service owner.
+
+        Delete all subflows belonging to the given transaction uuid for this
+        service owner.
+
+        :param service_owner: the service owner owning the transaction
+        :type service_owner: ``str``
+
+        :param transaction_uuid: the transaction uuid
         :type transaction_uuid: ``str`` in uuid format
         """
-        return {
-            'ref': 'http://%(argo_server)s/workflows/domain-%(service_owner)s?label=transaction_uuid=%(transaction_uuid)s' %
-                {
-                    'argo_server': LB_ARGO_SERVER,
-                    'service_owner': service_owner,
-                    'transaction_uuid': transaction_uuid
-                }
-        }
+        sys.stdout.write (
+            'Enter delete_transaction [service_owner=%s, transaction_uuid=%s]\n' %
+            (service_owner, transaction_uuid))
+
+        headers = {'Content-Type': 'application/json'}
+        query_str = "fields=items.metadata.name,"\
+        "items.metadata.labels.transaction_uuid&"\
+        "listOptions.labelSelector=transaction_uuid=%s" % transaction_uuid
+
+        sys.stdout.write ('Retrieve workflows [namespace=%s] [query=%s]' %
+                          ('domain'+service_owner, query_str))
+        r = requests.get("http://%(argo_server)s/api/v1/workflows/%(namespace)s?%(query)s" %
+                       {
+                          "argo_server": ARGO_SERVER,
+                          "namespace": "domain-"+service_owner,
+                          "query": query_str
+                       }, headers=headers)
+        sys.stdout.write ('Parsing result [r.json=%s]..\n' % r.json())
+
+        items = r.json()['items'] if r.json().get('items') is not None else []
+        if not items:
+            raise Exception(
+                "[transaction_uuid=%s] does not exist for [service_owner=%s]" %
+                (transaction_uuid, service_owner))
+
+        for i in items:
+            name = i['metadata']['name']
+            sys.stdout.write ('Deleting workflow [name=%s]..\n' % name)
+            requests.delete("http://%(argo_server)s/api/v1/workflows/%(namespace)s/%(name)s" %
+                        {
+                            "argo_server": ARGO_SERVER,
+                            "namespace": "domain-"+service_owner,
+                            "name": name
+                        }, headers=headers)
 
 
 proxy = flask.Flask(__name__)
@@ -224,73 +272,95 @@ def hello():
     return ("Greetings from the ISSM-API server! ")
 
 
-@proxy.route("/instantiate/<service_owner>",  methods=['POST'])
-def instantiate(service_owner):
-    sys.stdout.write('Received flow instantiate request for [%s] \n' % service_owner)
+@proxy.route("/transactions/<service_owner>/<transaction_type>",  methods=['POST'])
+def transactions_submit(service_owner, transaction_type):
+    sys.stdout.write('Received submit request for '
+                     '[service_owner=%s, transaction_type=%s] \n' %
+                     (service_owner, transaction_type))
     try:
         value = getMessagePayload()
+        if transaction_type not in TRANSACTION_TYPES:
+            raise Exception(
+                'transaction_type value does not match: %s' % 
+                TRANSACTION_TYPES)
 
-        operation='submit'
         intent = value
         response = flask.jsonify(
             proxy_server.instantiate(
-                service_owner=service_owner, operation=operation,
+                service_owner=service_owner, transaction_type=transaction_type,
                 intent=intent))
 
         response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         response.status_code = 500
 
     sys.stdout.write('Exit /instantiate %s\n' % str(response))
     return response
 
 
-@proxy.route("/get_workflows/<service_owner>",  methods=['GET'])
-def get_workflows(service_owner):
+@proxy.route("/transactions/<service_owner>",  methods=['GET'])
+def transactions_get_all(service_owner):
+    sys.stdout.write('Received get request for '
+                     '[service_owner=%s] \n' % service_owner)
     try:
-        flow_json = proxy_server.get_workflows(service_owner)
+        flow_json = proxy_server.get_transactions(service_owner)
         response = flask.jsonify(flow_json)
         response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
     except HTTPException as e:
         return e
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
 
 
-@proxy.route("/get_workflows_ref/<service_owner>",  methods=['GET'])
-def get_workflows_ref(service_owner):
+@proxy.route("/transactions/<service_owner>/<transaction_type>",  methods=['GET'])
+def transactions_get(service_owner, transaction_type):
+    sys.stdout.write('Received get request for '
+                     '[service_owner=%s, transaction_type=%s] \n' %
+                     (service_owner, transaction_type))
     try:
-        flow_json = proxy_server.get_workflows_ref(service_owner)
+        flow_json = proxy_server.get_transactions(service_owner, transaction_type)
         response = flask.jsonify(flow_json)
         response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
     except HTTPException as e:
         return e
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
 
 
-@proxy.route("/get_workflow_ref/<service_owner>/<transaction_uuid>",  methods=['GET'])
-def get_workflow_ref(service_owner, transaction_uuid):
+@proxy.route("/transactions/<service_owner>/<transaction_uuid>",  methods=['DELETE'])
+def transactions_delete(service_owner, transaction_uuid):
+    sys.stdout.write('Received delete request for '
+                     '[service_owner=%s, transaction_uuid=%s] \n' %
+                     (service_owner, transaction_uuid))
     try:
-        flow_json = proxy_server.get_workflow_ref(service_owner, transaction_uuid)
-        response = flask.jsonify(flow_json)
+        proxy_server.delete_transaction(service_owner, transaction_uuid)
+        response = flask.jsonify({})
         response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
     except HTTPException as e:
         return e
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
+
 
 def main():
     port = int(os.getenv('LISTEN_PORT', 8080))
@@ -302,7 +372,7 @@ def main():
            "KAFKA_API_VERSION '%s' " %
            (int(port), KAFKA_IP, str(KAFKA_PORT), KAFKA_API_VERSION))
     print ('-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n')
-    
+
     server.serve_forever()
 
 
