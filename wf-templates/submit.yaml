@@ -53,7 +53,7 @@ spec:
           - name: data
             value: |
               { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
-                "resources": {{tasks.srds-service.outputs.result}}, "operation": "submit", "sub_operation": "submit_bp",
+                "resources": {{tasks.srds-service.outputs.result}}, "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
                 "service_owner": "{{workflow.parameters.service_owner}}",
                 "service_id": "{{workflow.parameters.service_id}}",
                 "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
@@ -265,7 +265,7 @@ spec:
             - name: data
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-                  "operation": "submit", "sub_operation": "submit_orchestration",
+                  "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "resource_id": "{{inputs.parameters.resource_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",

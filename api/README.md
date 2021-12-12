@@ -19,7 +19,7 @@ Invoke the below in this order
 
 ```
 export REGISTRY=docker.pkg.github.com
-export IMAGE=$REGISTRY/5gzorro/issm/issm-api:a16fb27
+export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
 
 export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
@@ -40,17 +40,20 @@ kubectl apply -f deploy/service.yaml -n issm
 
 ## API
 
-### Submit slice intent
+### Submit transaction (slice intent)
+
+Submit a transaction for the given service owner
 
 ```
-curl -H "Content-type: application/json" -POST -d "@/path/to/intent.json" http://issm_api_ip_address:30080/instantiate/<service_owner>
+curl -H "Content-type: application/json" -POST -d "@/path/to/intent.json" http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_type>
 ```
 
 REST path:
 
 ```
     issm_api_ip_address - ipaddress ISSM API service.
-    service_owner      - the id of the service owner/tenant to perform this request (str)
+    service_owner       - the service owner (str)
+    transaction_type    - the type of the transaction to submit (e.g. scaleout)
 ```
 
 Data payload:
@@ -67,26 +70,26 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -POST -d "@payloads/intent.json" http://172.28.3.42:30080/instantiate/operator-a
+    curl -H "Content-type: application/json" -POST -d "@payloads/intent.json" http://172.28.3.42:30080/transactions/operator-a/scaleout
 
     {
         "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
     }
 ```
 
-### List workflows ref
+### List transactions
 
-Returns list of transactions invoked by the service owner
+Returns all transactions of the service owner
 
 ```
-curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/get_workflows_ref/<service_owner>
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/transactions/<service_owner>
 ```
 
 REST path:
 
 ```
     issm_api_ip_address - ipaddress ISSM API service.
-    service_owner       - the id of the service owner/tenant that triggered the workflows (str)
+    service_owner       - the service owner (str)
 ```
 
 Return:
@@ -102,7 +105,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/get_workflows/operator-a
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/transactions/operator-a
     [
       {
         "transaction_uuid": "77a6dc4622374122917d4f001a1f2a0a",
@@ -132,20 +135,46 @@ Invocation example:
     ]
 ```
 
+### List transactions from a given type
 
-### Delete workflow
-
-Deletes a single transaction owned by the service owner
+Returns transactions of a given type of the service owner
 
 ```
-curl -H "Content-type: application/json" -X DELETE http://issm_api_ip_address:30080/delete_workflow_ref/<service_owner>/<transaction_uuid>
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_type>
 ```
 
 REST path:
 
 ```
     issm_api_ip_address - ipaddress ISSM API service.
-    service_owner       - the id of the service owner/tenant that owned the workflows (str)
+    service_owner       - the service owner (str)
+    transaction_type    - the type of the transaction (e.g. scaleout)
+```
+
+Return:
+
+```
+    status - 200
+    list of dictionaries (json):
+        transaction_uuid - transaction uuid
+        status - overall status of the transaction
+        ref - launch-in-context URLs into Argo UI's service owner view
+```
+**TODO:** add example
+
+### Delete transaction
+
+Deletes a single transaction owned by the service owner
+
+```
+curl -H "Content-type: application/json" -X DELETE http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_uuid>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the service owner (str)
     transaction_uuid    - the uuid of the transaction (str in uuid format)
 ```
 
@@ -169,7 +198,7 @@ Return:
 1.  Set the `IMAGE` environment variable to hold the image.
 
     ```
-    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:a16fb27
+    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
     ```
 
 1.  Invoke the below command.
