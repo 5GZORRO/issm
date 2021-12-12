@@ -270,6 +270,7 @@ def instantiate(service_owner):
                 intent=intent))
 
         response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
 
     except Exception as e:
@@ -277,6 +278,7 @@ def instantiate(service_owner):
         response.status_code = 500
 
     sys.stdout.write('Exit /instantiate %s\n' % str(response))
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
     return response
 
 
@@ -286,12 +288,14 @@ def get_workflows_ref(service_owner):
         flow_json = proxy_server.get_workflows(service_owner)
         response = flask.jsonify(flow_json)
         response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
     except HTTPException as e:
         return e
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
 
 
@@ -299,12 +303,16 @@ def get_workflows_ref(service_owner):
 def delete_workflow_ref(service_owner, transaction_uuid):
     try:
         proxy_server.delete_workflow(service_owner, transaction_uuid)
-        return ('OK', 200)
+        response = flask.jsonify({})
+        response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        return response
     except HTTPException as e:
         return e
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
         return response
 
 
