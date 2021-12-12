@@ -108,29 +108,22 @@ Invocation example:
     curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/transactions/operator-a
     [
       {
-        "transaction_uuid": "77a6dc4622374122917d4f001a1f2a0a",
-        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=77a6dc4622374122917d4f001a1f2a0a",
-        "status": "Succeeded"
+        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=c5df607af95f469ca058919989968a33",
+        "status": "Running",
+        "transaction_type": "scaleout",
+        "transaction_uuid": "c5df607af95f469ca058919989968a33"
       },
       {
-        "transaction_uuid": "d33a603ce1054143bd9def88729d0fa3",
-        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=d33a603ce1054143bd9def88729d0fa3",
-        "status": "Failed"
+        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=a547d8726e7049b6bd7eee4cf3b93831",
+        "status": "Succeeded",
+        "transaction_type": "instantiate",
+        "transaction_uuid": "a547d8726e7049b6bd7eee4cf3b93831"
       },
       {
-        "transaction_uuid": "f40b12222a5a40c9bb2e961180077a98",
-        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=f40b12222a5a40c9bb2e961180077a98",
-        "status": "Succeeded"
-      },
-      {
-        "transaction_uuid": "e1642c75b5f947128cf8312d2aa46e23",
-        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=e1642c75b5f947128cf8312d2aa46e23",
-        "status": "Succeeded"
-      },
-      {
-        "transaction_uuid": "a5604bc8a00c495ebe8932d4e3ecec61",
-        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=a5604bc8a00c495ebe8932d4e3ecec61",
-        "status": "Succeeded"
+        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=6261754de98c4537ba08bd6b3c8d7d36",
+        "status": "Succeeded",
+        "transaction_type": "scaleout",
+        "transaction_uuid": "6261754de98c4537ba08bd6b3c8d7d36"
       }
     ]
 ```
@@ -160,7 +153,26 @@ Return:
         status - overall status of the transaction
         ref - launch-in-context URLs into Argo UI's service owner view
 ```
-**TODO:** add example
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/transactions/operator-a/scaleout
+    [
+      {
+        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=c5df607af95f469ca058919989968a33",
+        "status": "Running",
+        "transaction_type": "scaleout",
+        "transaction_uuid": "c5df607af95f469ca058919989968a33"
+      },
+      {
+        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=6261754de98c4537ba08bd6b3c8d7d36",
+        "status": "Succeeded",
+        "transaction_type": "scaleout",
+        "transaction_uuid": "6261754de98c4537ba08bd6b3c8d7d36"
+      }
+    ]
+```
 
 ### Delete transaction
 

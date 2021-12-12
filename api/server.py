@@ -139,7 +139,8 @@ class Proxy:
                           (service_owner, transaction_type))
 
         query_str = "fields=items.metadata.name,items.metadata.creationTimestamp,"\
-        "items.metadata.labels.transaction_uuid,items.status.phase&"\
+        "items.metadata.labels.transaction_uuid,"\
+        "items.metadata.labels.operation,items.status.phase&"\
         "listOptions.labelSelector=issm=true"
 
         if transaction_type:
@@ -278,12 +279,15 @@ def transactions_submit(service_owner, transaction_type):
                      (service_owner, transaction_type))
     try:
         value = getMessagePayload()
+        if transaction_type not in TRANSACTION_TYPES:
+            raise Exception(
+                'transaction_type value does not match: %s' % 
+                TRANSACTION_TYPES)
 
-        operation='submit'
         intent = value
         response = flask.jsonify(
             proxy_server.instantiate(
-                service_owner=service_owner, operation=operation,
+                service_owner=service_owner, transaction_type=transaction_type,
                 intent=intent))
 
         response.status_code = 200
