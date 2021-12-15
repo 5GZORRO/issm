@@ -40,8 +40,6 @@ spec:
       value: 123
     - name: product_id
       value: 456
-    - name: resource_id
-      value: 789
     - name: instance_id
       value: 012
 
@@ -74,7 +72,6 @@ spec:
               { "eventType": "new_SLA",
                 "transactionID": "{{workflow.parameters.transaction_id}}",
                 "productID": "{{workflow.parameters.product_id}}",
-                "resourceID": "{{workflow.parameters.resource_id}}",
                 "instanceID": "{{workflow.parameters.instance_id}}",
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}",
                 "kafka_port": "{{workflow.parameters.kafka_port}}",

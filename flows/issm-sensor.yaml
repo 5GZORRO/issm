@@ -157,8 +157,6 @@ spec:
 
                   - name: product_id
                     value: OVERRIDE
-                  - name: resource_id
-                    value: OVERRIDE
                   - name: resource_vsb
                     value: OVERRIDE
 
@@ -288,12 +286,6 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resource_id
-                value: DEFAULT
-              dest: spec.arguments.parameters.23.value
-
-            - src:
-                dependencyName: test-dep
                 dataKey: body.resource_vsb
                 value: DEFAULT
-              dest: spec.arguments.parameters.24.value
+              dest: spec.arguments.parameters.23.value
