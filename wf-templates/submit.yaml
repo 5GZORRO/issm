@@ -160,7 +160,7 @@ spec:
         template: trigger-orchestration-workflow
         arguments:
           parameters:
-          - name: resource_service_owner
+          - name: resource_owner
             value: "{{tasks.process-mno-name.outputs.result}}"
           - name: resource_vsb
             value: "{{tasks.resource-vsb.outputs.result}}"
@@ -247,7 +247,7 @@ spec:
   - name: trigger-orchestration-workflow
     inputs:
       parameters:
-      - name: resource_service_owner
+      - name: resource_owner
       - name: resource_vsb
       - name: product_id
       - name: resource_id
@@ -269,7 +269,7 @@ spec:
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "resource_id": "{{inputs.parameters.resource_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
-                  "resource_owner": "{{inputs.parameters.resource_service_owner}}",
+                  "resource_owner": "{{inputs.parameters.resource_owner}}",
                   "category": "{{workflow.parameters.category}}", "qos_parameters": {{workflow.parameters.qos_parameters}} }
             - name: kafka_topic
-              value: "issm-in-{{inputs.parameters.resource_service_owner}}"
+              value: "issm-in-{{inputs.parameters.resource_owner}}"
