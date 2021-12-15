@@ -93,7 +93,6 @@ spec:
               { "eventType": "new_SLA",
                 "transactionID": "{{workflow.parameters.transaction_uuid}}",
                 "productID": "{{workflow.parameters.product_id}}",
-                "resourceID": "{{workflow.parameters.resource_id}}",
                 "instanceID": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}",
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
                 "topic": "isbp-topic-out"
