@@ -53,7 +53,7 @@ REST path:
 ```
     issm_api_ip_address - ipaddress ISSM API service.
     service_owner       - the service owner (str)
-    transaction_type    - the type of the transaction to submit (e.g. scaleout)
+    transaction_type    - the type of the transaction to submit (e.g. instantiate, scaleout)
 ```
 
 Data payload:
@@ -70,7 +70,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -POST -d "@payloads/intent.json" http://172.28.3.42:30080/transactions/operator-a/scaleout
+    curl -H "Content-type: application/json" -X POST -d "@payloads/intent.json" http://172.28.3.42:30080/transactions/operator-a/scaleout
 
     {
         "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
@@ -196,6 +196,37 @@ Return:
     status - 200
 ```
 
+
+### Get transaction types
+
+Returns a list of supported transaction types
+
+```
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/transactions_types
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+```
+
+Return:
+
+```
+    status - 200
+    list of transaction types (list of str)
+```
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/transactions_types
+    [
+      "instantiate",
+      "scaleout"
+    ]
+```
 
 
 ## Build (**relevant for developers only**)

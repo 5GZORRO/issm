@@ -362,6 +362,15 @@ def transactions_delete(service_owner, transaction_uuid):
         return response
 
 
+@proxy.route("/transactions_types",  methods=['GET'])
+def transactions_types():
+    sys.stdout.write('Received get types\n')
+    response = flask.jsonify(TRANSACTION_TYPES)
+    response.status_code = 200
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+    return response
+
+
 def main():
     port = int(os.getenv('LISTEN_PORT', 8080))
     server = WSGIServer(('0.0.0.0', port), proxy, log=None)
