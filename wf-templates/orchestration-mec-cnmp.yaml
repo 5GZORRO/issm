@@ -16,6 +16,11 @@ spec:
           - name: mec_cnmp_port
             value: "30055"
 
+          - name: core_namespace
+            value: "domain-{{workflow.parameters.service_owner}}"
+          - name: namespace
+            value: "domain-{{workflow.parameters.resource_owner}}"
+
           - name: sst
             value: "1"
           - name: sd
@@ -66,6 +71,8 @@ spec:
             value: 1.2.3.4
           - name: mec_cnmp_port
             value: "30055"
+          - name: namespace
+            value: "domain-{{workflow.parameters.resource_owner}}"
           - name: nssi_id
             value: "{{tasks.mec-cnmp-create-nssi.outputs.parameters.nssi_id}}"
           - name: jq_query
@@ -113,6 +120,9 @@ spec:
       - name: mec_cnmp_ip
       - name: mec_cnmp_port
 
+      - name: core_namespace
+      - name: namespace
+
       - name: sst
       - name: sd
 
@@ -138,6 +148,8 @@ spec:
         {
           "cluster_core": "{{inputs.parameters.cluster_core}}",
           "cluster_edge": "{{inputs.parameters.cluster_edge}}",
+          "core_namespace": "{{inputs.parameters.core_namespace}}",
+          "namespace": "{{inputs.parameters.namespace}}",
           "sst": "{{inputs.parameters.sst}}",
           "sd": "{{inputs.parameters.sd}}",
           "network_name": "{{inputs.parameters.network_name}}",
@@ -151,6 +163,7 @@ spec:
         }
         echo "Create instance.."
         nssi_id="$(curl --data "$(generate_post_instance_create)" -X POST http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/subnetslice --header "Content-Type:application/json" 2>/dev/null | jq -r .name)"
+        echo "Instance: $nssi_id being created.."
         echo $nssi_id > /tmp/id.txt
     outputs:
       parameters:
@@ -164,6 +177,7 @@ spec:
       - name: poll
       - name: mec_cnmp_ip
       - name: mec_cnmp_port
+      - name: namespace
       - name: nssi_id
       - name: jq_query
       - name: jq_query_value
@@ -175,7 +189,7 @@ spec:
       source: |
         if [ {{inputs.parameters.poll}} = "true" ]; then
           i=0
-          until [ "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/core_subnetslice/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
+          until [ "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
              echo "Poll wait for nssi_id: {{inputs.parameters.nssi_id}}.. (1 sec)"
              sleep 1
              i=$((i+1))
@@ -184,10 +198,10 @@ spec:
             echo "TIMEOUT"
             echo "TIMEOUT" > /tmp/status.txt
           else
-            echo "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/core_subnetslice/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+            echo "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
           fi
         else  
-          echo "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/core_subnetslice/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+          echo "$(curl http://{{inputs.parameters.mec_cnmp_ip}}:{{inputs.parameters.mec_cnmp_port}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.nssi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
         fi
     outputs:
       parameters:
