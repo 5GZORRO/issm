@@ -42,6 +42,8 @@ spec:
       value: 456
     - name: instance_id
       value: 012
+    - name: sla_id
+      value: 789
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # metadata attributes:
@@ -73,6 +75,7 @@ spec:
                 "transactionID": "{{workflow.parameters.transaction_id}}",
                 "productID": "{{workflow.parameters.product_id}}",
                 "instanceID": "{{workflow.parameters.instance_id}}",
+                "slaID": "{{workflow.parameters.sla_id}}",
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}",
                 "kafka_port": "{{workflow.parameters.kafka_port}}",
                 "topic": "{{workflow.parameters.kafka_topic}}",

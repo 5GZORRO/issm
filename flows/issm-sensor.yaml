@@ -86,7 +86,7 @@ spec:
                   - name: discovery_ip
                     value: 172.28.3.42
                   - name: discovery_port
-                    value: 32000
+                    value: 32068
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Slicer service
@@ -107,12 +107,7 @@ spec:
                   - name: sub_operation
                     value: OVERRIDE
 
-                  - name: category
-                    value: OVERRIDE
-
-                  - name: latitude
-                    value: OVERRIDE
-                  - name: longitude
+                  - name: intent_query
                     value: OVERRIDE
 
                   - name: service_owner
@@ -124,15 +119,6 @@ spec:
                   - name: service_owner_target
                     # target mno to extend slice/service
                     # (applicable for symetric orchestration)
-                    value: OVERRIDE
-
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Range e.g. 1200-1400
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: requested_price
-                    value: OVERRIDE
-
-                  - name: resourceSpecCharacteristic
                     value: OVERRIDE
 
                   - name: qos_parameters
@@ -160,6 +146,8 @@ spec:
                   - name: resource_vsb
                     value: OVERRIDE
 
+                  - name: sla_id
+                    value: OVERRIDE
 
                 templates:
                 - name: handlerequest
@@ -208,84 +196,60 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.category
+                dataKey: body.intent_query
                 value: DEFAULT
               dest: spec.arguments.parameters.10.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.latitude
+                dataKey: body.service_owner
                 value: DEFAULT
               dest: spec.arguments.parameters.11.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.longitude
+                dataKey: body.resource_owner
                 value: DEFAULT
               dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.service_owner
-                value: DEFAULT
-              dest: spec.arguments.parameters.13.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.resource_owner
+                dataKey: body.qos_parameters
                 value: DEFAULT
               dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.service_owner_target
+                dataKey: body.resources
                 value: DEFAULT
               dest: spec.arguments.parameters.15.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.requested_price
-                value: DEFAULT
-              dest: spec.arguments.parameters.16.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.resourceSpecCharacteristic
-                value: DEFAULT
-              dest: spec.arguments.parameters.17.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.qos_parameters
-                value: DEFAULT
-              dest: spec.arguments.parameters.18.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.resources
-                value: DEFAULT
-              dest: spec.arguments.parameters.19.value
-
-            - src:
-                dependencyName: test-dep
                 dataKey: body.transaction_uuid
                 value: notapplicable
-              dest: spec.arguments.parameters.20.value
+              dest: spec.arguments.parameters.16.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.service_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.21.value
+              dest: spec.arguments.parameters.17.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.product_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.22.value
+              dest: spec.arguments.parameters.18.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resource_vsb
                 value: DEFAULT
-              dest: spec.arguments.parameters.23.value
+              dest: spec.arguments.parameters.19.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.sla_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.20.value

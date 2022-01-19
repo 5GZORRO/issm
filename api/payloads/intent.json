@@ -1,9 +1,5 @@
 {
-    "requested_price": "15-25",
-    "latitude": "43",
-    "longitude": "10",
-    "resourceSpecCharacteristic": "CDN",
-    "category": "vnf",
+    "intent_query": "3 CORES 12288 mb of RAM edge",
     "qos_parameters": {
         "users": "10"
     },

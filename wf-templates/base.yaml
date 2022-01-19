@@ -170,4 +170,4 @@ spec:
       imagePullPolicy: IfNotPresent
       command: [python]
       source: |
-        print(str("{{inputs.parameters.mno_name}}").replace('_','-'))
+        print(str("{{inputs.parameters.mno_name}}").replace('_','-').lower())
