@@ -1,5 +1,5 @@
 {
-    "intent_query": "3 CORES 12288 mb of RAM edge",
+    "intent_query": "total price: 135 euros, storage 96 GB 2730 MB of ram edge",
     "qos_parameters": {
         "users": "10"
     },
