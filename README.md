@@ -29,6 +29,12 @@ Log into 5GZorro platform kuberneters master
 kubectl create namespace issm
 ```
 
+### Create Eventbus in MNO namespace
+
+```
+kubectl apply -n issm -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
+```
+
 ### Create eventsource
 
 Register an event source on platform issm kafka bus
