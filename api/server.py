@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import flask
 import json
 import os
@@ -28,6 +29,8 @@ from kubernetes.client.rest import ApiException
 from kafka import KafkaProducer
 from kafka.admin import KafkaAdminClient, NewTopic
 from kafka.errors import KafkaError, TopicAlreadyExistsError
+
+import iso8601
 
 
 KAFKA_API_VERSION = (0, 10, 1)
@@ -55,6 +58,17 @@ if not LB_ARGO_SERVER:
 
 
 TRANSACTION_TYPES = ['instantiate', 'scaleout']
+
+
+def parse_isotime(timestr):
+    """Parse time from ISO 8601 format."""
+    try:
+        return iso8601.parse_date(timestr)
+    except iso8601.ParseError as e:
+        raise Exception(str(e))
+    except TypeError as e:
+        raise Exception(str(e))
+
 
 def publish_intent(kafka_ip, kafka_port, topic, payload):
     """
@@ -169,6 +183,12 @@ class Proxy:
             t_type = subflows[0]['metadata']['labels']['operation']
             for sf in subflows:
                 status_set.add(sf['status']['phase'])
+
+            dates = [parse_isotime(sf['metadata']['creationTimestamp']) for sf in subflows]
+            dates.sort()
+            sorteddates = [datetime.datetime.isoformat(ts) for ts in dates]
+            sys.stdout.write ('sorteddates of transaction [%s]: [%s]\n' % (k, sorteddates))
+
             # at least one Failed
             if 'Failed' in status_set:
                 status = 'Failed'
@@ -183,6 +203,7 @@ class Proxy:
 
             res.append(
                 dict(transaction_uuid=k, transaction_type=t_type, status=status,
+                     created=sorteddates[0],
                     ref='http://%s/workflows/domain-%s?label=transaction_uuid=%s'
                     % (LB_ARGO_SERVER, service_owner, k)))
 
