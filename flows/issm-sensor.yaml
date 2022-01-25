@@ -1,4 +1,4 @@
-# Copyright 2020 – 2021 IBM Corporation
+# Copyright 2020 - 2021 IBM Corporation
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -110,19 +110,22 @@ spec:
                   - name: intent_query
                     value: OVERRIDE
 
+                  - name: category
+
                   - name: service_owner
+                    # this is the stakeholder
                     value: OVERRIDE
 
                   - name: resource_owner
                     value: OVERRIDE
 
-                  - name: service_owner_target
-                    # target mno to extend slice/service
-                    # (applicable for symetric orchestration)
-                    value: OVERRIDE
-
                   - name: qos_parameters
-                    value: OVERRIDE
+                    # TODO: should be defined in intent query and then get
+                    # retrieved from the offer to be passed to nsso
+                    value: |
+                      {
+                        "users": "10"
+                      }
 
                   - name: resources
                     value: OVERRIDE
@@ -202,21 +205,26 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.service_owner
-                value: DEFAULT
+                dataKey: body.category
               dest: spec.arguments.parameters.11.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resource_owner
+                dataKey: body.service_owner
                 value: DEFAULT
               dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.qos_parameters
+                dataKey: body.resource_owner
                 value: DEFAULT
-              dest: spec.arguments.parameters.14.value
+              dest: spec.arguments.parameters.13.value
+
+#            - src:
+#                dependencyName: test-dep
+#                dataKey: body.qos_parameters
+#                # value: DEFAULT
+#              dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep

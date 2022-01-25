@@ -34,8 +34,7 @@ spec:
           - name: tenant_name
             value: "{{workflow.parameters.resource_owner}}"
           - name: blueprint_name
-            # TODO: offer should contain VSB_ID
-            value: "vCDN_edge_ICOM"
+            value: "{{workflow.parameters.resource_vsb}}"
           - name: parameters
             value: "{{workflow.parameters.qos_parameters}}"
 
@@ -55,8 +54,7 @@ spec:
           - name: vsd_id
             value: "{{tasks.nsso-create-vsd.outputs.parameters.vsd_id}}"
           - name: name
-            # TODO: offer should contain VSB_ID
-            value: "vCDN_edge_ICOM"
+            value: "{{workflow.parameters.resource_vsb}}"
           - name: userdata
             value: |
               { "product_id": "{{workflow.parameters.product_id}}",

@@ -1,7 +1,0 @@
-{
-    "intent_query": "total price: 135 euros, storage 96 GB 2730 MB of ram edge",
-    "qos_parameters": {
-        "users": "10"
-    },
-    "service_id": "23"
-}

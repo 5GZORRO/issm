@@ -41,6 +41,8 @@ spec:
         template: srds-service
         arguments:
           parameters:
+          - name: category
+            value: "{{workflow.parameters.category}}"
           - name: service_ip
             value: "{{workflow.parameters.discovery_ip}}"
           - name: service_port
@@ -51,6 +53,7 @@ spec:
       - name: send-resouces-to-optimizer
         # publish discovered resources for the optimizer to consume
         dependencies: [srds-service]
+        when: "{{workflow.parameters.category}} == \"resource\""
         templateRef:
           name: workflow-base
           template: publish-on-kafka
@@ -59,12 +62,23 @@ spec:
           - name: data
             value: |
               { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
-                "resources": {{tasks.srds-service.outputs.result}}, "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
+                "resources": {{tasks.srds-service.outputs.result}}, "category": "{{workflow.parameters.category}}",
+                "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
                 "service_owner": "{{workflow.parameters.service_owner}}",
                 "service_id": "{{workflow.parameters.service_id}}",
                 "qos_parameters": {{workflow.parameters.qos_parameters}} }
           - name: kafka_topic
             value: issm-optimizer
+
+      - name: consume-best-ranked-offer
+        dependencies: [srds-service]
+        when: "{{workflow.parameters.category}} == \"service\""
+        template: consume-best-ranked-offer
+        arguments:
+          parameters:
+          - name: resources
+            value: "{{tasks.srds-service.outputs.result}}"
+
 
   - name: handle-best-offers
     dag:
@@ -81,19 +95,52 @@ spec:
           - name: jq_query
             value: '.'
 
-      - name: loop-best-offers
+      - name: loop-best-offers-service
+        # loop through 'service' type offers
         dependencies: [handle-best-offers]
+        when: "{{workflow.parameters.category}} == \"service\""
         template: loop-best-offers
         arguments:
           parameters:
           - name: best_offer
             value: "{{item}}"
+          - name: jq_owner
+            value: '.productSpecification.relatedParty[0].name'
+          - name: jq_vsb
+            value: '.Blueprint_name'
+          - name: jq_product_id
+            value: '.product_id'
+          - name: jq_sla_id
+            value: ".tbd"
+        withParam: "{{workflow.parameters.resources}}"
+
+      - name: loop-best-offers-resource
+        # loop through 'resource' type offers
+        dependencies: [handle-best-offers]
+        when: "{{workflow.parameters.category}} == \"resource\""
+        template: loop-best-offers
+        arguments:
+          parameters:
+          - name: best_offer
+            value: "{{item}}"
+          - name: jq_owner
+            value: '.offer_object.productSpecification.relatedParty[0].name'
+          - name: jq_vsb
+            value: '.offer_object.Blueprint_name'
+          - name: jq_product_id
+            value: '.offer_object.product_id'
+          - name: jq_sla_id
+            value: '.offer_object.serviceLevelAgreement.id'
         withParam: "{{workflow.parameters.resources}}"
 
   - name: loop-best-offers
     inputs:
       parameters:
       - name: best_offer
+      - name: jq_owner
+      - name: jq_vsb
+      - name: jq_product_id
+      - name: jq_sla_id
     dag:
       tasks:
       - name: resource-service-owner
@@ -105,7 +152,7 @@ spec:
           - name: json_str
             value: "{{inputs.parameters.best_offer}}"
           - name: jq_query
-            value: '.offer_object.productSpecification.relatedParty[0].name'
+            value: "{{inputs.parameters.jq_owner}}"
 
       - name: process-mno-name
         dependencies: [resource-service-owner]
@@ -126,7 +173,7 @@ spec:
           - name: json_str
             value: "{{inputs.parameters.best_offer}}"
           - name: jq_query
-            value: '.offer_object.Blueprint_name'
+            value: "{{inputs.parameters.jq_vsb}}"
 
       - name: product-id
         templateRef:
@@ -137,7 +184,7 @@ spec:
           - name: json_str
             value: "{{inputs.parameters.best_offer}}"
           - name: jq_query
-            value: '.offer_object.product_id'
+            value: "{{inputs.parameters.jq_product_id}}"
 
       - name: sla-id
         templateRef:
@@ -148,8 +195,7 @@ spec:
           - name: json_str
             value: "{{inputs.parameters.best_offer}}"
           - name: jq_query
-            value: '.offer_object.serviceLevelAgreement.id'
-
+            value: "{{inputs.parameters.jq_sla_id}}"
 
       - name: acquire
         dependencies: [process-mno-name, resource-vsb, product-id, sla-id]
@@ -175,11 +221,13 @@ spec:
             value: "{{tasks.product-id.outputs.result}}"
           - name: sla_id
             value: "{{tasks.sla-id.outputs.result}}"
-            
+
 
   - name: srds-service
+    # handles both 'service' and 'resource' types
     inputs:
       parameters:
+      - name: category
       - name: service_ip
       - name: service_port
       - name: intent_query
@@ -194,11 +242,23 @@ spec:
         import urllib
         import urllib.parse
 
-        headers = {'Content-Type': 'application/json'}
-        intent_query = urllib.parse.quote('{{inputs.parameters.intent_query}}')
-        r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + intent_query, headers=headers)
-        # return offers
-        json.dump(r.json(), sys.stdout)
+        if "{{inputs.parameters.category}}" == "service":
+            requested_price = str("15-25")
+            price = requested_price.split('-')[0]
+            headers = {'Content-Type': 'application/json'}
+            # TODO: take from intent once discovery service supports 'service' type discovery
+            r = requests.get("http://{{inputs.parameters.service_ip}}:32000/discoveroffer/"
+                "{{inputs.parameters.category}}_lat43_long10_" + str(price) + "_CDN",
+                headers=headers)
+            # best ranked
+            json.dump([r.json()[0]], sys.stdout)
+        else:
+            headers = {'Content-Type': 'application/json'}
+            # TODO: take from intent once location based discovery is supported
+            intent_query = urllib.parse.quote("total price: 135 euros, storage 96 GB 2730 MB of ram edge")
+            r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + intent_query, headers=headers)
+            # return all offers
+            json.dump(r.json(), sys.stdout)
 
   - name: acquire
     # acquire is devided into two sub-tasks:
@@ -246,6 +306,34 @@ spec:
         valueFrom:
           path: /tmp/status.txt
 
+  - name: consume-best-ranked-offer
+    inputs:
+      parameters:
+      - name: resources
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+
+      - - name: publish-best-ranked-offer
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.name}}",
+                  "resources": {{inputs.parameters.resources}}, "category": "{{workflow.parameters.category}}",
+                  "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
+                  "service_owner": "{{workflow.parameters.service_owner}}",
+                  "service_id": "{{workflow.parameters.service_id}}",
+                  "qos_parameters": {{workflow.parameters.qos_parameters}} }
+            - name: kafka_topic
+              # route to myself
+              value: "issm-in-{{workflow.parameters.service_owner}}"
+
   - name: trigger-orchestration-workflow
     inputs:
       parameters:
@@ -267,6 +355,7 @@ spec:
             - name: data
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "category": "{{workflow.parameters.category}}",
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
