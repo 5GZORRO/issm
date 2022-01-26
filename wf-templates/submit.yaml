@@ -65,8 +65,7 @@ spec:
                 "resources": {{tasks.srds-service.outputs.result}}, "category": "{{workflow.parameters.category}}",
                 "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
                 "service_owner": "{{workflow.parameters.service_owner}}",
-                "service_id": "{{workflow.parameters.service_id}}",
-                "qos_parameters": {{workflow.parameters.qos_parameters}} }
+                "service_id": "{{workflow.parameters.service_id}}"}
           - name: kafka_topic
             value: issm-optimizer
 
@@ -337,8 +336,7 @@ spec:
                   "resources": {{inputs.parameters.resources}}, "category": "{{workflow.parameters.category}}",
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
                   "service_owner": "{{workflow.parameters.service_owner}}",
-                  "service_id": "{{workflow.parameters.service_id}}",
-                  "qos_parameters": {{workflow.parameters.qos_parameters}} }
+                  "service_id": "{{workflow.parameters.service_id}}"}
             - name: kafka_topic
               # route to myself
               value: "issm-in-{{workflow.parameters.service_owner}}"
@@ -368,7 +366,7 @@ spec:
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
-                  "resource_owner": "{{inputs.parameters.resource_owner}}", "qos_parameters": {{workflow.parameters.qos_parameters}},
+                  "resource_owner": "{{inputs.parameters.resource_owner}}",
                   "sla_id": "{{inputs.parameters.sla_id}}" }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"

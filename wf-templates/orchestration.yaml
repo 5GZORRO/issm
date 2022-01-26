@@ -36,7 +36,9 @@ spec:
           - name: blueprint_name
             value: "{{workflow.parameters.resource_vsb}}"
           - name: parameters
-            value: "{{workflow.parameters.qos_parameters}}"
+            # TODO: should be defined in intent query
+            value: |
+              { "users": "10" }
 
       - name: nsso-create-vsi
         dependencies: [nsso-create-vsd]

@@ -117,15 +117,16 @@ spec:
                     value: OVERRIDE
 
                   - name: resource_owner
+                    # mno owner of the offer (either service or iaas resouce)
                     value: OVERRIDE
 
-                  - name: qos_parameters
-                    # TODO: should be defined in intent query and then get
-                    # retrieved from the offer to be passed to nsso
-                    value: |
-                      {
-                        "users": "10"
-                      }
+#                  - name: qos_parameters
+#                    # TODO: should be defined in intent query and then get
+#                    # retrieved from the offer to be passed to nsso
+#                    value: |
+#                      {
+#                        "users": "10"
+#                      }
 
                   - name: resources
                     value: OVERRIDE
@@ -230,34 +231,34 @@ spec:
                 dependencyName: test-dep
                 dataKey: body.resources
                 value: DEFAULT
-              dest: spec.arguments.parameters.15.value
+              dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.transaction_uuid
                 value: notapplicable
-              dest: spec.arguments.parameters.16.value
+              dest: spec.arguments.parameters.15.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.service_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.17.value
+              dest: spec.arguments.parameters.16.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.product_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.18.value
+              dest: spec.arguments.parameters.17.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resource_vsb
                 value: DEFAULT
-              dest: spec.arguments.parameters.19.value
+              dest: spec.arguments.parameters.18.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.sla_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.20.value
+              dest: spec.arguments.parameters.19.value
