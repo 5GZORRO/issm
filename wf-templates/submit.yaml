@@ -96,6 +96,8 @@ spec:
             value: '.'
 
       - name: loop-best-offers-service
+        # TODO: update queries once new discovery service supports 'service'
+        # type discovery
         # loop through 'service' type offers
         dependencies: [handle-best-offers]
         when: "{{workflow.parameters.category}} == \"service\""
@@ -111,6 +113,7 @@ spec:
           - name: jq_product_id
             value: '.product_id'
           - name: jq_sla_id
+            # TODO: update sla query once populated in 'service' type offer
             value: ".tbd"
         withParam: "{{workflow.parameters.resources}}"
 
@@ -247,17 +250,18 @@ spec:
             price = requested_price.split('-')[0]
             headers = {'Content-Type': 'application/json'}
             # TODO: take from intent once discovery service supports 'service' type discovery
+            # TODO: switch to updated discovery service once it supports 'service' type discovery
             r = requests.get("http://{{inputs.parameters.service_ip}}:32000/discoveroffer/"
                 "{{inputs.parameters.category}}_lat43_long10_" + str(price) + "_CDN",
                 headers=headers)
-            # best ranked
+            # best ranked 'service' type offer
             json.dump([r.json()[0]], sys.stdout)
         else:
             headers = {'Content-Type': 'application/json'}
             # TODO: take from intent once location based discovery is supported
             intent_query = urllib.parse.quote("total price: 135 euros, storage 96 GB 2730 MB of ram edge")
             r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + intent_query, headers=headers)
-            # return all offers
+            # return all 'resource' type offers
             json.dump(r.json(), sys.stdout)
 
   - name: acquire
