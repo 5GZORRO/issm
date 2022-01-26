@@ -45,7 +45,7 @@ kubectl apply -f deploy/service.yaml -n issm
 Submit a transaction for the given service owner
 
 ```
-curl -H "Content-type: application/json" -POST -d "@/path/to/intent.json" http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_type>
+curl -H "Content-type: application/json" -POST -d "@/path/to/intent/json" http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_type>
 ```
 
 REST path:
@@ -70,7 +70,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -X POST -d "@payloads/intent.json" http://172.28.3.42:30080/transactions/operator-a/scaleout
+    curl -H "Content-type: application/json" -X POST -d "@payloads/intent-resource.json" http://172.28.3.42:30080/transactions/operator-a/scaleout
 
     {
         "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
