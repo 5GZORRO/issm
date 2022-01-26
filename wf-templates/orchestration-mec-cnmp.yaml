@@ -35,14 +35,16 @@ spec:
           - name: namespace
             value: "domain-{{workflow.parameters.resource_owner}}"
 
+          - name: cluster
+            value: cluster-1
+
           - name: sst
             value: "1"
           - name: sd
             value: "112233"
+
           - name: cluster_core
             value: cluster-2
-          - name: cluster_edge
-            value: cluster-1
 
           - name: network_name
             value: gilan
@@ -134,14 +136,15 @@ spec:
       - name: mec_cnmp_ip
       - name: mec_cnmp_port
 
-      - name: core_namespace
       - name: namespace
+      - name: cluster
+
+      - name: core_namespace
 
       - name: sst
       - name: sd
 
       - name: cluster_core
-      - name: cluster_edge
 
       - name: network_name
       - name: network_master
@@ -160,10 +163,10 @@ spec:
         {
           cat <<EOF
         {
-          "cluster_core": "{{inputs.parameters.cluster_core}}",
-          "cluster_edge": "{{inputs.parameters.cluster_edge}}",
-          "core_namespace": "{{inputs.parameters.core_namespace}}",
+          "cluster": "{{inputs.parameters.cluster}}",
           "namespace": "{{inputs.parameters.namespace}}",
+          "cluster_core": "{{inputs.parameters.cluster_core}}",
+          "core_namespace": "{{inputs.parameters.core_namespace}}",
           "sst": "{{inputs.parameters.sst}}",
           "sd": "{{inputs.parameters.sd}}",
           "network_name": "{{inputs.parameters.network_name}}",
