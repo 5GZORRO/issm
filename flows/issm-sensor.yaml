@@ -89,80 +89,57 @@ spec:
                     value: 32068
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Slicer service
+                  # Mandatory to exist
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: nsso_ip
-                    # service name to be used by the local issm instance
-                    value: vs
-                  - name: nsso_port
-                    value: 8082
+                  - name: transaction_uuid
+                  - name: scenario
+                  # stakeholder
+                  - name: service_owner
 
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Payload parameters
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # instantiate, scaleout
                   - name: operation
-                    # transaction_type: instantiate, scaleout
                     value: OVERRIDE
 
+                  # per scenario context
                   - name: sub_operation
                     value: OVERRIDE
 
                   - name: intent_query
                     value: OVERRIDE
 
-                  - name: category
-
-                  - name: service_owner
-                    # this is the stakeholder
-                    value: OVERRIDE
-
-                  - name: resource_owner
-                    # mno owner of the offer (either service or iaas resouce)
-                    value: OVERRIDE
-
-#                  - name: qos_parameters
-#                    # TODO: should be defined in intent query and then get
-#                    # retrieved from the offer to be passed to nsso
-#                    value: |
-#                      {
-#                        "users": "10"
-#                      }
-
-                  - name: resources
-                    value: OVERRIDE
-
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Id of the transaction
-                  # (N/A for submit_intent)
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: transaction_uuid
-                    value: OVERRIDE
-
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Id of the existing service
-                  # to extend
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: service_id
-                    value: OVERRIDE
-
+                  # SW offer related
                   - name: product_id
                     value: OVERRIDE
                   - name: resource_vsb
                     value: OVERRIDE
-
                   - name: sla_id
+                    value: OVERRIDE
+
+                  # Id of existing instance (for scaleout)
+                  - name: service_id
+                    value: OVERRIDE
+
+                  - name: resources
+                    value: OVERRIDE
+
+                  - name: resource_owner
+                    # operator owner as denoted in the offer
                     value: OVERRIDE
 
                 templates:
                 - name: handlerequest
                   steps:
-                  - - name: submit
-                      # This is the starting point of the transaction
-                      # meaning that event_uuid here is the transaction_uuid
+                  - - name: submit-scenario-1
                       templateRef:
-                        name: submit-template
+                        name: scenario-1-submit
                         template: handle-submit
-                      when: "{{workflow.parameters.operation}} == \"scaleout\""
+                      when: "{{workflow.parameters.scenario}} == \"1\""
+
+                  - - name: submit-scenario-2
+                      templateRef:
+                        name: scenario-2-submit
+                        template: handle-submit
+                      when: "{{workflow.parameters.scenario}} == \"2\""
 
           parameters:
             - src:
@@ -184,8 +161,26 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.operation
+                dataKey: body.transaction_uuid
+                value: notapplicable
+              dest: spec.arguments.parameters.6.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.scenario
+                value: DEFAULT
+              dest: spec.arguments.parameters.7.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.service_owner
+                value: DEFAULT
               dest: spec.arguments.parameters.8.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.operation
+              dest: spec.arguments.parameters.9.value
 
             - src:
                 dependencyName: test-dep
@@ -196,69 +191,46 @@ spec:
                 dependencyName: test-dep
                 dataKey: body.sub_operation
                 value: DEFAULT
-              dest: spec.arguments.parameters.9.value
+              dest: spec.arguments.parameters.10.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.intent_query
                 value: DEFAULT
-              dest: spec.arguments.parameters.10.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.category
               dest: spec.arguments.parameters.11.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.service_owner
-                value: DEFAULT
-              dest: spec.arguments.parameters.12.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.resource_owner
-                value: DEFAULT
-              dest: spec.arguments.parameters.13.value
-
-#            - src:
-#                dependencyName: test-dep
-#                dataKey: body.qos_parameters
-#                # value: DEFAULT
-#              dest: spec.arguments.parameters.14.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.resources
-                value: DEFAULT
-              dest: spec.arguments.parameters.14.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.transaction_uuid
-                value: notapplicable
-              dest: spec.arguments.parameters.15.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.service_id
-                value: DEFAULT
-              dest: spec.arguments.parameters.16.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.product_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.17.value
+              dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resource_vsb
                 value: DEFAULT
-              dest: spec.arguments.parameters.18.value
+              dest: spec.arguments.parameters.13.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.sla_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.19.value
+              dest: spec.arguments.parameters.14.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.service_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.15.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resources
+                value: DEFAULT
+              dest: spec.arguments.parameters.16.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resource_owner
+                value: DEFAULT
+              dest: spec.arguments.parameters.17.value

@@ -1,0 +1,6 @@
+{
+    "scenario": "2",
+    "operation": "scaleout",
+    "intent_query": "Barcelona Spain",
+    "product_id": "123"
+}
