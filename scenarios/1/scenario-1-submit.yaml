@@ -78,7 +78,7 @@ spec:
 
   - name: handle-submit-instantiate
     steps:
-      - name: print-message
+    - - name: print-message
         template: whalesay
         arguments:
           parameters:
