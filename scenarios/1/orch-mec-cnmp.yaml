@@ -15,7 +15,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: scenario-2-orchestration-template
+  name: scenario-1-orchestration-template
 spec:
   templates:
   - name: orchestration-scaleout
