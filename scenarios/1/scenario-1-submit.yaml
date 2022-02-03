@@ -49,9 +49,11 @@
 #
 # * Aquire resource offer from marketplace
 # 
-# * Asymetric-orchestrate, using the stakeholder ocehstration stack to
+# * (NSSO) Asymetric-orchestrate, using the stakeholder orchestration stack to
 #   orchestrate scaleout operation of an instance id denoted by service_id - into
 #   3rd party premises (as denoted in the selected SW offer)
+#
+# * (MEC-CNMP) TBD
 #
 # * (TBD) SLA event
 # 
@@ -96,7 +98,7 @@ spec:
     - - name: handle-orchestration
         templateRef:
           name: scenario-1-orchestration-template
-          template: nsso-orchestration-scaleout
+          template: orchestration-scaleout
         when: "{{workflow.parameters.sub_operation}} == \"submit_orchestration\""
 
   - name: handle-new-intent

@@ -19,7 +19,7 @@ metadata:
   name: scenario-2-orchestration-template
 spec:
   templates:
-  - name: nsso-orchestration-scaleout
+  - name: orchestration-scaleout
     dag:
       tasks:
       - name: nsso-create-vsd

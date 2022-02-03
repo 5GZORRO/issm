@@ -54,10 +54,16 @@
 # * Retrieve best resource offer from ISSM-O
 #
 # * Aquire IaaS resource offer from marketplace
-# 
-# * Asymetric-orchestrate, using the stakeholder ocehstration stack to
-#   orchestrate scaleout operation of an instance id denoted by service_id - into
-#   3rd party premises (as denoted in the selected SW offer)
+#
+# * Orchestration:
+#
+#   - (NSSO) Asymetric-orchestrate, using the stakeholder orchestration stack to
+#     orchestrate scaleout operation of an instance id denoted by service_id - into
+#     3rd party premises (as denoted in the selected SW offer) and connect it to the 
+#     stakeholder's instance id
+#  
+#   - (MEC-CNMP) UPF is deployed into 3rd party domain (i.e. 3rd party namespace)
+#     and get connected to stakeholder's core
 #
 # * (TBD) SLA event
 # 
@@ -102,7 +108,7 @@ spec:
     - - name: handle-orchestration
         templateRef:
           name: scenario-2-orchestration-template
-          template: nsso-orchestration-scaleout
+          template: orchestration-scaleout
         when: "{{workflow.parameters.sub_operation}} == \"submit_orchestration\""
 
   - name: handle-new-intent
