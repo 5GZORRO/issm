@@ -78,12 +78,12 @@ spec:
 
   - name: handle-submit-instantiate
     steps:
-    - name: print-message
-      template: whalesay
-      arguments:
-        parameters:
-        - name: message
-          value: "Instantiate not supported at this moment"
+      - name: print-message
+        template: whalesay
+        arguments:
+          parameters:
+          - name: message
+            value: "Instantiate not supported at this moment"
 
   - name: handle-submit-scaleout
     steps:

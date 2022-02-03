@@ -1,5 +1,5 @@
 {
     "scenario": "1",
     "operation": "instantiate",
-    "intent_query": "Barcelona Spain, vCDN service with max. users 10, total price: 135 euros",
+    "intent_query": "Barcelona Spain, vCDN service with max. users 10, total price: 135 euros"
 }
