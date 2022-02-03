@@ -16,7 +16,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   # Note: this name must be identical accross all domain operators
-  name: scenario-1-orchestration-template
+  name: scenario-2-orchestration-template
 spec:
   templates:
   - name: nsso-orchestration-scaleout
