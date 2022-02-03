@@ -90,6 +90,22 @@ spec:
           value: "Instantiate not supported at this moment"
 
   - name: handle-submit-scaleout
+    steps:
+    - - name: handle-new-intent
+        template: handle-new-intent
+        when: "{{workflow.parameters.sub_operation}} == \"new_intent\""
+
+    - - name: handle-best-offers
+        template: handle-best-offers
+        when: "{{workflow.parameters.sub_operation}} == \"submit_bp\""
+
+    - - name: handle-orchestration
+        templateRef:
+          name: scenario-2-orchestration-template
+          template: nsso-orchestration-scaleout
+        when: "{{workflow.parameters.sub_operation}} == \"submit_orchestration\""
+
+  - name: handle-new-intent
     dag:
       tasks:
       - name: srds-service

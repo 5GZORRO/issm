@@ -94,10 +94,9 @@ spec:
         when: "{{workflow.parameters.sub_operation}} == \"submit_bp\""
 
     - - name: handle-orchestration
-        # entry point of orchestration stack
         templateRef:
-          name: orchestration-template
-          template: handle-orchestration
+          name: scenario-1-orchestration-template
+          template: nsso-orchestration-scaleout
         when: "{{workflow.parameters.sub_operation}} == \"submit_orchestration\""
 
   - name: handle-new-intent
