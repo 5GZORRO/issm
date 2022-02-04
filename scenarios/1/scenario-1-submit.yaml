@@ -14,49 +14,54 @@
 
 ###############################################################################
 #
-# Business flow: Scenario 1:
+# Business flow Scenario 1:
 # ============================
 #
-# Starting point of a business flow that instantiates/scalesout a SW bundle
+# Scenario 1 deals with instantiating a SW and scaling it out as a SW bundle.
 #
-# Instantiate. Instantiation of a SW bundled offer
+# Instantiate. Instantiation of an already purshased SW offer
 #
-# * Discover SW bundled offer based on requirements that include
-#     - location
-#     - costs
-#     - SW category (e.g. CDN)
-#     - QoS
-#     e.g. "Barcelona Spain, vCDN service with max. users 10, total price: 135 euros"
+# Parameters:
 #
-# * Retrieve best ranked offer
+#     product_id: the DID of the SW offer that is already owned by the stakeholder (e.g. 6wG2v3x8sBduWUNWMB2YBL)
+#     service_owner: stakeholder name (e.g. operator-a)
 #
-# * Aquire resource offer from marketplace
-# 
-# * Orchestrate the instantiation of the SW at the offer's owner premises
+# Steps:
+#
+# * Retrieve SW offer of product_id and service_owner (stakeholder); extract data (e.g. sla_id, Blueprint_name)
+#
+# * Orchestrate the instantiation of the SW at the stakeholder premises
 #
 # * Send SLA event to start SLA monitoring
+#   SLA event includes: transaction_uuid, product_id, instance_id, sla_id
 #
-# Scaleout. Scaleout of SW bundled offer to 3rd party premises
-# 
-# * Discover SW bundled offer based on requirements that include
-#     - location
-#     - costs
-#     - SW category (e.g. CDN)
-#     - QoS
-#     e.g. "Barcelona Spain, vCDN service with max. users 10, total price: 135 euros"
+# ==============================================================================
 #
-# * Retrieve best ranked offer
+# Scaleout. Scaleout of an existing service - to 3rd party premises using best ranked SW bundled offer
+#
+# Parameters:
+#
+#     service_owner: stakeholder name (e.g. operator-a)
+#     service_id: the existing running instance id to be scaled out
+#     instent_query: high level query that defines the SW bundle offer to discover (e.g.
+#       "Barcelona Spain, vCDN service with max. users 10, total price: 135 euros")
+#
+# Steps:
+#
+# * Discover SW bundled offers based on instent_query
+#
+# * Retrieve the best ranked offer
 #
 # * Aquire resource offer from marketplace
-# 
+#
 # * (NSSO) Asymetric-orchestrate, using the stakeholder orchestration stack to
 #   orchestrate scaleout operation of an instance id denoted by service_id - into
-#   3rd party premises (as denoted in the selected SW offer)
+#   3rd party premises (as denoted in the best ranked offer owner)
 #
 # * (MEC-CNMP) TBD
 #
-# * (TBD) SLA event
-# 
+# * (SLA event) TBD
+#
 ###############################################################################
 
 apiVersion: argoproj.io/v1alpha1
@@ -241,6 +246,8 @@ spec:
         arguments:
           parameters:
           - name: service_owner
+            value: "{{workflow.parameters.service_owner}}"
+          - name: resource_owner
             value: "{{tasks.process-mno-name.outputs.result}}"
           - name: resource_vsb
             value: "{{tasks.resource-vsb.outputs.result}}"
@@ -248,6 +255,9 @@ spec:
             value: "{{tasks.product-id.outputs.result}}"
           - name: sla_id
             value: "{{tasks.sla-id.outputs.result}}"
+          - name: service_id
+            value: "{{workflow.parameters.service_id}}"
+            
 
 
   - name: srds-service
@@ -401,16 +411,26 @@ spec:
     # Send orchestration request to stakeholder that triggered scaleout
     # passing 'service_id' that denotes the instance id to scaleout
     #
-    # Note: an asymetric orchestration is being used where stakeholder's
+    # Note: an asymetric orchestration is being used here, where stakeholder's
     # orchestration stack is responsible to perform the scaleout operation into
-    # the 3rd party premises
+    # the 3rd party premises (3rd party name is denoted in resource_owner)
     #
+    # Parameters:
+    # service_owner: stakeholder name (str)
+    # resource_owner: the owner of the SW bundle offer (str)
+    # resource_vsb: the blueprint name of the SW bundle offer to be used by the
+    #               orchestration stack (str)
+    # product_id: the id of the SW bundle offer  (str)
+    # sla_id: SLA ID of the SW bundle offer (str)
+    # service_id: the existing instance id to be scaled out (str)
     inputs:
       parameters:
       - name: service_owner
+      - name: resource_owner
       - name: resource_vsb
       - name: product_id
       - name: sla_id
+      - name: service_id
     steps:
       - - name: event-uuid
           templateRef:
@@ -428,8 +448,8 @@ spec:
                   "scenario": "{{workflow.parameters.scenario}}",
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
-                  "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
-                  "service_owner": "{{inputs.parameters.service_owner}}",
+                  "service_id": "{{inputs.parameters.service_id}}",
+                  "service_owner": "{{inputs.parameters.service_owner}}", "resource_owner": "{{inputs.parameters.resource_owner}}"
                   "sla_id": "{{inputs.parameters.sla_id}}" }
             - name: kafka_topic
               # route orchestration request to the stekholder

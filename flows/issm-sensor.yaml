@@ -96,15 +96,28 @@ spec:
                   # stakeholder
                   - name: service_owner
 
-                  # instantiate, scaleout
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Below are scenario specific
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+                  # 'instantiate', 'scaleout'
                   - name: operation
                     value: OVERRIDE
 
-                  # per scenario context
+                  # the context within the scenario 
                   - name: sub_operation
                     value: OVERRIDE
 
+
+                  # High level intent query for smart offer search
                   - name: intent_query
+                    value: OVERRIDE
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Attributes related to smart offer search
+                  # (where applicable)
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: location
                     value: OVERRIDE
 
                   # SW offer related

@@ -17,37 +17,47 @@
 # Business flow Scenario 2:
 # =========================
 #
-# Starting point of a business flow that instantiates/scalesout a SW,
-# selecting the best 3rd party that fulfils its sizing demands
+# Scenario 2 deals with instantiating a SW and scaling it out by selecting the
+# best 3rd party operator that fulfils its sizing demands.
 #
-# Instantiate. Instantiation of a SW offer
+# Instantiate. Instantiation of an already purshased SW offer
 #
-# * Discover SW bundled offer based on requirements that include
-#     - location
-#     - costs
-#     - SW category (e.g. CDN)
-#     - QoS
-#     e.g. "Barcelona Spain, vCDN service with max. users 10, total price: 135 euros"
+# Parameters:
 #
-# * Retrieve best ranked offer
+#     product_id: the DID of the SW offer that is already owned by the stakeholder (e.g. 6wG2v3x8sBduWUNWMB2YBL)
+#     service_owner: stakeholder name (e.g. operator-a)
 #
-# * Aquire resource offer from marketplace
-# 
-# * Orchestrate the instantiation of the SW at the offer's owner premises
+# Steps:
+#
+# * Retrieve SW offer of product_id and service_owner (stakeholder); extract data (e.g. sla_id, Blueprint_name)
+#
+# * Orchestrate the instantiation of the SW at the stakeholder premises and return the instance_id
 #
 # * Send SLA event to start SLA monitoring
+#   SLA event includes: transaction_uuid, product_id, instance_id, sla_id
 #
-# Scaleout. Scaleout of SW into the best 3rd party premises that fulfils its
-# sizing demands
+# ==============================================================================
 #
-# * Retrieve SW offer out from product_id and service_owner (stakeholder)
+# Scaleout. Scaleout of an existing service - into a best 3rd party edge premises
+#           that fulfils service's sizing demands
 #
-# * Retrieve CPU, RAM, Storage from offer
+# Parameters:
+#
+#     product_id: the DID of the SW offer to scaleout (e.g. 6wG2v3x8sBduWUNWMB2YBL)
+#     service_owner: stakeholder name (e.g. operator-a)
+#     service_id: the existing running instance id to be scaled out
+#     Parameters for smart offer search:
+#       location: the location to scaleout (e.g. Barcelona Spain)
+#
+# Steps:
+#
+# * Retrieve SW offer out from product_id and service_owner (stakeholder); extract data
+#   (e.g. CPU, RAM, Storage)
 #
 # * Discover IaaS Edge resource offers based on requirements that include
 #     - location
-#     - CPU, RAM, Disk
-#     e.g. "storage 96 GB 2730 MB of ram edge"
+#     - CPU, RAM, Disk (extracted above)
+#     e.g. "storage 96 GB 2730 MB of ram edge, barcelona spain"
 #
 # * Send offers to ISSM-O
 #
