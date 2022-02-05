@@ -12,12 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+###############################################################################
+#
+# ISBP breach handler Scenario 2:
+# ===============================
+#
+# Scenario 2 deals with instantiating a SW and scaling it out by selecting the
+# best 3rd party operator that fulfils its sizing demands.
+#
+# This handler triggered whever an SLA breach notification arrives.
+#
+# Parameters:
+#
+#     transaction_uuid: the uuid of the transaction that instantiate the service where SLA breach occured
+#     service_id: the instance id of this instantiate service that caused this violation
+#     product_id: the DID of the SW offer this service instance is from
+#     location: the location of where this violation occured
+#
+# Steps:
+#
+# * Retrieve the trasaction ofject from transaction_uuid; retrieve service_owner (the stakeholder) from it
+#
+# * (TBD) If scaleout operation occurs in this location for this service_id, in last x time - abort
+#
+# * Send scale out intent to stakeholder with service_id, product_id, location
+#
+# ==============================================================================
+
+
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: workflow-isbp
 spec:
   templates:
+  # TODO: this flow deals with scenario 2 case; it is assumed that breach
+  # notificiation is triggered as part of scenario 2
   - name: handle-breach
     dag:
       tasks:
@@ -89,6 +119,35 @@ spec:
           parameters:
           - name: json_str
             value: "{{tasks.get-transaction.outputs.result}}"
+
+  - name: trigger-scaleout
+    inputs:
+      parameters:
+      - name: service_owner
+      - name: location
+      - name: product_id
+      - name: service_id
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-orchestration
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "scenario": "2",
+                  "operation": "scaleout", "sub_operation": "new_intent",
+                  "service_owner": "{{inputs.parameters.service_owner}}",
+                  "product_id": "{{inputs.parameters.product_id}}",
+                  "service_id": "{{inputs.parameters.service_id}}"}
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.service_owner}}"
+
 
   - name: issm-api-get-transaction
     inputs:
