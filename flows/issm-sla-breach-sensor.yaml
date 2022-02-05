@@ -62,35 +62,40 @@ spec:
                 arguments:
                   parameters:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Payload parameters
+                  # ISSM kafka bus
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: kafka_ip
+                    value: 172.28.3.196
+                  - name: kafka_port
+                    value: 9092
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # API service
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: service_ip
+                    value: 172.28.3.42
+                  - name: service_port
+                    value: 30080
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Json with keys:
+                  # transactionID
+                  # productID
+                  # instanceID
+                  # location
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: breachPredictionNotification
-                    value: OVERRIDE
 
                 templates:
                 - name: handlerequest
-                  dag:
-                    tasks:
-                    - name: print-message
-                      template: whalesay
-                      arguments:
-                        parameters:
-                        - name: message
-                          value: "Received payload: {{workflow.parameters.breachPredictionNotification}}"
-
-                - name: whalesay
-                  inputs:
-                    parameters:
-                    - name: message
-                  container:
-                    image: docker/whalesay
-                    imagePullPolicy: IfNotPresent
-                    command: [cowsay]
-                    args: ["{{inputs.parameters.message}}"]
+                  steps:
+                  - - name: handle-breach
+                      templateRef:
+                        name: workflow-isbp
+                        template: handle-breach
 
           parameters:
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification
-                value: DEFAULT
-              dest: spec.arguments.parameters.0.value
+              dest: spec.arguments.parameters.4.value
