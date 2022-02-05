@@ -264,9 +264,14 @@ class Proxy:
                         }, headers=headers)
 
     def get_workflow(self, transaction_uuid):
+        """
+        Retrieve the *first* workflow object of a given transaction_uuid.
+        This operation is cross namespace and hence goes through k8s API.
+        """
         sys.stdout.write('Requesting workflows\n')
 
         res = {}
+        # Filter also by metadata.name so that we get the *first* transaction flow
         workflows = self.api.list_cluster_custom_object(
             group="argoproj.io",
             version="v1alpha1",
@@ -286,7 +291,6 @@ class Proxy:
             }
 
         return res
-
 
 
 proxy = flask.Flask(__name__)
@@ -436,8 +440,12 @@ def workflows_get(transaction_uuid):
                      transaction_uuid)
     try:
         flow_json = proxy_server.get_workflow(transaction_uuid)
-        response = flask.jsonify(flow_json)
-        response.status_code = 200
+        if not flow_json:
+            response = flask.jsonify({'error': 'Workflow not found'})
+            response.status_code = 404
+        else:
+            response = flask.jsonify(flow_json)
+            response.status_code = 200
         return response
     except HTTPException as e:
         return e
