@@ -82,17 +82,13 @@ spec:
             value: "{{tasks.breach-transaction-uuid.outputs.result}}"
 
       - name: transaction-service-owner
-        # Retrieve service_owner from transaction object
+        # Retrieve 'service_owner' (stakeholder) from the transaction
         dependencies: [get-transaction]
-        templateRef:
-          name: workflow-base
-          template: jq-script
+        template: jq-script
         arguments:
           parameters:
           - name: json_str
             value: "{{tasks.get-transaction.outputs.result}}"
-          - name: jq_query
-            value: '.workflow_parameters[] | select(.name=="service_owner").value'
 
   - name: issm-api-get-transaction
     inputs:
@@ -114,3 +110,14 @@ spec:
         r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/workflows/{{inputs.parameters.transaction_uuid}}",
             headers=headers)
         json.dump(r.json(), sys.stdout)
+
+  - name: jq-script
+    inputs:
+      parameters:
+      - name: json_str
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="service_owner").value'
