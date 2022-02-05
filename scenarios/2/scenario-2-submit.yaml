@@ -146,7 +146,7 @@ spec:
           - name: data
             value: |
               { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
-                "resources": {{tasks.srds-service.outputs.result}},
+                "resources": {{tasks.srds-service.outputs.result}}, "scenario": "{{workflow.parameters.scenario}}",
                 "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
                 "service_owner": "{{workflow.parameters.service_owner}}",
                 "service_id": "{{workflow.parameters.service_id}}"}
@@ -348,33 +348,6 @@ spec:
         valueFrom:
           path: /tmp/status.txt
 
-  - name: consume-best-ranked-offer
-    inputs:
-      parameters:
-      - name: resources
-    steps:
-      - - name: event-uuid
-          templateRef:
-            name: workflow-base
-            template: event-uuid
-
-      - - name: publish-best-ranked-offer
-          templateRef:
-            name: workflow-base
-            template: publish-on-kafka
-          arguments:
-            parameters:
-            - name: data
-              value: |
-                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.name}}",
-                  "resources": {{inputs.parameters.resources}},
-                  "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
-                  "service_owner": "{{workflow.parameters.service_owner}}",
-                  "service_id": "{{workflow.parameters.service_id}}"}
-            - name: kafka_topic
-              # route to myself
-              value: "issm-in-{{workflow.parameters.service_owner}}"
-
   - name: trigger-orchestration-scaleout
     inputs:
       parameters:
@@ -397,6 +370,7 @@ spec:
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
+                  "scenario": "{{workflow.parameters.scenario}}",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
                   "resource_owner": "{{inputs.parameters.resource_owner}}",

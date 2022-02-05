@@ -39,15 +39,13 @@
 #
 # ==============================================================================
 
-
+# TODO: if transaction belongs to scenarion other than 2 -- abort
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: workflow-isbp
 spec:
   templates:
-  # TODO: this flow deals with scenario 2 case; it is assumed that breach
-  # notificiation is triggered as part of scenario 2
   - name: handle-breach
     dag:
       tasks:
@@ -98,7 +96,7 @@ spec:
             value: "{{workflow.parameters.breachPredictionNotification}}"
           - name: jq_query
             value: '.productID'
-      
+
       - name: get-transaction
         dependencies: [breach-transaction-uuid]
         template: issm-api-get-transaction
@@ -120,6 +118,20 @@ spec:
           - name: json_str
             value: "{{tasks.get-transaction.outputs.result}}"
 
+      - name: trigger-scaleout
+        dependencies: [transaction-service-owner, breach-product-id, breach-instance-id, breach-location]
+        template: trigger-scaleout
+        arguments:
+          parameters:
+          - name: service_owner
+            value: "{{tasks.transaction-service-owner.outputs.result}}"
+          - name: location
+            value: "{{tasks.breach-location.outputs.result}}"
+          - name: product_id
+            value: "{{tasks.breach-product-id.outputs.result}}"
+          - name: service_id
+            value: "{{tasks.breach-instance-id.outputs.result}}"
+
   - name: trigger-scaleout
     inputs:
       parameters:
@@ -139,15 +151,18 @@ spec:
           arguments:
             parameters:
             - name: data
+              # Triggering here a new bussines transaction:
+              # important that event and transaction uuids are the same
               value: |
-                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "scenario": "2",
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
+                  "scenario": "2",
                   "operation": "scaleout", "sub_operation": "new_intent",
+                  "intent_query": "{{inputs.parameters.location}}",
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "product_id": "{{inputs.parameters.product_id}}",
                   "service_id": "{{inputs.parameters.service_id}}"}
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"
-
 
   - name: issm-api-get-transaction
     inputs:

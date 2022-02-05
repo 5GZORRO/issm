@@ -17,7 +17,7 @@ kind: Workflow
 metadata:
   # Emulate SLA breach notification being sent over ISSM kafka topic isbp-topic-out
   # Refer to step send-sla-breach for notification payload details
-  generateName: sla-breach-emulation-
+  generateName: fire-sla-breach-
 spec:
   entrypoint: handle
   imagePullSecrets:
