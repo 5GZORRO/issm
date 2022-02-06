@@ -214,36 +214,42 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.product_id
+                dataKey: body.location
                 value: DEFAULT
               dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resource_vsb
+                dataKey: body.product_id
                 value: DEFAULT
               dest: spec.arguments.parameters.13.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.sla_id
+                dataKey: body.resource_vsb
                 value: DEFAULT
               dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.service_id
+                dataKey: body.sla_id
                 value: DEFAULT
               dest: spec.arguments.parameters.15.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resources
+                dataKey: body.service_id
                 value: DEFAULT
               dest: spec.arguments.parameters.16.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resource_owner
+                dataKey: body.resources
                 value: DEFAULT
               dest: spec.arguments.parameters.17.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resource_owner
+                value: DEFAULT
+              dest: spec.arguments.parameters.18.value
