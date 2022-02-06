@@ -108,6 +108,8 @@ spec:
             value: "Instantiate not supported at this moment"
 
   - name: handle-submit-scaleout
+    # Branching point according to internal state
+    # of the transaction
     steps:
     - - name: handle-new-intent
         template: handle-new-intent
