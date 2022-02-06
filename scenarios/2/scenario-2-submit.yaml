@@ -72,8 +72,9 @@
 #     3rd party premises (as denoted in the selected SW offer) and connect it to the 
 #     stakeholder's instance id
 #  
-#   - (MEC-CNMP) UPF is deployed into 3rd party domain (i.e. 3rd party namespace)
-#     and get connected to stakeholder's core
+#   - (MEC-CNMP) UPF is deployed into 3rd party domain and is get connected to
+#                stakeholder's core
+#                (TBD attributes to exist in product offer 
 #
 # * (TBD) SLA event
 # 
@@ -106,6 +107,8 @@ spec:
             value: "Instantiate not supported at this moment"
 
   - name: handle-submit-scaleout
+    # This step is a branching point according to internal
+    # transaction state
     steps:
     - - name: handle-new-intent
         template: handle-new-intent
@@ -124,6 +127,34 @@ spec:
   - name: handle-new-intent
     dag:
       tasks:
+      - name: get-product-offer-from-catalog
+        template: get-product-offer-from-catalog
+        arguments:
+          parameters:
+          - name: catalog_ip
+            value: 1.2.3.4
+          - name: catalog_port
+            value: 8000
+          - name: service_owner
+            value: "{{workflow.parameters.service_owner}}"
+          - name: product_id
+            value: "{{workflow.parameters.product_id}}"
+
+      - name: jq-catalog-offer-sizings
+        dependencies: [get-product-offer-from-catalog]
+        template: jq-catalog-offer-sizings
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{tasks.get-product-offer-from-catalog.outputs.result}}"
+
+      - name: build-intent-query
+        dependencies: [jq-catalog-offer-sizings]
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{tasks.get-product-offer-from-catalog.outputs.result}}"
+      
       - name: srds-service
         template: srds-service
         arguments:
@@ -133,7 +164,7 @@ spec:
           - name: service_port
             value: "{{workflow.parameters.discovery_port}}"
           - name: intent_query
-            value: "{{workflow.parameters.intent_query}}"
+            value: "{{tasks.build-intent-query.outputs.result}}"
 
       - name: send-resouces-to-optimizer
         # publish discovered resources for the optimizer to consume
@@ -276,8 +307,38 @@ spec:
             value: "{{tasks.sla-id.outputs.result}}"
 
 
+  - name: get-product-offer-from-catalog
+    #
+    # TODO: replace this template with a real call into the catalog of
+    # the service_owner (stakeholder)
+    #
+    inputs:
+      parameters:
+      - name: service_ip
+      - name: service_port
+      - name: service_owner
+      - name: product_id
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+        import urllib
+        import urllib.parse
+
+        headers = {'Content-Type': 'application/json'}
+        # TODO: take from intent once location based discovery is supported
+        # TODO: sizings to be retrieved from the offer with 'product_id'
+        intent_query = urllib.parse.quote("total price: 135 euros, storage 96 GB 2730 MB of ram edge")
+        r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + intent_query, headers=headers)
+        # return all 'resource' type offers
+        json.dump(r.json(), sys.stdout)
+
+
   - name: srds-service
-    # handles both 'service' and 'resource' types
     inputs:
       parameters:
       - name: service_ip
@@ -377,3 +438,37 @@ spec:
                   "sla_id": "{{inputs.parameters.sla_id}}" }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"
+
+  - name: jq-catalog-offer-sizings
+    inputs:
+      parameters:
+      - name: json_str
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+        # sizing values
+        echo '{{inputs.parameters.json_str}}' | jq -r '.[0].offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="cpu").resourceSpecCharacteristicValue[0].value.value' > /tmp/cpu.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.[0].offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="memory").resourceSpecCharacteristicValue[0].value.value' > /tmp/memory.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.[0].offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="storage").resourceSpecCharacteristicValue[0].value.value' > /tmp/storage.txt
+        # sizing units
+        echo '{{inputs.parameters.json_str}}' | jq -r '.[0].offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="memory").resourceSpecCharacteristicValue[0].unitOfMeasure' > /tmp/memory_units.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.[0].offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="storage").resourceSpecCharacteristicValue[0].unitOfMeasure' > /tmp/storage_units.txt
+    outputs:
+      parameters:
+      - name: cpu
+        valueFrom:
+          path: /tmp/cpu.txt
+      - name: memory
+        valueFrom:
+          path: /tmp/memory.txt
+      - name: storage
+        valueFrom:
+          path: /tmp/storage.txt
+      - name: memory_units
+        valueFrom:
+          path: /tmp/memory_units.txt
+      - name: storage_units
+        valueFrom:
+          path: /tmp/storage_units.txt
