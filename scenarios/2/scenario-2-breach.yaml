@@ -43,7 +43,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: workflow-isbp
+  name: scenario-2-breach
 spec:
   templates:
   - name: handle-breach
@@ -109,7 +109,7 @@ spec:
           - name: transaction_uuid
             value: "{{tasks.breach-transaction-uuid.outputs.result}}"
 
-      - name: transaction-service-owner
+      - name: service-owner-scenario
         # Retrieve 'service_owner' (stakeholder) from the transaction
         dependencies: [get-transaction]
         template: jq-script
@@ -119,12 +119,12 @@ spec:
             value: "{{tasks.get-transaction.outputs.result}}"
 
       - name: trigger-scaleout
-        dependencies: [transaction-service-owner, breach-product-id, breach-instance-id, breach-location]
+        dependencies: [service-owner-scenario, breach-product-id, breach-instance-id, breach-location]
         template: trigger-scaleout
         arguments:
           parameters:
           - name: service_owner
-            value: "{{tasks.transaction-service-owner.outputs.result}}"
+            value: "{{tasks.service-owner-scenario.outputs.parameters.service_owner}}"
           - name: location
             value: "{{tasks.breach-location.outputs.result}}"
           - name: product_id
@@ -144,7 +144,7 @@ spec:
           templateRef:
             name: workflow-base
             template: event-uuid
-      - - name: publish-to-orchestration
+      - - name: publish-to-scaleout
           templateRef:
             name: workflow-base
             template: publish-on-kafka
@@ -194,4 +194,13 @@ spec:
       imagePullPolicy: IfNotPresent
       command: [sh]
       source: |
-        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="service_owner").value'
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="service_owner").value' > /tmp/service_owner.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="scenario").value' > /tmp/scenario.txt
+    outputs:
+      parameters:
+      - name: service_owner
+        valueFrom:
+          path: /tmp/service_owner.txt
+      - name: scenario
+        valueFrom:
+          path: /tmp/scenario.txt

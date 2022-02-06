@@ -86,16 +86,31 @@ spec:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: breachPredictionNotification
 
+                  - name: scenario
+
                 templates:
+                
                 - name: handlerequest
                   steps:
-                  - - name: handle-breach
+                  - - name: breach-scenario-1
                       templateRef:
-                        name: workflow-isbp
+                        name: scenario-1-breach
                         template: handle-breach
+                      when: "{{workflow.parameters.scenario}} == 1"
+
+                  - - name: breach-scenario-2
+                      templateRef:
+                        name: scenario-2-breach
+                        template: handle-breach
+                      when: "{{workflow.parameters.scenario}} == 2"
 
           parameters:
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification
               dest: spec.arguments.parameters.4.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.scenario
+              dest: spec.arguments.parameters.5.value
