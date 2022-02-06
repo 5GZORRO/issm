@@ -157,7 +157,7 @@ spec:
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
                   "scenario": "2",
                   "operation": "scaleout", "sub_operation": "new_intent",
-                  "intent_query": "{{inputs.parameters.location}}",
+                  "location": "{{inputs.parameters.location}}",
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "product_id": "{{inputs.parameters.product_id}}",
                   "service_id": "{{inputs.parameters.service_id}}"}

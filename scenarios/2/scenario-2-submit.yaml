@@ -131,9 +131,9 @@ spec:
         template: get-product-offer-from-catalog
         arguments:
           parameters:
-          - name: catalog_ip
+          - name: service_ip
             value: 1.2.3.4
-          - name: catalog_port
+          - name: service_port
             value: 8000
           - name: service_owner
             value: "{{workflow.parameters.service_owner}}"
@@ -150,13 +150,25 @@ spec:
 
       - name: build-intent-query
         dependencies: [jq-catalog-offer-sizings]
+        template: build-intent-query
         arguments:
           parameters:
-          - name: json_str
-            value: "{{tasks.get-product-offer-from-catalog.outputs.result}}"
-      
+          - name: location
+            value: "{{workflow.parameters.location}}"
+          - name: cpu
+            value: "{{tasks.jq-catalog-offer-sizings.outputs.parameters.cpu}}"
+          - name: memory
+            value: "{{tasks.jq-catalog-offer-sizings.outputs.parameters.memory}}"
+          - name: memory_unit
+            value: "{{tasks.jq-catalog-offer-sizings.outputs.parameters.memory_unit}}"
+          - name: storage
+            value: "{{tasks.jq-catalog-offer-sizings.outputs.parameters.storage}}"
+          - name: storage_unit
+            value: "{{tasks.jq-catalog-offer-sizings.outputs.parameters.storage_unit}}"
+
       - name: srds-service
         template: srds-service
+        dependencies: [build-intent-query]
         arguments:
           parameters:
           - name: service_ip
@@ -166,23 +178,23 @@ spec:
           - name: intent_query
             value: "{{tasks.build-intent-query.outputs.result}}"
 
-      - name: send-resouces-to-optimizer
-        # publish discovered resources for the optimizer to consume
-        dependencies: [srds-service]
-        templateRef:
-          name: workflow-base
-          template: publish-on-kafka
-        arguments:
-          parameters:
-          - name: data
-            value: |
-              { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
-                "resources": {{tasks.srds-service.outputs.result}}, "scenario": "{{workflow.parameters.scenario}}",
-                "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
-                "service_owner": "{{workflow.parameters.service_owner}}",
-                "service_id": "{{workflow.parameters.service_id}}"}
-          - name: kafka_topic
-            value: issm-optimizer
+#      - name: send-resouces-to-optimizer
+#        # publish discovered resources for the optimizer to consume
+#        dependencies: [srds-service]
+#        templateRef:
+#          name: workflow-base
+#          template: publish-on-kafka
+#        arguments:
+#          parameters:
+#          - name: data
+#            value: |
+#              { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
+#                "resources": {{tasks.srds-service.outputs.result}}, "scenario": "{{workflow.parameters.scenario}}",
+#                "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
+#                "service_owner": "{{workflow.parameters.service_owner}}",
+#                "service_id": "{{workflow.parameters.service_id}}"}
+#          - name: kafka_topic
+#            value: issm-optimizer
 
   - name: handle-best-offers
     dag:
@@ -309,7 +321,7 @@ spec:
 
   - name: get-product-offer-from-catalog
     #
-    # TODO: replace this template with a real call into the catalog of
+    # TODO: **replace** this template with a real call into the catalog of
     # the service_owner (stakeholder)
     #
     inputs:
@@ -330,13 +342,35 @@ spec:
         import urllib.parse
 
         headers = {'Content-Type': 'application/json'}
-        # TODO: take from intent once location based discovery is supported
-        # TODO: sizings to be retrieved from the offer with 'product_id'
         intent_query = urllib.parse.quote("total price: 135 euros, storage 96 GB 2730 MB of ram edge")
-        r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + intent_query, headers=headers)
-        # return all 'resource' type offers
-        json.dump(r.json(), sys.stdout)
+        r = requests.get("http://172.28.3.42:32068/intent/" + intent_query, headers=headers)
+        # single offer
+        json.dump(r.json()[0], sys.stdout)
 
+  - name: build-intent-query
+    inputs:
+      parameters:
+      - name: location
+      - name: cpu
+      - name: memory
+      - name: memory_unit
+      - name: storage
+      - name: storage_unit
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import sys
+        # intent/$(urlencode 'storage 96 GB ram 2730 MB edge Barcelona'))
+        location = str("{{inputs.parameters.location}}")
+        memory = str("{{inputs.parameters.memory}}")
+        memory_unit = str("{{inputs.parameters.memory_unit}}")
+
+        storage = str("{{inputs.parameters.storage}}")
+        storage_unit = str("{{inputs.parameters.storage_unit}}")
+        
+        sys.stdout.write("storage " + storage + " " + storage_unit + " ram " + memory + " " + memory_unit + " edge " +  location)
 
   - name: srds-service
     inputs:
@@ -356,11 +390,10 @@ spec:
         import urllib.parse
 
         headers = {'Content-Type': 'application/json'}
-        # TODO: take from intent once location based discovery is supported
-        # TODO: sizings to be retrieved from the offer with 'product_id'
-        intent_query = urllib.parse.quote("total price: 135 euros, storage 96 GB 2730 MB of ram edge")
-        r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + intent_query, headers=headers)
-        # return all 'resource' type offers
+        intent_query = str("{{inputs.parameters.intent_query}}")
+        iq = urllib.parse.quote(intent_query)
+        r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + iq, headers=headers)
+        # return all
         json.dump(r.json(), sys.stdout)
 
   - name: acquire
@@ -449,12 +482,12 @@ spec:
       command: [sh]
       source: |
         # sizing values
-        echo '{{inputs.parameters.json_str}}' | jq -r '.[0].offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="cpu").resourceSpecCharacteristicValue[0].value.value' > /tmp/cpu.txt
-        echo '{{inputs.parameters.json_str}}' | jq -r '.[0].offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="memory").resourceSpecCharacteristicValue[0].value.value' > /tmp/memory.txt
-        echo '{{inputs.parameters.json_str}}' | jq -r '.[0].offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="storage").resourceSpecCharacteristicValue[0].value.value' > /tmp/storage.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="cpu").resourceSpecCharacteristicValue[0].value.value' > /tmp/cpu.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="memory").resourceSpecCharacteristicValue[0].value.value' > /tmp/memory.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="storage").resourceSpecCharacteristicValue[0].value.value' > /tmp/storage.txt
         # sizing units
-        echo '{{inputs.parameters.json_str}}' | jq -r '.[0].offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="memory").resourceSpecCharacteristicValue[0].unitOfMeasure' > /tmp/memory_units.txt
-        echo '{{inputs.parameters.json_str}}' | jq -r '.[0].offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="storage").resourceSpecCharacteristicValue[0].unitOfMeasure' > /tmp/storage_units.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="memory").resourceSpecCharacteristicValue[0].unitOfMeasure' > /tmp/memory_unit.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="storage").resourceSpecCharacteristicValue[0].unitOfMeasure' > /tmp/storage_unit.txt
     outputs:
       parameters:
       - name: cpu
@@ -466,9 +499,9 @@ spec:
       - name: storage
         valueFrom:
           path: /tmp/storage.txt
-      - name: memory_units
+      - name: memory_unit
         valueFrom:
-          path: /tmp/memory_units.txt
-      - name: storage_units
+          path: /tmp/memory_unit.txt
+      - name: storage_unit
         valueFrom:
-          path: /tmp/storage_units.txt
+          path: /tmp/storage_unit.txt
