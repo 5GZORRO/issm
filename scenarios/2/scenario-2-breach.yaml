@@ -20,22 +20,22 @@
 # Scenario 2 deals with instantiating a SW and scaling it out by selecting the
 # best 3rd party operator that fulfils its sizing demands.
 #
-# This handler triggered whever an SLA breach notification arrives.
+# This handler is being triggered whenver an SLA breach notification arrives from ISBP module.
 #
 # Parameters:
 #
-#     transaction_uuid: the uuid of the transaction that instantiate the service where SLA breach occured
-#     service_id: the instance id of this instantiate service that caused this violation
+#     transaction_uuid: the uuid of the transaction that instantiated the service where the SLA breach occured
+#     service_id: the instance id of this service that caused this violation
 #     product_id: the DID of the SW offer this service instance is from
 #     location: the location of where this violation occured
 #
 # Steps:
 #
-# * Retrieve the trasaction ofject from transaction_uuid; retrieve service_owner (the stakeholder) from it
+# * Retrieve the transaction ofject from transaction_uuid; retrieve service_owner (the stakeholder)
 #
-# * (TBD) If scaleout operation occurs in this location for this service_id, in last x time - abort
+# * If scaleout operation occured in this location for this service_id, in last x time - ignore
 #
-# * Send scale out intent to stakeholder with service_id, product_id, location
+# * Send scale out intent on behalf of this stakeholder with service_id, product_id, location
 #
 # ==============================================================================
 

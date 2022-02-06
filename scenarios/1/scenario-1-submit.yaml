@@ -19,7 +19,7 @@
 #
 # Scenario 1 deals with instantiating a SW and scaling it out as a SW bundle.
 #
-# Instantiate. Instantiation of an already purshased SW offer
+# Instantiate. Instantiation of an already purchased SW offer
 #
 # Parameters:
 #
@@ -30,7 +30,8 @@
 #
 # * Retrieve SW offer of product_id and service_owner (stakeholder); extract data (e.g. sla_id, Blueprint_name)
 #
-# * Orchestrate the instantiation of the SW at the stakeholder premises
+# * Orchestrate the instantiation of the SW at the stakeholder premises using Blueprint_name with
+#   the defintion of the VNF IDs
 #
 # * Send SLA event to start SLA monitoring
 #   SLA event includes: transaction_uuid, product_id, instance_id, sla_id
@@ -48,17 +49,15 @@
 #
 # Steps:
 #
-# * Discover SW bundled offers based on instent_query
+# * Discover SW bundled offers based on intent_query
 #
 # * Retrieve the best ranked offer
 #
 # * Aquire resource offer from marketplace
 #
-# * (NSSO) Asymetric-orchestrate, using the stakeholder orchestration stack to
-#   orchestrate scaleout operation of an instance id denoted by service_id - into
-#   3rd party premises (as denoted in the best ranked offer owner)
-#
-# * (MEC-CNMP) TBD
+# * Asymetric-orchestration, using the stakeholder orchestration stack to
+#   orchestrate scaleout operation for an instance id denoted by service_id - into
+#   3rd party premises (as denoted in the best ranked offer)
 #
 # * (SLA event) TBD
 #

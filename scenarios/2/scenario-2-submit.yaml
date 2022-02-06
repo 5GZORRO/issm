@@ -47,17 +47,19 @@
 #     service_owner: stakeholder name (e.g. operator-a)
 #     service_id: the existing running instance id to be scaled out
 #     Parameters for smart offer search:
-#       location: the location to scaleout (e.g. Barcelona Spain)
+#       location: the location of where to scaleout (e.g. Barcelona Spain)
 #
 # Steps:
 #
 # * Retrieve SW offer out from product_id and service_owner (stakeholder); extract data
 #   (e.g. CPU, RAM, Storage)
 #
+# * Build sizing intent out from the above extracted data
+#
 # * Discover IaaS Edge resource offers based on requirements that include
 #     - location
-#     - CPU, RAM, Disk (extracted above)
-#     e.g. "storage 96 GB 2730 MB of ram edge, barcelona spain"
+#     - sizings (extracted above)
+#     e.g. for a discovery query: "storage 96 GB 2730 MB of ram edge, barcelona spain"
 #
 # * Send offers to ISSM-O
 #
@@ -68,10 +70,10 @@
 # * Orchestration:
 #
 #   - (NSSO) Asymetric-orchestrate, using the stakeholder orchestration stack to
-#     orchestrate scaleout operation of an instance id denoted by service_id - into
-#     3rd party premises (as denoted in the selected SW offer) and connect it to the 
+#     orchestrate the scaleout operation of an instance id denoted by service_id - into
+#     3rd party premises (as denoted in the selected IaaS resource) and connect it to the 
 #     stakeholder's instance id
-#  
+#
 #   - (MEC-CNMP) UPF is deployed into 3rd party domain (i.e. 3rd party namespace)
 #     and get connected to stakeholder's core
 #
@@ -277,7 +279,6 @@ spec:
 
 
   - name: srds-service
-    # handles both 'service' and 'resource' types
     inputs:
       parameters:
       - name: service_ip
