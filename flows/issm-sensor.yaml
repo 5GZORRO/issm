@@ -14,7 +14,8 @@
 
 
 #
-# Common sensor that invokes a workflow locally on the operator premises
+# Sensor that invokes a workflow locally on the operator premises
+# Every domain should have a sensor
 #
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
@@ -138,6 +139,10 @@ spec:
                   - name: resource_owner
                     # operator owner as denoted in the offer
                     value: OVERRIDE
+
+                  - name: elma_url
+                    # TODO: this is domain specific
+                    value: "http://172.28.3.42:31880"
 
                 templates:
                 - name: handlerequest

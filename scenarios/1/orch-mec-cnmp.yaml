@@ -75,7 +75,7 @@ spec:
                   "start": "192.168.1.251",
                   "end": "192.168.1.253"
                 }
-              ]              
+              ]
 
       - name: mec-cnmp-poll
         dependencies: [mec-cnmp-create-nssi]
@@ -168,6 +168,8 @@ spec:
           "namespace": "{{inputs.parameters.namespace}}",
           "cluster_core": "{{inputs.parameters.cluster_core}}",
           "core_namespace": "{{inputs.parameters.core_namespace}}",
+          "product_id": "{{workflow.parameters.product_id}}",
+          "elma_url": "{{workflow.parameters.elma_url}}",
           "sst": "{{inputs.parameters.sst}}",
           "sd": "{{inputs.parameters.sd}}",
           "network_name": "{{inputs.parameters.network_name}}",
