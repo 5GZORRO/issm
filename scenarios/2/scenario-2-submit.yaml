@@ -179,23 +179,23 @@ spec:
           - name: intent_query
             value: "{{tasks.build-intent-query.outputs.result}}"
 
-#      - name: send-resouces-to-optimizer
-#        # publish discovered resources for the optimizer to consume
-#        dependencies: [srds-service]
-#        templateRef:
-#          name: workflow-base
-#          template: publish-on-kafka
-#        arguments:
-#          parameters:
-#          - name: data
-#            value: |
-#              { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
-#                "resources": {{tasks.srds-service.outputs.result}}, "scenario": "{{workflow.parameters.scenario}}",
-#                "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
-#                "service_owner": "{{workflow.parameters.service_owner}}",
-#                "service_id": "{{workflow.parameters.service_id}}"}
-#          - name: kafka_topic
-#            value: issm-optimizer
+      - name: send-resouces-to-optimizer
+        # publish discovered resources for the optimizer to consume
+        dependencies: [srds-service]
+        templateRef:
+          name: workflow-base
+          template: publish-on-kafka
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
+                "resources": {{tasks.srds-service.outputs.result}}, "scenario": "{{workflow.parameters.scenario}}",
+                "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
+                "service_owner": "{{workflow.parameters.service_owner}}",
+                "service_id": "{{workflow.parameters.service_id}}"}
+          - name: kafka_topic
+            value: issm-optimizer
 
   - name: handle-best-offers
     dag:

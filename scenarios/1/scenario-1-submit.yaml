@@ -450,7 +450,7 @@ spec:
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "service_id": "{{inputs.parameters.service_id}}",
-                  "service_owner": "{{inputs.parameters.service_owner}}", "resource_owner": "{{inputs.parameters.resource_owner}}"
+                  "service_owner": "{{inputs.parameters.service_owner}}", "resource_owner": "{{inputs.parameters.resource_owner}}",
                   "sla_id": "{{inputs.parameters.sla_id}}" }
             - name: kafka_topic
               # route orchestration request to the stekholder
