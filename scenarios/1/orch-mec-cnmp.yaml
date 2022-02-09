@@ -15,10 +15,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: orchestration-template
+  name: scenario-1-orchestration-template
 spec:
   templates:
-  - name: handle-orchestration
+  - name: orchestration-scaleout
     dag:
       tasks:
       - name: mec-cnmp-create-nssi
@@ -30,8 +30,9 @@ spec:
           - name: mec_cnmp_port
             value: "30055"
 
+          # Extend stakeholder free5gc to (upf) in a 3rd party domain
           - name: core_namespace
-            value: "domain-{{workflow.parameters.service_owner}}"
+            value: "domain-{{workflow.parameters.resource_owner}}"
           - name: namespace
             value: "domain-{{workflow.parameters.resource_owner}}"
 
@@ -74,7 +75,7 @@ spec:
                   "start": "192.168.1.251",
                   "end": "192.168.1.253"
                 }
-              ]              
+              ]
 
       - name: mec-cnmp-poll
         dependencies: [mec-cnmp-create-nssi]
@@ -167,6 +168,8 @@ spec:
           "namespace": "{{inputs.parameters.namespace}}",
           "cluster_core": "{{inputs.parameters.cluster_core}}",
           "core_namespace": "{{inputs.parameters.core_namespace}}",
+          "product_id": "{{workflow.parameters.product_id}}",
+          "elma_url": "{{workflow.parameters.elma_url}}",
           "sst": "{{inputs.parameters.sst}}",
           "sd": "{{inputs.parameters.sd}}",
           "network_name": "{{inputs.parameters.network_name}}",

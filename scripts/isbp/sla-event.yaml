@@ -15,6 +15,8 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
+  # Emulate SLA event being sent over ISSM DL kafka topic isbp-topic.
+  # Refer to step send-sla-event for event payload details
   generateName: sla-event-
 spec:
   entrypoint: handle

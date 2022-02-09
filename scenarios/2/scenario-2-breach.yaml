@@ -1,0 +1,206 @@
+# Copyright 2021 - 2022 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+###############################################################################
+#
+# ISBP breach handler Scenario 2:
+# ===============================
+#
+# Scenario 2 deals with instantiating a SW and scaling it out by selecting the
+# best 3rd party operator that fulfils its sizing demands.
+#
+# This handler is being triggered whenver an SLA breach notification arrives from ISBP module.
+#
+# Parameters:
+#
+#     transaction_uuid: the uuid of the transaction that instantiated the service where the SLA breach occured
+#     service_id: the instance id of this service that caused this violation
+#     product_id: the DID of the SW offer this service instance is from
+#     location: the location of where this violation occured
+#
+# Steps:
+#
+# * Retrieve the transaction ofject from transaction_uuid; retrieve service_owner (the stakeholder)
+#
+# * If scaleout operation occured in this location for this service_id, in last x time - ignore
+#
+# * Send scale out intent on behalf of this stakeholder with service_id, product_id, location
+#
+# ==============================================================================
+
+# TODO: if transaction belongs to scenarion other than 2 -- abort
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: scenario-2-breach
+spec:
+  templates:
+  - name: handle-breach
+    dag:
+      tasks:
+      # Retrieve transaction-uuid
+      - name: breach-transaction-uuid
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{workflow.parameters.breachPredictionNotification}}"
+          - name: jq_query
+            value: '.transactionID'
+
+      - name: breach-location
+      # Retrieve location
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{workflow.parameters.breachPredictionNotification}}"
+          - name: jq_query
+            value: '.location'
+
+      - name: breach-instance-id
+      # Retrieve location
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{workflow.parameters.breachPredictionNotification}}"
+          - name: jq_query
+            value: '.instanceID'
+
+      - name: breach-product-id
+        # Retrieve location      
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{workflow.parameters.breachPredictionNotification}}"
+          - name: jq_query
+            value: '.productID'
+
+      - name: get-transaction
+        dependencies: [breach-transaction-uuid]
+        template: issm-api-get-transaction
+        arguments:
+          parameters:
+          - name: service_ip
+            value: "{{workflow.parameters.service_ip}}"
+          - name: service_port
+            value: "{{workflow.parameters.service_port}}"
+          - name: transaction_uuid
+            value: "{{tasks.breach-transaction-uuid.outputs.result}}"
+
+      - name: service-owner-scenario
+        # Retrieve 'service_owner' (stakeholder) from the transaction
+        dependencies: [get-transaction]
+        template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{tasks.get-transaction.outputs.result}}"
+
+      - name: trigger-scaleout
+        dependencies: [service-owner-scenario, breach-product-id, breach-instance-id, breach-location]
+        template: trigger-scaleout
+        arguments:
+          parameters:
+          - name: service_owner
+            value: "{{tasks.service-owner-scenario.outputs.parameters.service_owner}}"
+          - name: location
+            value: "{{tasks.breach-location.outputs.result}}"
+          - name: product_id
+            value: "{{tasks.breach-product-id.outputs.result}}"
+          - name: service_id
+            value: "{{tasks.breach-instance-id.outputs.result}}"
+
+  - name: trigger-scaleout
+    inputs:
+      parameters:
+      - name: service_owner
+      - name: location
+      - name: product_id
+      - name: service_id
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-scaleout
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              # Triggering here a new bussines transaction:
+              # important that event and transaction uuids are the same
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
+                  "scenario": "2",
+                  "operation": "scaleout", "sub_operation": "new_intent",
+                  "location": "{{inputs.parameters.location}}",
+                  "service_owner": "{{inputs.parameters.service_owner}}",
+                  "product_id": "{{inputs.parameters.product_id}}",
+                  "service_id": "{{inputs.parameters.service_id}}"}
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.service_owner}}"
+
+  - name: issm-api-get-transaction
+    inputs:
+      parameters:
+      - name: service_ip
+      - name: service_port
+      - name: transaction_uuid
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        headers = {'Content-Type': 'application/json'}
+
+        r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/workflows/{{inputs.parameters.transaction_uuid}}",
+            headers=headers)
+        json.dump(r.json(), sys.stdout)
+
+  - name: jq-script
+    inputs:
+      parameters:
+      - name: json_str
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="service_owner").value' > /tmp/service_owner.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="scenario").value' > /tmp/scenario.txt
+    outputs:
+      parameters:
+      - name: service_owner
+        valueFrom:
+          path: /tmp/service_owner.txt
+      - name: scenario
+        valueFrom:
+          path: /tmp/scenario.txt

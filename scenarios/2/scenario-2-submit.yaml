@@ -1,0 +1,508 @@
+# Copyright 2020 - 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+###############################################################################
+#
+# Business flow Scenario 2:
+# =========================
+#
+# Scenario 2 deals with instantiating a SW and scaling it out by selecting the
+# best 3rd party operator that fulfils its sizing demands.
+#
+# Instantiate. Instantiation of an already purshased SW offer
+#
+# Parameters:
+#
+#     product_id: the DID of the SW offer that is already owned by the stakeholder (e.g. 6wG2v3x8sBduWUNWMB2YBL)
+#     service_owner: stakeholder name (e.g. operator-a)
+#
+# Steps:
+#
+# * Retrieve SW offer of product_id and service_owner (stakeholder); extract data (e.g. sla_id, Blueprint_name)
+#
+# * Orchestrate the instantiation of the SW at the stakeholder premises and return the instance_id
+#
+# * Send SLA event to start SLA monitoring
+#   SLA event includes: transaction_uuid, product_id, instance_id, sla_id
+#
+# ==============================================================================
+#
+# Scaleout. Scaleout of an existing service - into a best 3rd party edge premises
+#           that fulfils service's sizing demands
+#
+# Parameters:
+#
+#     product_id: the DID of the SW offer to scaleout (e.g. 6wG2v3x8sBduWUNWMB2YBL)
+#     service_owner: stakeholder name (e.g. operator-a)
+#     service_id: the existing running instance id to be scaled out
+#     Parameters for smart offer search:
+#       location: the location of where to scaleout (e.g. Barcelona Spain)
+#
+# Steps:
+#
+# * Retrieve SW offer out from product_id and service_owner (stakeholder); extract data
+#   (e.g. CPU, RAM, Storage)
+#
+# * Build sizing intent out from the above extracted data
+#
+# * Discover IaaS Edge resource offers based on requirements that include
+#     - location
+#     - sizings (extracted above)
+#     e.g. for a discovery query: "storage 96 GB 2730 MB of ram edge, barcelona spain"
+#
+# * Send offers to ISSM-O
+#
+# * Retrieve best resource offer from ISSM-O
+#
+# * Aquire IaaS resource offer from marketplace
+#
+# * Orchestration:
+#
+#   - (NSSO) Asymetric-orchestrate, using the stakeholder orchestration stack to
+#     orchestrate the scaleout operation of an instance id denoted by service_id - into
+#     3rd party premises (as denoted in the selected IaaS resource) and connect it to the 
+#     stakeholder's instance id
+#
+#   - (MEC-CNMP) UPF is deployed into 3rd party domain (i.e. 3rd party namespace)
+#     and get connected to stakeholder's core
+#
+# * (TBD) SLA event
+# 
+###############################################################################
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: scenario-2-submit
+spec:
+  templates:
+  - name: handle-submit
+    # Entry point of the scenario
+    steps:
+    - - name: handle-instantiate
+        template: handle-submit-instantiate
+        when: "{{workflow.parameters.operation}} == \"instantiate\""
+
+    - - name: handle-scaleout
+        template: handle-submit-scaleout
+        when: "{{workflow.parameters.operation}} == \"scaleout\""
+
+  - name: handle-submit-instantiate
+    steps:
+    - - name: print-message
+        template: whalesay
+        arguments:
+          parameters:
+          - name: message
+            value: "Instantiate not supported at this moment"
+
+  - name: handle-submit-scaleout
+    # Branching point according to internal state
+    # of the transaction
+    steps:
+    - - name: handle-new-intent
+        template: handle-new-intent
+        when: "{{workflow.parameters.sub_operation}} == \"new_intent\""
+
+    - - name: handle-best-offers
+        template: handle-best-offers
+        when: "{{workflow.parameters.sub_operation}} == \"submit_bp\""
+
+    - - name: handle-orchestration
+        templateRef:
+          name: scenario-2-orchestration-template
+          template: orchestration-scaleout
+        when: "{{workflow.parameters.sub_operation}} == \"submit_orchestration\""
+
+  - name: handle-new-intent
+    dag:
+      tasks:
+      - name: get-product-offer-from-catalog
+        template: get-product-offer-from-catalog
+        arguments:
+          parameters:
+          - name: service_ip
+            value: 1.2.3.4
+          - name: service_port
+            value: 8000
+          - name: service_owner
+            value: "{{workflow.parameters.service_owner}}"
+          - name: product_id
+            value: "{{workflow.parameters.product_id}}"
+
+      - name: jq-catalog-offer-sizings
+        dependencies: [get-product-offer-from-catalog]
+        template: jq-catalog-offer-sizings
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{tasks.get-product-offer-from-catalog.outputs.result}}"
+
+      - name: build-intent-query
+        dependencies: [jq-catalog-offer-sizings]
+        template: build-intent-query
+        arguments:
+          parameters:
+          - name: location
+            value: "{{workflow.parameters.location}}"
+          - name: cpu
+            value: "{{tasks.jq-catalog-offer-sizings.outputs.parameters.cpu}}"
+          - name: memory
+            value: "{{tasks.jq-catalog-offer-sizings.outputs.parameters.memory}}"
+          - name: memory_unit
+            value: "{{tasks.jq-catalog-offer-sizings.outputs.parameters.memory_unit}}"
+          - name: storage
+            value: "{{tasks.jq-catalog-offer-sizings.outputs.parameters.storage}}"
+          - name: storage_unit
+            value: "{{tasks.jq-catalog-offer-sizings.outputs.parameters.storage_unit}}"
+
+      - name: srds-service
+        template: srds-service
+        dependencies: [build-intent-query]
+        arguments:
+          parameters:
+          - name: service_ip
+            value: "{{workflow.parameters.discovery_ip}}"
+          - name: service_port
+            value: "{{workflow.parameters.discovery_port}}"
+          - name: intent_query
+            value: "{{tasks.build-intent-query.outputs.result}}"
+
+      - name: send-resouces-to-optimizer
+        # publish discovered resources for the optimizer to consume
+        dependencies: [srds-service]
+        templateRef:
+          name: workflow-base
+          template: publish-on-kafka
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
+                "resources": {{tasks.srds-service.outputs.result}}, "scenario": "{{workflow.parameters.scenario}}",
+                "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
+                "service_owner": "{{workflow.parameters.service_owner}}",
+                "service_id": "{{workflow.parameters.service_id}}"}
+          - name: kafka_topic
+            value: issm-optimizer
+
+  - name: handle-best-offers
+    dag:
+      tasks:
+      - name: handle-best-offers
+        # this step is mainly for pretty print
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{workflow.parameters.resources}}"
+          - name: jq_query
+            value: '.'
+
+      - name: loop-best-offers-resource
+        # loop through 'resource' type offers
+        dependencies: [handle-best-offers]
+        template: loop-best-offers
+        arguments:
+          parameters:
+          - name: best_offer
+            value: "{{item}}"
+          - name: jq_owner
+            value: '.offer_object.productSpecification.relatedParty[0].name'
+          - name: jq_vsb
+            value: '.offer_object.Blueprint_name'
+          - name: jq_product_id
+            value: '.offer_object.product_id'
+          - name: jq_sla_id
+            value: '.offer_object.serviceLevelAgreement.id'
+        withParam: "{{workflow.parameters.resources}}"
+
+  - name: loop-best-offers
+    inputs:
+      parameters:
+      - name: best_offer
+      - name: jq_owner
+      - name: jq_vsb
+      - name: jq_product_id
+      - name: jq_sla_id
+    dag:
+      tasks:
+      - name: resource-service-owner
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: "{{inputs.parameters.jq_owner}}"
+
+      - name: process-mno-name
+        dependencies: [resource-service-owner]
+        templateRef:
+          name: workflow-base
+          template: correct-mno-name
+        arguments:
+          parameters:
+          - name: mno_name
+            value: "{{tasks.resource-service-owner.outputs.result}}"
+
+      - name: resource-vsb
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: "{{inputs.parameters.jq_vsb}}"
+
+      - name: product-id
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: "{{inputs.parameters.jq_product_id}}"
+
+      - name: sla-id
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: "{{inputs.parameters.jq_sla_id}}"
+
+      - name: acquire
+        dependencies: [process-mno-name, resource-vsb, product-id, sla-id]
+        # invokes acquire template for every entry in resources list
+        # waits for them to succeed and publishes status success for the
+        # service owner to consume
+        template: acquire
+        arguments:
+          parameters:
+          - name: product_id
+            value: "{{tasks.product-id.outputs.result}}"
+
+      - name: trigger-orchestration-scaleout
+        dependencies: [acquire]
+        template: trigger-orchestration-scaleout
+        arguments:
+          parameters:
+          - name: resource_owner
+            value: "{{tasks.process-mno-name.outputs.result}}"
+          - name: resource_vsb
+            value: "{{tasks.resource-vsb.outputs.result}}"
+          - name: product_id
+            value: "{{tasks.product-id.outputs.result}}"
+          - name: sla_id
+            value: "{{tasks.sla-id.outputs.result}}"
+
+
+  - name: get-product-offer-from-catalog
+    #
+    # TODO: **replace** this template with a real call into the catalog of
+    # the service_owner (stakeholder)
+    #
+    inputs:
+      parameters:
+      - name: service_ip
+      - name: service_port
+      - name: service_owner
+      - name: product_id
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+        import urllib
+        import urllib.parse
+
+        headers = {'Content-Type': 'application/json'}
+        intent_query = urllib.parse.quote("total price: 135 euros, storage 96 GB 2730 MB of ram edge")
+        r = requests.get("http://172.28.3.42:32068/intent/" + intent_query, headers=headers)
+        # single offer
+        json.dump(r.json()[0], sys.stdout)
+
+  - name: build-intent-query
+    inputs:
+      parameters:
+      - name: location
+      - name: cpu
+      - name: memory
+      - name: memory_unit
+      - name: storage
+      - name: storage_unit
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import sys
+        # intent/$(urlencode 'storage 96 GB ram 2730 MB edge Barcelona'))
+        location = str("{{inputs.parameters.location}}")
+        memory = str("{{inputs.parameters.memory}}")
+        memory_unit = str("{{inputs.parameters.memory_unit}}")
+
+        storage = str("{{inputs.parameters.storage}}")
+        storage_unit = str("{{inputs.parameters.storage_unit}}")
+        
+        sys.stdout.write("storage " + storage + " " + storage_unit + " ram " + memory + " " + memory_unit + " edge " +  location)
+
+  - name: srds-service
+    inputs:
+      parameters:
+      - name: service_ip
+      - name: service_port
+      - name: intent_query
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+        import urllib
+        import urllib.parse
+
+        headers = {'Content-Type': 'application/json'}
+        intent_query = str("{{inputs.parameters.intent_query}}")
+        iq = urllib.parse.quote(intent_query)
+        r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + iq, headers=headers)
+        # return all
+        json.dump(r.json(), sys.stdout)
+
+  - name: acquire
+    # acquire is devided into two sub-tasks:
+    # 1. the acquire operation itself
+    # 2. branch to inspect acquire status and either fail the flow
+    # or proceed as normal
+    inputs:
+      parameters:
+      - name: product_id
+    steps:
+      - - name: acquire-resource
+          template: acquire-simulator
+          arguments:
+            parameters:
+            - name: product_id
+              value: "{{inputs.parameters.product_id}}"
+
+      - - name: fail-flow
+          templateRef:
+            name: workflow-base
+            template: fail
+          when: "{{steps.acquire-resource.outputs.parameters.status}} == \"FAIL\""
+
+  - name: acquire-simulator
+    # simulate a resource purchase with a return of a
+    # fail/success status
+    inputs:
+      parameters:
+      - name: product_id
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import random
+        import sys
+        status = "acquire_success"
+        json.dump({"product_id": "{{inputs.parameters.product_id}}", "status": status}, sys.stdout)
+        with open("/tmp/status.txt", "a") as myfile:
+            myfile.write(status)
+    outputs:
+      parameters:
+      - name: status
+        valueFrom:
+          path: /tmp/status.txt
+
+  - name: trigger-orchestration-scaleout
+    inputs:
+      parameters:
+      - name: resource_owner
+      - name: resource_vsb
+      - name: product_id
+      - name: sla_id
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-orchestration
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
+                  "scenario": "{{workflow.parameters.scenario}}",
+                  "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
+                  "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
+                  "resource_owner": "{{inputs.parameters.resource_owner}}",
+                  "sla_id": "{{inputs.parameters.sla_id}}" }
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.resource_owner}}"
+
+  - name: jq-catalog-offer-sizings
+    inputs:
+      parameters:
+      - name: json_str
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+        # sizing values
+        echo '{{inputs.parameters.json_str}}' | jq -r '.offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="cpu").resourceSpecCharacteristicValue[0].value.value' > /tmp/cpu.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="memory").resourceSpecCharacteristicValue[0].value.value' > /tmp/memory.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="storage").resourceSpecCharacteristicValue[0].value.value' > /tmp/storage.txt
+        # sizing units
+        echo '{{inputs.parameters.json_str}}' | jq -r '.offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="memory").resourceSpecCharacteristicValue[0].unitOfMeasure' > /tmp/memory_unit.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.offer_object.productSpecification.resourceSpecification[0].resourceSpecCharacteristic[] | select(.name=="storage").resourceSpecCharacteristicValue[0].unitOfMeasure' > /tmp/storage_unit.txt
+    outputs:
+      parameters:
+      - name: cpu
+        valueFrom:
+          path: /tmp/cpu.txt
+      - name: memory
+        valueFrom:
+          path: /tmp/memory.txt
+      - name: storage
+        valueFrom:
+          path: /tmp/storage.txt
+      - name: memory_unit
+        valueFrom:
+          path: /tmp/memory_unit.txt
+      - name: storage_unit
+        valueFrom:
+          path: /tmp/storage_unit.txt

@@ -60,10 +60,13 @@ kubectl apply -f deploy/install-v1.1.0.yaml
 
 ### Onboard SLA breach workflow
 
-Create the sensor
+Create the sensor and flows
 
 ```
 kubectl apply -f flows/issm-sla-breach-sensor.yaml -n issm
+kubectl apply -f scenarios/1/scenario-1-breach.yaml -n issm
+kubectl apply -f scenarios/2/scenario-2-breach.yaml -n issm
+kubectl apply -f wf-templates/base.yaml -n issm
 ```
 
 ### ISSM-API service
@@ -181,13 +184,13 @@ kubectl apply -f flows/issm-sensor.yaml -n $MNO_NAMESPACE
 Deploy common libraries according to your orchestration stack the mno supports
 
 ```
-wf-templates/apply.sh NSSO
+./apply.sh NSSO
 ```
 
 or
 
 ```
-wf-templates/apply.sh ISSM-MEC
+./apply.sh ISSM-MEC
 ```
 
 ## Trigger ISSM business flow

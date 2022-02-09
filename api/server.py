@@ -33,6 +33,12 @@ from kafka.errors import KafkaError, TopicAlreadyExistsError
 import iso8601
 
 
+import kubernetes
+from kubernetes.client import V1Namespace
+from kubernetes.client import V1ObjectMeta
+from kubernetes.client.rest import ApiException
+
+
 KAFKA_API_VERSION = (0, 10, 1)
 KAFKA_TIMEOUT = 10  # seconds
 
@@ -103,12 +109,11 @@ def publish_intent(kafka_ip, kafka_port, topic, payload):
 class Proxy:
     def __init__(self):
         """
-        Initialize with the in-cluster configuration and the required
+        Initialize the proxy with the in-cluster configuration and the required
         APIs
         """
-#         kubernetes.config.load_incluster_config()
-#         self.api = kubernetes.client.CustomObjectsApi()
-#         self.core_api = kubernetes.client.CoreV1Api()
+        kubernetes.config.load_incluster_config()
+        self.api = kubernetes.client.CustomObjectsApi()
         sys.stdout.write('ISSM-API initialized\n')
 
     def instantiate(self, service_owner, transaction_type, intent):
@@ -258,6 +263,35 @@ class Proxy:
                             "name": name
                         }, headers=headers)
 
+    def get_workflow(self, transaction_uuid):
+        """
+        Retrieve the *first* workflow object of a given transaction_uuid.
+        This operation is cross namespace and hence goes through k8s API.
+        """
+        sys.stdout.write('Requesting workflows\n')
+
+        res = {}
+        # Filter also by metadata.name so that we get the *first* transaction flow
+        workflows = self.api.list_cluster_custom_object(
+            group="argoproj.io",
+            version="v1alpha1",
+            plural="workflows",
+            label_selector="transaction_uuid=%s" % transaction_uuid,
+            field_selector="metadata.name=%s" % transaction_uuid)
+        if workflows and workflows.get('items'):
+            #sys.stdout.write(str(workflows['items'][0]) + '\n')
+            sys.stdout.write(str(len(workflows['items'])) + '\n')
+            wf = (workflows['items'][0])
+            wf_params = wf.get('spec', {}).get('arguments', {}).get('parameters', [])
+            res = {
+                'name': wf['metadata']['name'],
+                'phase': wf['status']['phase'],
+                'progress': wf['status']['progress'],
+                'workflow_parameters': wf_params
+            }
+
+        return res
+
 
 proxy = flask.Flask(__name__)
 proxy.debug = True
@@ -398,6 +432,27 @@ def transactions_types():
     response.status_code = 200
     #response.headers["Access-Control-Allow-Origin"] = "*"
     return response
+
+
+@proxy.route("/workflows/<transaction_uuid>",  methods=['GET'])
+def workflows_get(transaction_uuid):
+    sys.stdout.write('Received get workflows for [transaction_uuid=%s]\n' %
+                     transaction_uuid)
+    try:
+        flow_json = proxy_server.get_workflow(transaction_uuid)
+        if not flow_json:
+            response = flask.jsonify({'error': 'Workflow not found'})
+            response.status_code = 404
+        else:
+            response = flask.jsonify(flow_json)
+            response.status_code = 200
+        return response
+    except HTTPException as e:
+        return e
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+        return response
 
 
 def main():

@@ -19,7 +19,7 @@ Invoke the below in this order
 
 ```
 export REGISTRY=docker.pkg.github.com
-export IMAGE=$REGISTRY/5gzorro/issm/issm-api:1a05ece
+export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
 
 export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
@@ -70,7 +70,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -X POST -d "@payloads/intent-resource.json" http://172.28.3.42:30080/transactions/operator-a/scaleout
+    curl -H "Content-type: application/json" -X POST -d "@payloads/scenario-1-scaleout.json" http://172.28.3.42:30080/transactions/operator-a/scaleout
 
     {
         "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
@@ -246,7 +246,7 @@ Invocation example:
 1.  Set the `IMAGE` environment variable to hold the image.
 
     ```
-    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:1a05ece
+    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
     ```
 
 1.  Invoke the below command.

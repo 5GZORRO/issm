@@ -1,4 +1,4 @@
-# Copyright 2020 – 2021 IBM Corporation
+# Copyright 2020 - 2021 IBM Corporation
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -62,35 +62,55 @@ spec:
                 arguments:
                   parameters:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Payload parameters
+                  # ISSM kafka bus
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: kafka_ip
+                    value: 172.28.3.196
+                  - name: kafka_port
+                    value: 9092
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # API service
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: service_ip
+                    value: 172.28.3.42
+                  - name: service_port
+                    value: 30080
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Json with keys:
+                  # transactionID
+                  # productID
+                  # instanceID
+                  # location
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: breachPredictionNotification
-                    value: OVERRIDE
+
+                  - name: scenario
 
                 templates:
+                
                 - name: handlerequest
-                  dag:
-                    tasks:
-                    - name: print-message
-                      template: whalesay
-                      arguments:
-                        parameters:
-                        - name: message
-                          value: "Received payload: {{workflow.parameters.breachPredictionNotification}}"
+                  steps:
+                  - - name: breach-scenario-1
+                      templateRef:
+                        name: scenario-1-breach
+                        template: handle-breach
+                      when: "{{workflow.parameters.scenario}} == 1"
 
-                - name: whalesay
-                  inputs:
-                    parameters:
-                    - name: message
-                  container:
-                    image: docker/whalesay
-                    imagePullPolicy: IfNotPresent
-                    command: [cowsay]
-                    args: ["{{inputs.parameters.message}}"]
+                  - - name: breach-scenario-2
+                      templateRef:
+                        name: scenario-2-breach
+                        template: handle-breach
+                      when: "{{workflow.parameters.scenario}} == 2"
 
           parameters:
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification
-                value: DEFAULT
-              dest: spec.arguments.parameters.0.value
+              dest: spec.arguments.parameters.4.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.scenario
+              dest: spec.arguments.parameters.5.value
