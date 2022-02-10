@@ -38,10 +38,10 @@ spec:
       - name: get-product-offer-from-catalog
         template: get-product-offer-from-catalog
 
-      - name: fail
-        dependencies: [get-product-offer-from-catalog]
-        template: fail
-        when: "{{tasks.get-product-offer-from-catalog.outputs.parameters.status}} != 200"
+#      - name: fail
+#        dependencies: [get-product-offer-from-catalog]
+#        template: fail
+#        when: "{{tasks.get-product-offer-from-catalog.outputs.parameters.status}} != 200"
 
   - name: get-product-offer-from-catalog
     script:
@@ -56,16 +56,35 @@ spec:
         headers = {'Content-Type': 'application/json'}
         r = requests.get("http://{{workflow.parameters.catalogue_ip}}:{{workflow.parameters.catalogue_port}}/tmf-api/productCatalogManagement/v4/productOffering/{{workflow.parameters.product_id}}",
             headers=headers)
-
         json.dump(r.json(), sys.stdout)
-        with open('/tmp/status.txt', 'w') as f:
-            f.write(str(r.status_code))
+        sys.stdout.write('\n')
+
+        href = r.json()['productSpecification']['href']
+        r = requests.get(str(href), headers=headers)
+        json.dump(r.json(), sys.stdout)
+        sys.stdout.write('\n')
+
+        href = r.json()['resourceSpecification'][0]['href']
+        r = requests.get(str(href), headers=headers)
+        json.dump(r.json(), sys.stdout)
+        sys.stdout.write('\n')
+
+        vsdName = ''
+        rsc_list = r.json()[0]['resourceSpecCharacteristic']
+        for r in rsc_list:
+          if r['name'] == 'vsdName':
+            vsdName = r['resourceSpecCharacteristicValue'][0]['value']['value']
+            sys.stdout.write('vsdName: %s \n' % vsdName)
+            break
+
+        with open('/tmp/vsdName.txt', 'w') as f:
+            f.write(str(vsdName))
 
     outputs:
       parameters:
-      - name: status
+      - name: vsdName
         valueFrom:
-          path: /tmp/status.txt
+          path: /tmp/vsdName.txt
 
   - name: fail
     script:
