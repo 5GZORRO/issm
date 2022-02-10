@@ -2,6 +2,8 @@
     "scenario": "2",
     "operation": "scaleout",
     "location": "Barcelona Spain",
-    "product_id": "123",
-    "service_id": "23"
+    "product_id": "0f5460c1-efe4-42e6-85e5-57571989e270",
+    "service_id": "23",
+    "elma_url": "http://172.28.3.42:31880",
+    "catalogue_url": "http://172.28.3.126:31080"
 }

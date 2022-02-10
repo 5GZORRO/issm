@@ -141,18 +141,10 @@ spec:
                     value: OVERRIDE
 
                   - name: elma_url
-                    # Important to note that this sensor can run in
-                    # 3rd-party domain - not stakeholder's
-                    # TODO: attrs location should be revised
-                    value: "http://172.28.3.42:31880"
+                    value: OVERRIDE
 
-                  - name: catalogue_ip
-                    # Important to note that this sensor can run in
-                    # 3rd-party domain - not stakeholder's
-                    # TODO: attrs location should be revised
-                    value: 172.28.3.126
-                  - name: catalogue_port
-                    value: 31080
+                  - name: catalogue_url
+                    value: OVERRIDE
 
                 templates:
                 - name: handlerequest
@@ -268,3 +260,16 @@ spec:
                 dataKey: body.resource_owner
                 value: DEFAULT
               dest: spec.arguments.parameters.18.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.elma_url
+                value: DEFAULT
+              dest: spec.arguments.parameters.19.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.catalogue_url
+                value: DEFAULT
+              dest: spec.arguments.parameters.20.value
+              

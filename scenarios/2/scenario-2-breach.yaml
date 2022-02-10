@@ -109,8 +109,9 @@ spec:
           - name: transaction_uuid
             value: "{{tasks.breach-transaction-uuid.outputs.result}}"
 
-      - name: service-owner-scenario
-        # Retrieve 'service_owner' (stakeholder) from the transaction
+      - name: service-owner-etc-scenario
+        # Retrieve 'service_owner' (stakeholder) and its access
+        # infos from the transaction
         dependencies: [get-transaction]
         template: jq-script
         arguments:
@@ -119,18 +120,22 @@ spec:
             value: "{{tasks.get-transaction.outputs.result}}"
 
       - name: trigger-scaleout
-        dependencies: [service-owner-scenario, breach-product-id, breach-instance-id, breach-location]
+        dependencies: [service-owner-etc-scenario, breach-product-id, breach-instance-id, breach-location]
         template: trigger-scaleout
         arguments:
           parameters:
           - name: service_owner
-            value: "{{tasks.service-owner-scenario.outputs.parameters.service_owner}}"
+            value: "{{tasks.service-owner-etc-scenario.outputs.parameters.service_owner}}"
           - name: location
             value: "{{tasks.breach-location.outputs.result}}"
           - name: product_id
             value: "{{tasks.breach-product-id.outputs.result}}"
           - name: service_id
             value: "{{tasks.breach-instance-id.outputs.result}}"
+          - name: elma_url
+            value: "{{tasks.service-owner-etc-scenario.outputs.parameters.elma_url}}"
+          - name: catalogue_url
+            value: "{{tasks.service-owner-etc-scenario.outputs.parameters.catalogue_url}}"
 
   - name: trigger-scaleout
     inputs:
@@ -139,6 +144,8 @@ spec:
       - name: location
       - name: product_id
       - name: service_id
+      - name: elma_url
+      - name: catalogue_url
     steps:
       - - name: event-uuid
           templateRef:
@@ -160,7 +167,10 @@ spec:
                   "location": "{{inputs.parameters.location}}",
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "product_id": "{{inputs.parameters.product_id}}",
-                  "service_id": "{{inputs.parameters.service_id}}"}
+                  "service_id": "{{inputs.parameters.service_id}}",
+                  "elma_url": "{{inputs.parameters.elma_url}}",
+                  "catalogue_url": "{{inputs.parameters.catalogue_url}}"
+                }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"
 
@@ -196,11 +206,22 @@ spec:
       source: |
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="service_owner").value' > /tmp/service_owner.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="scenario").value' > /tmp/scenario.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="elma_url").value' > /tmp/elma_url.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="catalogue_url").value' > /tmp/catalogue_url.txt
     outputs:
       parameters:
       - name: service_owner
         valueFrom:
           path: /tmp/service_owner.txt
+
       - name: scenario
         valueFrom:
           path: /tmp/scenario.txt
+
+      - name: elma_url
+        valueFrom:
+          path: /tmp/elma_url.txt
+
+      - name: catalogue_url
+        valueFrom:
+          path: /tmp/catalogue_url.txt

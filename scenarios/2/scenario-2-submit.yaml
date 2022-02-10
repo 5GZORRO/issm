@@ -226,7 +226,8 @@ spec:
               { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
                 "resources": {{tasks.srds-service.outputs.result}}, "scenario": "{{workflow.parameters.scenario}}",
                 "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
-                "service_owner": "{{workflow.parameters.service_owner}}",
+                "service_owner": "{{workflow.parameters.service_owner}}", "elma_url": "{{workflow.parameters.elma_url}}",
+                "product_id": "{{workflow.parameters.product_id}}",
                 "service_id": "{{workflow.parameters.service_id}}"}
           - name: kafka_topic
             value: issm-optimizer
@@ -368,7 +369,7 @@ spec:
         import sys
 
         headers = {'Content-Type': 'application/json'}
-        r = requests.get("http://{{workflow.parameters.catalogue_ip}}:{{workflow.parameters.catalogue_port}}/tmf-api/productCatalogManagement/v4/productOffering/{{inputs.parameters.product_id}}",
+        r = requests.get("{{workflow.parameters.catalogue_url}}/tmf-api/productCatalogManagement/v4/productOffering/{{inputs.parameters.product_id}}",
             headers=headers)
         json.dump(r.json(), sys.stdout)
         sys.stdout.write('\n')
@@ -545,7 +546,7 @@ spec:
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
-                  "scenario": "{{workflow.parameters.scenario}}",
+                  "scenario": "{{workflow.parameters.scenario}}", "elma_url": "{{workflow.parameters.elma_url}}",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
                   "resource_owner": "{{inputs.parameters.resource_owner}}",
