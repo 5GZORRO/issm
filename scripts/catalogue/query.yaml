@@ -1,0 +1,76 @@
+# Copyright 2020 - 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: get-product-offer-
+spec:
+  entrypoint: handlerequest
+  arguments:
+    parameters:
+    - name: catalogue_ip
+      value: 172.28.3.126
+    - name: catalogue_port
+      value: 31080
+
+    - name: product_id
+      value: 0f5460c1-efe4-42e6-85e5-57571989e270
+
+    - name: service_owner
+      value: operator-a
+
+  templates:
+  - name: handlerequest
+    dag:
+      tasks:
+      - name: get-product-offer-from-catalog
+        template: get-product-offer-from-catalog
+
+      - name: fail
+        dependencies: [get-product-offer-from-catalog]
+        template: fail
+        when: "{{tasks.get-product-offer-from-catalog.outputs.parameters.status}} != 200"
+
+  - name: get-product-offer-from-catalog
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.get("http://{{workflow.parameters.catalogue_ip}}:{{workflow.parameters.catalogue_port}}/tmf-api/productCatalogManagement/v4/productOffering/{{workflow.parameters.product_id}}",
+            headers=headers)
+
+        json.dump(r.json(), sys.stdout)
+        with open('/tmp/status.txt', 'w') as f:
+            f.write(str(r.status_code))
+
+    outputs:
+      parameters:
+      - name: status
+        valueFrom:
+          path: /tmp/status.txt
+
+  - name: fail
+    script:
+      image: debian:9.4
+      imagePullPolicy: IfNotPresent
+      command: [bash]
+      source: |
+        exit 123
