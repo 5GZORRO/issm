@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+################################################################################
+#
+# Important: this template can either run in stakeholder context or 3rd-party
+#
+################################################################################
+
+
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:

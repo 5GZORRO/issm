@@ -100,12 +100,18 @@ spec:
 
   - name: handle-submit-instantiate
     steps:
-    - - name: print-message
-        template: whalesay
-        arguments:
-          parameters:
-          - name: message
-            value: "Instantiate not supported at this moment"
+    # Branching point according to internal state
+    # of the transaction
+    steps:
+    - - name: handle-new-intent-instantiate
+        template: handle-new-intent-instantiate
+        when: "{{workflow.parameters.sub_operation}} == \"new_intent\""
+
+    - - name: handle-orchestration-instantiate
+        templateRef:
+          name: scenario-2-orchestration-template
+          template: orchestration-instantiate
+        when: "{{workflow.parameters.sub_operation}} == \"submit_orchestration\""
 
   - name: handle-submit-scaleout
     # Branching point according to internal state
@@ -125,11 +131,39 @@ spec:
           template: orchestration-scaleout
         when: "{{workflow.parameters.sub_operation}} == \"submit_orchestration\""
 
-  - name: handle-new-intent
+
+  - name: handle-new-intent-instantiate
     dag:
       tasks:
       - name: get-product-offer-from-catalog
         template: get-product-offer-from-catalog
+        arguments:
+          parameters:
+          - name: product_id
+            value: "{{workflow.parameters.product_id}}"
+
+      - name: trigger-orchestration-instantiate
+        dependencies: [get-product-offer-from-catalog]
+        template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # set this to stakeholder name so that orch request is routed to it
+            value: "{{workflow.parameters.service_owner}}"
+          - name: resource_vsb
+            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.vsdName}}"
+          - name: product_id
+            value: "{{workflow.parameters.product_id}}"
+          - name: sla_id
+            # TODO: from where do we take SLA ID?
+            value: "123"
+
+
+  - name: handle-new-intent
+    dag:
+      tasks:
+      - name: get-po-catalog-mock
+        template: get-po-catalog-mock
         arguments:
           parameters:
           - name: service_ip
@@ -142,12 +176,12 @@ spec:
             value: "{{workflow.parameters.product_id}}"
 
       - name: jq-catalog-offer-sizings
-        dependencies: [get-product-offer-from-catalog]
+        dependencies: [get-po-catalog-mock]
         template: jq-catalog-offer-sizings
         arguments:
           parameters:
           - name: json_str
-            value: "{{tasks.get-product-offer-from-catalog.outputs.result}}"
+            value: "{{tasks.get-po-catalog-mock.outputs.result}}"
 
       - name: build-intent-query
         dependencies: [jq-catalog-offer-sizings]
@@ -307,7 +341,7 @@ spec:
 
       - name: trigger-orchestration-scaleout
         dependencies: [acquire]
-        template: trigger-orchestration-scaleout
+        template: trigger-orchestration
         arguments:
           parameters:
           - name: resource_owner
@@ -321,6 +355,52 @@ spec:
 
 
   - name: get-product-offer-from-catalog
+    inputs:
+      parameters:
+      - name: product_id
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.get("http://{{workflow.parameters.catalogue_ip}}:{{workflow.parameters.catalogue_port}}/tmf-api/productCatalogManagement/v4/productOffering/{{inputs.parameters.product_id}}",
+            headers=headers)
+        json.dump(r.json(), sys.stdout)
+        sys.stdout.write('\n')
+
+        href = r.json()['productSpecification']['href']
+        r = requests.get(str(href), headers=headers)
+        json.dump(r.json(), sys.stdout)
+        sys.stdout.write('\n')
+
+        href = r.json()['resourceSpecification'][0]['href']
+        r = requests.get(str(href), headers=headers)
+        json.dump(r.json(), sys.stdout)
+        sys.stdout.write('\n')
+
+        vsdName = ''
+        rsc_list = r.json()[0]['resourceSpecCharacteristic']
+        for r in rsc_list:
+          if r['name'] == 'vsdName':
+            vsdName = r['resourceSpecCharacteristicValue'][0]['value']['value']
+            sys.stdout.write('vsdName: %s \n' % vsdName)
+            break
+
+        with open('/tmp/vsdName.txt', 'w') as f:
+            f.write(str(vsdName))
+
+    outputs:
+      parameters:
+      - name: vsdName
+        valueFrom:
+          path: /tmp/vsdName.txt
+
+  - name: get-po-catalog-mock
     #
     # TODO: **replace** this template with a real call into the catalog of
     # the service_owner (stakeholder)
@@ -443,7 +523,7 @@ spec:
         valueFrom:
           path: /tmp/status.txt
 
-  - name: trigger-orchestration-scaleout
+  - name: trigger-orchestration
     inputs:
       parameters:
       - name: resource_owner

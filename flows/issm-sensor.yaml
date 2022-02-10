@@ -141,8 +141,18 @@ spec:
                     value: OVERRIDE
 
                   - name: elma_url
-                    # TODO: this is domain specific
+                    # Important to note that this sensor can run in
+                    # 3rd-party domain - not stakeholder's
+                    # TODO: attrs location should be revised
                     value: "http://172.28.3.42:31880"
+
+                  - name: catalogue_ip
+                    # Important to note that this sensor can run in
+                    # 3rd-party domain - not stakeholder's
+                    # TODO: attrs location should be revised
+                    value: 172.28.3.126
+                  - name: catalogue_port
+                    value: 31080
 
                 templates:
                 - name: handlerequest
