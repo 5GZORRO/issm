@@ -29,7 +29,7 @@
 #
 # Steps:
 #
-# * Retrieve SW offer of product_id and service_owner (stakeholder); extract data (e.g. sla_id, Blueprint_name)
+# * Retrieve SW offer of product_id and service_owner (stakeholder); extract data (e.g. VSB)
 #
 # * Orchestrate the instantiation of the SW at the stakeholder premises and return the instance_id
 #
@@ -52,7 +52,7 @@
 # Steps:
 #
 # * Retrieve SW offer out from product_id and service_owner (stakeholder); extract data
-#   (e.g. CPU, RAM, Storage)
+#   (e.g. CPU, RAM, Storage + VSB)
 #
 # * Build sizing intent out from the above extracted data
 #
@@ -70,9 +70,9 @@
 # * Orchestration:
 #
 #   - (NSSO) Asymetric-orchestrate, using the stakeholder orchestration stack to
-#     orchestrate the scaleout operation of an instance id denoted by service_id - into
-#     3rd party premises (as denoted in the selected IaaS resource) and connect it to the 
-#     stakeholder's instance id
+#     orchestrate the scaleout operation of an instance id denoted by service_id,
+#     VSB in product_id PO - into 3rd party premises (as denoted in the
+#     selected IaaS resource) and connect it to the stakeholder's instance id
 #
 #   - (MEC-CNMP) UPF is deployed into 3rd party domain (i.e. 3rd party namespace)
 #     and get connected to stakeholder's core
@@ -158,7 +158,6 @@ spec:
             # TODO: from where do we take SLA ID?
             value: "123"
 
-
   - name: handle-new-intent
     dag:
       tasks:
@@ -227,7 +226,7 @@ spec:
                 "resources": {{tasks.srds-service.outputs.result}}, "scenario": "{{workflow.parameters.scenario}}",
                 "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_bp",
                 "service_owner": "{{workflow.parameters.service_owner}}", "elma_url": "{{workflow.parameters.elma_url}}",
-                "product_id": "{{workflow.parameters.product_id}}",
+                "product_id": "{{workflow.parameters.product_id}}", "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                 "service_id": "{{workflow.parameters.service_id}}"}
           - name: kafka_topic
             value: issm-optimizer
@@ -235,6 +234,13 @@ spec:
   - name: handle-best-offers
     dag:
       tasks:
+      - name: get-product-offer-from-catalog
+        template: get-product-offer-from-catalog
+        arguments:
+          parameters:
+          - name: product_id
+            value: "{{workflow.parameters.product_id}}"
+
       - name: handle-best-offers
         # this step is mainly for pretty print
         templateRef:
@@ -249,30 +255,21 @@ spec:
 
       - name: loop-best-offers-resource
         # loop through 'resource' type offers
-        dependencies: [handle-best-offers]
+        dependencies: [handle-best-offers, get-product-offer-from-catalog]
         template: loop-best-offers
         arguments:
           parameters:
           - name: best_offer
             value: "{{item}}"
-          - name: jq_owner
-            value: '.offer_object.productSpecification.relatedParty[0].name'
-          - name: jq_vsb
-            value: '.offer_object.Blueprint_name'
-          - name: jq_product_id
-            value: '.offer_object.product_id'
-          - name: jq_sla_id
-            value: '.offer_object.serviceLevelAgreement.id'
+          - name: resource_vsb
+            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.vsdName}}"
         withParam: "{{workflow.parameters.resources}}"
 
   - name: loop-best-offers
     inputs:
       parameters:
       - name: best_offer
-      - name: jq_owner
-      - name: jq_vsb
-      - name: jq_product_id
-      - name: jq_sla_id
+      - name: resource_vsb
     dag:
       tasks:
       - name: resource-service-owner
@@ -284,7 +281,7 @@ spec:
           - name: json_str
             value: "{{inputs.parameters.best_offer}}"
           - name: jq_query
-            value: "{{inputs.parameters.jq_owner}}"
+            value: '.offer_object.productSpecification.relatedParty[0].name'
 
       - name: process-mno-name
         dependencies: [resource-service-owner]
@@ -296,41 +293,8 @@ spec:
           - name: mno_name
             value: "{{tasks.resource-service-owner.outputs.result}}"
 
-      - name: resource-vsb
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{inputs.parameters.best_offer}}"
-          - name: jq_query
-            value: "{{inputs.parameters.jq_vsb}}"
-
-      - name: product-id
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{inputs.parameters.best_offer}}"
-          - name: jq_query
-            value: "{{inputs.parameters.jq_product_id}}"
-
-      - name: sla-id
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{inputs.parameters.best_offer}}"
-          - name: jq_query
-            value: "{{inputs.parameters.jq_sla_id}}"
-
       - name: acquire
-        dependencies: [process-mno-name, resource-vsb, product-id, sla-id]
+        dependencies: [process-mno-name]
         # invokes acquire template for every entry in resources list
         # waits for them to succeed and publishes status success for the
         # service owner to consume
@@ -338,7 +302,7 @@ spec:
         arguments:
           parameters:
           - name: product_id
-            value: "{{tasks.product-id.outputs.result}}"
+            value: "{{workflow.parameters.product_id}}"
 
       - name: trigger-orchestration-scaleout
         dependencies: [acquire]
@@ -348,12 +312,11 @@ spec:
           - name: resource_owner
             value: "{{tasks.process-mno-name.outputs.result}}"
           - name: resource_vsb
-            value: "{{tasks.resource-vsb.outputs.result}}"
+            value: "{{inputs.parameters.resource_vsb}}"
           - name: product_id
-            value: "{{tasks.product-id.outputs.result}}"
+            value: "{{workflow.parameters.product_id}}"
           - name: sla_id
-            value: "{{tasks.sla-id.outputs.result}}"
-
+            value: "123"
 
   - name: get-product-offer-from-catalog
     inputs:
