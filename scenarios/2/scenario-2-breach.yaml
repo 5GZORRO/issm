@@ -132,6 +132,8 @@ spec:
             value: "{{tasks.breach-product-id.outputs.result}}"
           - name: service_id
             value: "{{tasks.breach-instance-id.outputs.result}}"
+          - name: scenario
+            value: "{{tasks.service-owner-etc-scenario.outputs.parameters.scenario}}"
           - name: elma_url
             value: "{{tasks.service-owner-etc-scenario.outputs.parameters.elma_url}}"
           - name: catalogue_url
@@ -144,6 +146,7 @@ spec:
       - name: location
       - name: product_id
       - name: service_id
+      - name: scenario
       - name: elma_url
       - name: catalogue_url
     steps:
@@ -162,7 +165,7 @@ spec:
               # important that event and transaction uuids are the same
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
-                  "scenario": "2",
+                  "scenario": "{{inputs.parameters.scenario}}",
                   "operation": "scaleout", "sub_operation": "new_intent",
                   "location": "{{inputs.parameters.location}}",
                   "service_owner": "{{inputs.parameters.service_owner}}",

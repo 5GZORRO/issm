@@ -87,6 +87,7 @@ spec:
                   - name: breachPredictionNotification
 
                   - name: scenario
+                    value: 2
 
                 templates:
                 
@@ -109,8 +110,3 @@ spec:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification
               dest: spec.arguments.parameters.4.value
-
-            - src:
-                dependencyName: breach-dep
-                dataKey: body.scenario
-              dest: spec.arguments.parameters.5.value

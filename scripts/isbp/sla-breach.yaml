@@ -45,7 +45,7 @@ spec:
     - name: transaction_id
       value: "99bbc9dd7b9f4e76829cb892e6de077f"
     - name: product_id
-      value: "456"
+      value: 0f5460c1-efe4-42e6-85e5-57571989e270
     - name: instance_id
       value: "012"
     - name: location
@@ -72,8 +72,7 @@ spec:
                   "productID": "{{workflow.parameters.product_id}}",
                   "instanceID": "{{workflow.parameters.instance_id}}",
                   "location": "{{workflow.parameters.location}}"
-                },
-                "scenario": "2"
+                }
               }
           - name: kafka_topic
             value: isbp-topic-out
