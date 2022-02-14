@@ -77,20 +77,23 @@ spec:
                   - name: service_port
                     value: 30080
 
+                  - name: breachPredictionNotification
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Json with keys:
+                  # Pre-parsed json from breach payload keys:
                   # transactionID
                   # productID
                   # instanceID
                   # location
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: breachPredictionNotification
+                  - name: transaction_uuid
+                  - name: location
+                  - name: instance_id
+                  - name: product_id
 
                   - name: scenario
                     value: 2
 
                 templates:
-                
                 - name: handlerequest
                   steps:
                   - - name: breach-scenario-1
@@ -110,3 +113,23 @@ spec:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification
               dest: spec.arguments.parameters.4.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification.transactionID
+              dest: spec.arguments.parameters.5.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification.location
+              dest: spec.arguments.parameters.6.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification.instanceID
+              dest: spec.arguments.parameters.7.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification.productID
+              dest: spec.arguments.parameters.8.value

@@ -49,56 +49,7 @@ spec:
   - name: handle-breach
     dag:
       tasks:
-      # Retrieve transaction-uuid
-      - name: breach-transaction-uuid
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{workflow.parameters.breachPredictionNotification}}"
-          - name: jq_query
-            value: '.transactionID'
-
-      - name: breach-location
-      # Retrieve location
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{workflow.parameters.breachPredictionNotification}}"
-          - name: jq_query
-            value: '.location'
-
-      - name: breach-instance-id
-      # Retrieve location
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{workflow.parameters.breachPredictionNotification}}"
-          - name: jq_query
-            value: '.instanceID'
-
-      - name: breach-product-id
-        # Retrieve location      
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{workflow.parameters.breachPredictionNotification}}"
-          - name: jq_query
-            value: '.productID'
-
       - name: get-transaction
-        dependencies: [breach-transaction-uuid]
         template: issm-api-get-transaction
         arguments:
           parameters:
@@ -107,11 +58,11 @@ spec:
           - name: service_port
             value: "{{workflow.parameters.service_port}}"
           - name: transaction_uuid
-            value: "{{tasks.breach-transaction-uuid.outputs.result}}"
+            value: "{{workflow.parameters.transaction_uuid}}"
 
-      - name: service-owner-etc-scenario
-        # Retrieve 'service_owner' (stakeholder) and its access
-        # infos from the transaction
+      - name: transaction-data
+        # Retrieve 'service_owner' (stakeholder), access
+        # infos
         dependencies: [get-transaction]
         template: jq-script
         arguments:
@@ -120,24 +71,24 @@ spec:
             value: "{{tasks.get-transaction.outputs.result}}"
 
       - name: trigger-scaleout
-        dependencies: [service-owner-etc-scenario, breach-product-id, breach-instance-id, breach-location]
         template: trigger-scaleout
+        dependencies: [transaction-data]
         arguments:
           parameters:
           - name: service_owner
-            value: "{{tasks.service-owner-etc-scenario.outputs.parameters.service_owner}}"
+            value: "{{tasks.transaction-data.outputs.parameters.service_owner}}"
           - name: location
-            value: "{{tasks.breach-location.outputs.result}}"
+            value: "{{workflow.parameters.location}}"
           - name: product_id
-            value: "{{tasks.breach-product-id.outputs.result}}"
+            value: "{{workflow.parameters.product_id}}"
           - name: service_id
-            value: "{{tasks.breach-instance-id.outputs.result}}"
+            value: "{{workflow.parameters.instance_id}}"
           - name: scenario
-            value: "{{tasks.service-owner-etc-scenario.outputs.parameters.scenario}}"
+            value: "{{tasks.transaction-data.outputs.parameters.scenario}}"
           - name: elma_url
-            value: "{{tasks.service-owner-etc-scenario.outputs.parameters.elma_url}}"
+            value: "{{tasks.transaction-data.outputs.parameters.elma_url}}"
           - name: catalogue_url
-            value: "{{tasks.service-owner-etc-scenario.outputs.parameters.catalogue_url}}"
+            value: "{{tasks.transaction-data.outputs.parameters.catalogue_url}}"
 
   - name: trigger-scaleout
     inputs:
