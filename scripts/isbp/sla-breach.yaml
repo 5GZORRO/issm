@@ -43,9 +43,9 @@ spec:
       value: "31-01-2022T05:55"
 
     - name: transaction_id
-      value: 054e4324250544caaf28c62fda4e932f
+      value: 5f1da43fcc3c46809ce70b3186d0d2cd
     - name: product_id
-      value: 0f5460c1-efe4-42e6-85e5-57571989e270
+      value: 3e922f24-01ec-4f83-8328-b69dc9ab8f8e
     - name: instance_id
       value: "012"
     - name: location

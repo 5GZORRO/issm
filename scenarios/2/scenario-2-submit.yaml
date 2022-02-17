@@ -151,7 +151,7 @@ spec:
             # set this to stakeholder name so that orch request is routed to it
             value: "{{workflow.parameters.service_owner}}"
           - name: resource_vsb
-            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.vsdName}}"
+            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.vsbName}}"
           - name: product_id
             value: "{{workflow.parameters.product_id}}"
           - name: sla_id
@@ -175,14 +175,14 @@ spec:
           parameters:
           - name: location
             value: "{{workflow.parameters.location}}"
-          - name: cpu_num
-            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.cpu_num}}"
-          - name: memory
-            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.memory}}"
-          - name: memory_unit
-            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.memory_unit}}"
-          - name: storage
-            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.storage}}"
+          - name: cpu_max
+            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.cpu_max}}"
+          - name: mem_max
+            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.mem_max}}"
+          - name: mem_unit
+            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.mem_unit}}"
+          - name: storage_max
+            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.storage_max}}"
           - name: storage_unit
             value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.storage_unit}}"
 
@@ -248,7 +248,7 @@ spec:
           - name: best_offer
             value: "{{item}}"
           - name: resource_vsb
-            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.vsdName}}"
+            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.vsbName}}"
         withParam: "{{workflow.parameters.resources}}"
 
   - name: loop-best-offers
@@ -308,10 +308,10 @@ spec:
     inputs:
       parameters:
       - name: location
-      - name: cpu_num
-      - name: memory
-      - name: memory_unit
-      - name: storage
+      - name: cpu_max
+      - name: mem_max
+      - name: mem_unit
+      - name: storage_max
       - name: storage_unit
     script:
       image: python:alpine3.6
@@ -321,14 +321,16 @@ spec:
         import sys
         # intent/$(urlencode 'storage 96 GB ram 2730 MB edge Barcelona'))
         location = str("{{inputs.parameters.location}}")
-        cpu_num = str("{{inputs.parameters.cpu_num}}")
-        memory = str("{{inputs.parameters.memory}}")
-        memory_unit = str("{{inputs.parameters.memory_unit}}")
+        cpu_max = str("{{inputs.parameters.cpu_max}}")
+        mem_max = str("{{inputs.parameters.mem_max}}")
+        mem_unit = str("{{inputs.parameters.mem_unit}}")
 
-        storage = str("{{inputs.parameters.storage}}")
+        storage_max = str("{{inputs.parameters.storage_max}}")
+        # TODO: remove once IaaS edge resource matches storage of VNF PO 
+        storage_max = "96"
         storage_unit = str("{{inputs.parameters.storage_unit}}")
         
-        sys.stdout.write(cpu_num + " cores" + " storage " + storage + " " + storage_unit + " ram " + memory + " " + memory_unit + " edge " +  location)
+        sys.stdout.write(cpu_max + " cores" + " storage " + storage_max + " " + storage_unit + " ram " + mem_max + " " + mem_unit + " edge " +  location)
 
   - name: srds-service
     inputs:
@@ -351,8 +353,15 @@ spec:
         intent_query = str("{{inputs.parameters.intent_query}}")
         iq = urllib.parse.quote(intent_query)
         r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + iq, headers=headers)
+        offers = r.json()
+        for e in offers:
+            try:
+                # TODO: kafka produce does not like json bool true/false
+                del e['offer_object']['serviceLevelAgreement']['approved']
+            except:
+                pass
         # return all
-        json.dump(r.json(), sys.stdout)
+        json.dump(offers, sys.stdout)
 
   - name: acquire
     # acquire is devided into two sub-tasks:
@@ -431,19 +440,6 @@ spec:
               value: "issm-in-{{inputs.parameters.resource_owner}}"
 
   - name: get-product-offer-from-catalog
-    #
-    # Retrieve attributes of a VNF PO from the domain catalogue
-    #
-    # Parameters:
-    # product_id: PO id
-    #
-    # outputs:
-    # vsdName: blueprint name
-    # memory: memory size for this VNF
-    # memory_unit: memory unit (e.g. MB)
-    # cpu_num: number of vCPU for this VNF
-    # storage: storage size for this VNF
-    # storage_unit: memory unit (e.g. GB)
     inputs:
       parameters:
       - name: product_id
@@ -490,53 +486,69 @@ spec:
 
         rsc_list = r.json()[0]['resourceSpecCharacteristic']
 
-        # 1. retrieve vnfdId
-        element = find(rsc_list, lambda e: e.get('name', '') == 'vnfdId')
+        # 2. vCPU Requirements
+        element = find(rsc_list, lambda e: e.get('name', '') == 'vCPU Requirements')
         if not element:
-            raise Exception("*** Unable to find 'vnfdId' ***")
-        vnfdId = element['resourceSpecCharacteristicValue'][0]['value']['value']
-        sys.stdout.write('vnfdId: "%s" \n' % vnfdId)
+            raise Exception("*** Unable to find 'vCPU Requirements' ***")
 
-        # 2. retrieve vsdName
-        element = find(rsc_list, lambda e: e.get('name', '') == 'vsdName')
+        # min
+        min = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-vCPU')
+        if not min:
+            raise Exception("*** Unable to find 'min-vCPU' ***")
+        cpu_min = min['value']['value']
+
+        # max
+        max = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-vCPU')
+        if not max:
+            raise Exception("*** Unable to find 'max-vCPU' ***")
+        cpu_max = max['value']['value']
+
+        sys.stdout.write('cpu_min/max: "%s, %s" \n' % (cpu_min, cpu_max))
+
+
+        # 3. Virtual Memory Requirements
+        element = find(rsc_list, lambda e: e.get('name', '') == 'Virtual Memory Requirements')
         if not element:
-            raise Exception("*** Unable to find 'vsdName' ***")
-        vsdName = element['resourceSpecCharacteristicValue'][0]['value']['value']
-        sys.stdout.write('vsdName: "%s" \n' % vsdName)
+            raise Exception("*** Unable to find 'Virtual Memory Requirements' ***")
 
-        # 3. retrieve <vnfdId>-VM
-        element = find(rsc_list, lambda e: e.get('name', '') == '%s-VM' % vnfdId)
+        # min
+        min = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-virtual-memory')
+        if not min:
+            raise Exception("*** Unable to find 'min-virtual-memory' ***")
+        mem_min = min['value']['value']
+
+        # max
+        max = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-virtual-memory')
+        if not max:
+            raise Exception("*** Unable to find 'max-virtual-memory' ***")
+        mem_max = max['value']['value']
+
+        sys.stdout.write('mem_min/max: "%s, %s" \n' % (mem_min, mem_max))
+
+        # 4. retrieve Storage Requirements
+        element = find(rsc_list, lambda e: e.get('name', '') == 'Storage Requirements')
         if not element:
-            raise Exception("*** Unable to find '%s-VM' ***" % vnfdId)
-        rsc_value = element['resourceSpecCharacteristicValue']
+            raise Exception("*** Unable to find 'Storage Requirements' ***")
 
-        # 3.a retrieve virtual-memory
-        element = find(rsc_value, lambda e: e.get('value', {}).get('alias', '') == 'virtual-memory')
-        if not element:
-            raise Exception("*** Unable to find 'virtual-memory' ***")
-        memory_unit = element['unitOfMeasure']
-        memory = element['value']['value']
-        sys.stdout.write('memory_unit: "%s" \n' % memory_unit)
-        sys.stdout.write('memory: "%s" \n' % memory)
+        # min
+        min = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-storage')
+        if not min:
+            raise Exception("*** Unable to find 'min-storage' ***")
+        storage_min = min['value']['value']
 
-        # 3.b retrieve virtual-cpu
-        element = find(rsc_value, lambda e: e.get('value', {}).get('alias', '') == 'virtual-cpu')
-        if not element:
-            raise Exception("*** Unable to find 'virtual-cpu' ***")
-        cpu = element['value']['value']
-        sys.stdout.write('cpu: "%s" \n' % cpu)
-        cpu_num = REGEX.match(cpu).group(1)
-        sys.stdout.write('cpu_num: "%s" \n' % cpu_num)
+        # max
+        max = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-storage')
+        if not max:
+            raise Exception("*** Unable to find 'max-storage' ***")
+        storage_max = max['value']['value']
 
-        # 3.b retrieve size-of-storage 0
-        element = find(rsc_value, lambda e: e.get('value', {}).get('alias', '') == 'size-of-storage 0')
-        if not element:
-            raise Exception("*** Unable to find 'size-of-storage 0' ***")
-        storage_unit = element['unitOfMeasure']
-        storage = element['value']['value']
-        sys.stdout.write('storage_unit: "%s" \n' % storage_unit)
-        sys.stdout.write('storage: "%s" \n' % storage)
+        sys.stdout.write('storage_min/max: "%s, %s" \n' % (storage_min, storage_max))
 
+        r = requests.get("{{workflow.parameters.catalogue_url}}/tmf-api/productCatalogManagement/v4/productOfferingStatus/{{inputs.parameters.product_id}}",
+            headers=headers)
+        json.dump(r.json(), sys.stdout)
+        sys.stdout.write('\n')
+        did = r.json()['did']
 
         #for r in rsc_list:
         #  if r['name'] == 'vsdName':
@@ -544,46 +556,69 @@ spec:
         #    sys.stdout.write('vsdName: %s \n' % vsdName)
         #    break
 
-        with open('/tmp/vsdName.txt', 'w') as f:
-            f.write(str(vsdName))
+        with open('/tmp/vsbName.txt', 'w') as f:
+            f.write(str("vCDN_edge_ICOM"))
 
-        with open('/tmp/memory_unit.txt', 'w') as f:
-            f.write(str(memory_unit))
+        with open('/tmp/mem_unit.txt', 'w') as f:
+            # TODO: change to GB once value is updated in PO
+            f.write(str("MB"))
 
-        with open('/tmp/memory.txt', 'w') as f:
-            f.write(str(memory))
+        with open('/tmp/mem_min.txt', 'w') as f:
+            f.write(str(mem_min))
+        with open('/tmp/mem_max.txt', 'w') as f:
+            f.write(str(mem_max))
 
-        with open('/tmp/cpu_num.txt', 'w') as f:
-            f.write(str(cpu_num))
+        with open('/tmp/cpu_min.txt', 'w') as f:
+            f.write(str(cpu_min))
+        with open('/tmp/cpu_max.txt', 'w') as f:
+            f.write(str(cpu_max))
 
         with open('/tmp/storage_unit.txt', 'w') as f:
-            f.write(str(storage_unit))
+            f.write(str("GB"))
 
-        with open('/tmp/storage.txt', 'w') as f:
-            f.write(str(storage))
+        with open('/tmp/storage_min.txt', 'w') as f:
+            f.write(str(storage_min))
+        with open('/tmp/storage_max.txt', 'w') as f:
+            f.write(str(storage_max))
+
+        with open('/tmp/did.txt', 'w') as f:
+            f.write(str(did))
 
     outputs:
       parameters:
-      - name: vsdName
+      - name: vsbName
         valueFrom:
-          path: /tmp/vsdName.txt
+          path: /tmp/vsbName.txt
 
-      - name: memory_unit
+      - name: mem_unit
         valueFrom:
-          path: /tmp/memory_unit.txt
+          path: /tmp/mem_unit.txt
 
-      - name: memory
+      - name: mem_min
         valueFrom:
-          path: /tmp/memory.txt
+          path: /tmp/mem_min.txt
+      - name: mem_max
+        valueFrom:
+          path: /tmp/mem_max.txt
 
-      - name: cpu_num
+      - name: cpu_min
         valueFrom:
-          path: /tmp/cpu_num.txt
+          path: /tmp/cpu_min.txt
+      - name: cpu_max
+        valueFrom:
+          path: /tmp/cpu_max.txt
 
       - name: storage_unit
         valueFrom:
           path: /tmp/storage_unit.txt
 
-      - name: storage
+      - name: storage_min
         valueFrom:
-          path: /tmp/storage.txt
+          path: /tmp/storage_min.txt
+      - name: storage_max
+        valueFrom:
+          path: /tmp/storage_max.txt
+
+      - name: did
+        valueFrom:
+          path: /tmp/did.txt
