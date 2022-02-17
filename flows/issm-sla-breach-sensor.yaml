@@ -121,7 +121,7 @@ spec:
 
             - src:
                 dependencyName: breach-dep
-                dataKey: body.breachPredictionNotification.location
+                dataKey: body.breachPredictionNotification.location.city
               dest: spec.arguments.parameters.6.value
 
             - src:

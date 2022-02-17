@@ -146,6 +146,12 @@ spec:
                   - name: catalogue_url
                     value: OVERRIDE
 
+                  - name: my_place
+                    # this domain location
+                    # (should match IaaS resource PO)
+                    # passed to sla-event on instantiation flow
+                    value: OVERRIDE
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -272,4 +278,9 @@ spec:
                 dataKey: body.catalogue_url
                 value: DEFAULT
               dest: spec.arguments.parameters.20.value
-              
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.my_place
+                value: DEFAULT
+              dest: spec.arguments.parameters.21.value

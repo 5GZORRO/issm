@@ -431,6 +431,7 @@ spec:
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
+                  "my_place": {{workflow.parameters.my_place}},
                   "scenario": "{{workflow.parameters.scenario}}", "elma_url": "{{workflow.parameters.elma_url}}",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
