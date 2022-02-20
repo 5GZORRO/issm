@@ -35,7 +35,7 @@
 # * Orchestrate the instantiation of the SW at the stakeholder premises and return the instance_id
 #
 # * Send SLA event to start SLA monitoring
-#   SLA event includes: transaction_uuid, product_id, instance_id, sla_id, place
+#   SLA event includes: transaction_uuid, product_id, instance_id, place
 #                       (as denoted in input parameter)
 #
 # ==============================================================================
@@ -78,8 +78,7 @@
 #   - (MEC-CNMP) UPF is deployed into 3rd party domain (i.e. 3rd party namespace)
 #     and get connected to stakeholder's core
 #
-# * SLA event includes: transaction_uuid, product_id, instance_id, sla_id,
-#                       location (of IaaS resource)
+# * SLA event includes: transaction_uuid, product_id, instance_id, location (of IaaS resource)
 # 
 ###############################################################################
 
@@ -156,9 +155,6 @@ spec:
             value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.vsbName}}"
           - name: product_id
             value: "{{workflow.parameters.product_id}}"
-          - name: sla_id
-            # TODO: from where do we take SLA ID?
-            value: "123"
           - name: place
             value: "{{workflow.parameters.place}}"
             
@@ -317,8 +313,6 @@ spec:
             value: "{{inputs.parameters.resource_vsb}}"
           - name: product_id
             value: "{{workflow.parameters.product_id}}"
-          - name: sla_id
-            value: "123"
           - name: place
             value: "{{tasks.resource-location.outputs.result}}"
 
@@ -433,7 +427,6 @@ spec:
       - name: resource_owner
       - name: resource_vsb
       - name: product_id
-      - name: sla_id
       - name: place
     steps:
       - - name: event-uuid
@@ -454,8 +447,7 @@ spec:
                   "scenario": "{{workflow.parameters.scenario}}", "elma_url": "{{workflow.parameters.elma_url}}",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
-                  "resource_owner": "{{inputs.parameters.resource_owner}}",
-                  "sla_id": "{{inputs.parameters.sla_id}}" }
+                  "resource_owner": "{{inputs.parameters.resource_owner}}" }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"
 

@@ -44,8 +44,6 @@ spec:
       value: 456
     - name: instance_id
       value: 012
-    - name: sla_id
-      value: 789
     - name: place
       value: |
         {

@@ -120,7 +120,6 @@ spec:
                 "transactionID": "{{workflow.parameters.transaction_uuid}}",
                 "productID": "{{workflow.parameters.product_id}}",
                 "instanceID": "{{tasks.mec-cnmp-create-nssi.outputs.parameters.nssi_id}}",
-                "slaID": "{{workflow.parameters.sla_id}}",
                 "place": {{workflow.parameters.place}},
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
                 "topic": "isbp-topic-out"
