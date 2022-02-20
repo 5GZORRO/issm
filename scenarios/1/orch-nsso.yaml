@@ -111,6 +111,7 @@ spec:
                 "productID": "{{workflow.parameters.product_id}}",
                 "instanceID": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}",
                 "slaID": "{{workflow.parameters.sla_id}}",
+                "place": "Not-Applicable",
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
                 "topic": "isbp-topic-out"
               }
