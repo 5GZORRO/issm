@@ -46,6 +46,28 @@ spec:
       value: 012
     - name: sla_id
       value: 789
+    - name: place
+      value: |
+        {
+          "id": "9d6301ac-698c-4ed0-bd28-b0446b0b305c",
+          "href": "http://172.28.3.126:31080/tmf-api/geographicAddressManagement/v4/geographicAddress/9d6301ac-698c-4ed0-bd28-b0446b0b305c",
+          "city": "Barcelona",
+          "country": "Spain",
+          "locality": "Barcelona",
+          "geographicLocation": {
+            "id": "f17148e1-b874-4e2e-a81e-86738d0ee044",
+            "name": "Barcelona i2CAT Area, Spain ",
+            "geometryType": "string",
+            "geometry": [
+              {
+                "id": "c45f6cc2-85af-4f64-95d8-25f9ba775fab",
+                "x": "41.3879",
+                "y": "2.1699",
+                "z": "3388.0"
+              }
+            ]
+          }
+        }        
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # metadata attributes:
@@ -78,9 +100,10 @@ spec:
                 "productID": "{{workflow.parameters.product_id}}",
                 "instanceID": "{{workflow.parameters.instance_id}}",
                 "slaID": "{{workflow.parameters.sla_id}}",
+                "place": {{workflow.parameters.place}},
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}",
                 "kafka_port": "{{workflow.parameters.kafka_port}}",
-                "topic": "{{workflow.parameters.kafka_topic}}",
+                "topic": "{{workflow.parameters.kafka_topic}}"
               }
           - name: kafka_topic
             value: "{{workflow.parameters.kafka_dl_topic}}"

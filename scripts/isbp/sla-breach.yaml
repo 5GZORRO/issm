@@ -48,7 +48,7 @@ spec:
       value: 3e922f24-01ec-4f83-8328-b69dc9ab8f8e
     - name: instance_id
       value: "012"
-    - name: location
+    - name: place
       value: |
         {
           "id": "9d6301ac-698c-4ed0-bd28-b0446b0b305c",
@@ -91,7 +91,7 @@ spec:
                   "transactionID": "{{workflow.parameters.transaction_id}}",
                   "productID": "{{workflow.parameters.product_id}}",
                   "instanceID": "{{workflow.parameters.instance_id}}",
-                  "location": {{workflow.parameters.location}}
+                  "place": {{workflow.parameters.place}}
                 }
               }
           - name: kafka_topic

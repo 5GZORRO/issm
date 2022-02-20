@@ -4,7 +4,7 @@
     "product_id": "3e922f24-01ec-4f83-8328-b69dc9ab8f8e",
     "elma_url": "http://172.28.3.42:31880",
     "catalogue_url": "http://172.28.3.126:31080",
-    "my_place": {
+    "place": {
       "id": "9d6301ac-698c-4ed0-bd28-b0446b0b305c",
       "href": "http://172.28.3.126:31080/tmf-api/geographicAddressManagement/v4/geographicAddress/9d6301ac-698c-4ed0-bd28-b0446b0b305c",
       "city": "Barcelona",

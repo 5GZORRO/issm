@@ -86,7 +86,7 @@ spec:
                   # location
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: transaction_uuid
-                  - name: location
+                  - name: place
                   - name: instance_id
                   - name: product_id
 
@@ -121,7 +121,7 @@ spec:
 
             - src:
                 dependencyName: breach-dep
-                dataKey: body.breachPredictionNotification.location.city
+                dataKey: body.breachPredictionNotification.place
               dest: spec.arguments.parameters.6.value
 
             - src:

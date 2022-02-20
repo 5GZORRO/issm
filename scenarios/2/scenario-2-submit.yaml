@@ -26,6 +26,7 @@
 #
 #     product_id: the DID of the SW offer that is already owned by the stakeholder (e.g. 6wG2v3x8sBduWUNWMB2YBL)
 #     service_owner: stakeholder name (e.g. operator-a)
+#     place: the location of where this instantiation is going to be (PO TMF format)
 #
 # Steps:
 #
@@ -34,7 +35,8 @@
 # * Orchestrate the instantiation of the SW at the stakeholder premises and return the instance_id
 #
 # * Send SLA event to start SLA monitoring
-#   SLA event includes: transaction_uuid, product_id, instance_id, sla_id
+#   SLA event includes: transaction_uuid, product_id, instance_id, sla_id, place
+#                       (as denoted in input parameter)
 #
 # ==============================================================================
 #
@@ -46,8 +48,7 @@
 #     product_id: the DID of the SW offer to scaleout (e.g. 6wG2v3x8sBduWUNWMB2YBL)
 #     service_owner: stakeholder name (e.g. operator-a)
 #     service_id: the existing running instance id to be scaled out
-#     Parameters for smart offer search:
-#       location: the location of where to scaleout (e.g. Barcelona Spain)
+#     place: the location of where we would like to scaleout (PO TMF format)
 #
 # Steps:
 #
@@ -77,7 +78,8 @@
 #   - (MEC-CNMP) UPF is deployed into 3rd party domain (i.e. 3rd party namespace)
 #     and get connected to stakeholder's core
 #
-# * (TBD) SLA event
+# * SLA event includes: transaction_uuid, product_id, instance_id, sla_id,
+#                       location (of IaaS resource)
 # 
 ###############################################################################
 
@@ -157,6 +159,9 @@ spec:
           - name: sla_id
             # TODO: from where do we take SLA ID?
             value: "123"
+          - name: place
+            value: "{{workflow.parameters.place}}"
+            
 
   - name: handle-new-intent
     dag:
@@ -173,8 +178,8 @@ spec:
         template: build-intent-query
         arguments:
           parameters:
-          - name: location
-            value: "{{workflow.parameters.location}}"
+          - name: place
+            value: "{{workflow.parameters.place}}"
           - name: cpu_max
             value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.cpu_max}}"
           - name: mem_max
@@ -279,8 +284,19 @@ spec:
           - name: mno_name
             value: "{{tasks.resource-service-owner.outputs.result}}"
 
+      - name: resource-location
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.offer_object.place[0]'
+
       - name: acquire
-        dependencies: [process-mno-name]
+        dependencies: [process-mno-name, resource-location]
         # invokes acquire template for every entry in resources list
         # waits for them to succeed and publishes status success for the
         # service owner to consume
@@ -303,11 +319,13 @@ spec:
             value: "{{workflow.parameters.product_id}}"
           - name: sla_id
             value: "123"
+          - name: place
+            value: "{{tasks.resource-location.outputs.result}}"
 
   - name: build-intent-query
     inputs:
       parameters:
-      - name: location
+      - name: place
       - name: cpu_max
       - name: mem_max
       - name: mem_unit
@@ -320,7 +338,7 @@ spec:
       source: |
         import sys
         # intent/$(urlencode 'storage 96 GB ram 2730 MB edge Barcelona'))
-        location = str("{{inputs.parameters.location}}")
+        location = {{inputs.parameters.place}}['city']
         cpu_max = str("{{inputs.parameters.cpu_max}}")
         mem_max = str("{{inputs.parameters.mem_max}}")
         mem_unit = str("{{inputs.parameters.mem_unit}}")
@@ -416,6 +434,7 @@ spec:
       - name: resource_vsb
       - name: product_id
       - name: sla_id
+      - name: place
     steps:
       - - name: event-uuid
           templateRef:
@@ -431,7 +450,7 @@ spec:
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
-                  "my_place": {{workflow.parameters.my_place}},
+                  "place": {{inputs.parameters.place}},
                   "scenario": "{{workflow.parameters.scenario}}", "elma_url": "{{workflow.parameters.elma_url}}",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_id": "{{inputs.parameters.product_id}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",

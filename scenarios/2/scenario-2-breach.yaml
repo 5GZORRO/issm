@@ -27,7 +27,7 @@
 #     transaction_uuid: the uuid of the transaction that instantiated the service where the SLA breach occured
 #     service_id: the instance id of this service that caused this violation
 #     product_id: the DID of the SW offer this service instance is from
-#     location: the location of where this violation occured
+#     place: the location of where this violation occured (PO TMF format)
 #
 # Steps:
 #
@@ -35,7 +35,7 @@
 #
 # * If scaleout operation occured in this location for this service_id, in last x time - ignore
 #
-# * Send scale out intent on behalf of this stakeholder with service_id, product_id, location
+# * Send scale out intent on behalf of this stakeholder with service_id, product_id, place
 #
 # ==============================================================================
 
@@ -77,8 +77,8 @@ spec:
           parameters:
           - name: service_owner
             value: "{{tasks.transaction-data.outputs.parameters.service_owner}}"
-          - name: location
-            value: "{{workflow.parameters.location}}"
+          - name: place
+            value: "{{workflow.parameters.place}}"
           - name: product_id
             value: "{{workflow.parameters.product_id}}"
           - name: service_id
@@ -94,7 +94,7 @@ spec:
     inputs:
       parameters:
       - name: service_owner
-      - name: location
+      - name: place
       - name: product_id
       - name: service_id
       - name: scenario
@@ -118,7 +118,7 @@ spec:
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
                   "scenario": "{{inputs.parameters.scenario}}",
                   "operation": "scaleout", "sub_operation": "new_intent",
-                  "location": "{{inputs.parameters.location}}",
+                  "place": {{inputs.parameters.place}},
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "product_id": "{{inputs.parameters.product_id}}",
                   "service_id": "{{inputs.parameters.service_id}}",

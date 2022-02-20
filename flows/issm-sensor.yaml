@@ -114,12 +114,12 @@ spec:
                   - name: intent_query
                     value: OVERRIDE
 
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Attributes related to smart offer search
-                  # (where applicable)
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: location
-                    value: OVERRIDE
+#                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#                  # Attributes related to smart offer search
+#                  # (where applicable)
+#                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#                  - name: location
+#                    value: OVERRIDE
 
                   # SW offer related
                   - name: product_id
@@ -146,7 +146,7 @@ spec:
                   - name: catalogue_url
                     value: OVERRIDE
 
-                  - name: my_place
+                  - name: place
                     # this domain location
                     # (should match IaaS resource PO)
                     # passed to sla-event on instantiation flow
@@ -225,62 +225,62 @@ spec:
                 value: DEFAULT
               dest: spec.arguments.parameters.11.value
 
-            - src:
-                dependencyName: test-dep
-                dataKey: body.location
-                value: DEFAULT
-              dest: spec.arguments.parameters.12.value
+#            - src:
+#                dependencyName: test-dep
+#                dataKey: body.location
+#                value: DEFAULT
+#              dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.product_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.13.value
+              dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resource_vsb
                 value: DEFAULT
-              dest: spec.arguments.parameters.14.value
+              dest: spec.arguments.parameters.13.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.sla_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.15.value
+              dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.service_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.16.value
+              dest: spec.arguments.parameters.15.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resources
                 value: DEFAULT
-              dest: spec.arguments.parameters.17.value
+              dest: spec.arguments.parameters.16.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resource_owner
                 value: DEFAULT
-              dest: spec.arguments.parameters.18.value
+              dest: spec.arguments.parameters.17.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.elma_url
                 value: DEFAULT
-              dest: spec.arguments.parameters.19.value
+              dest: spec.arguments.parameters.18.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.catalogue_url
                 value: DEFAULT
-              dest: spec.arguments.parameters.20.value
+              dest: spec.arguments.parameters.19.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.my_place
+                dataKey: body.place
                 value: DEFAULT
-              dest: spec.arguments.parameters.21.value
+              dest: spec.arguments.parameters.20.value
