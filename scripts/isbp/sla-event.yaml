@@ -97,7 +97,6 @@ spec:
                 "transactionID": "{{workflow.parameters.transaction_id}}",
                 "productID": "{{workflow.parameters.product_id}}",
                 "instanceID": "{{workflow.parameters.instance_id}}",
-                "slaID": "{{workflow.parameters.sla_id}}",
                 "place": {{workflow.parameters.place}},
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}",
                 "kafka_port": "{{workflow.parameters.kafka_port}}",

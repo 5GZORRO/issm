@@ -146,13 +146,6 @@ spec:
         sys.stdout.write('storage_unit: "%s" \n' % storage_unit)
         sys.stdout.write('storage: "%s" \n' % storage)
 
-
-        #for r in rsc_list:
-        #  if r['name'] == 'vsdName':
-        #    vsdName = r['resourceSpecCharacteristicValue'][0]['value']['value']
-        #    sys.stdout.write('vsdName: %s \n' % vsdName)
-        #    break
-
         with open('/tmp/vsdName.txt', 'w') as f:
             f.write(str(vsdName))
 

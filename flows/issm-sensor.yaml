@@ -114,13 +114,6 @@ spec:
                   - name: intent_query
                     value: OVERRIDE
 
-#                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#                  # Attributes related to smart offer search
-#                  # (where applicable)
-#                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#                  - name: location
-#                    value: OVERRIDE
-
                   # SW offer related
                   - name: product_id
                     value: OVERRIDE
@@ -224,12 +217,6 @@ spec:
                 dataKey: body.intent_query
                 value: DEFAULT
               dest: spec.arguments.parameters.11.value
-
-#            - src:
-#                dependencyName: test-dep
-#                dataKey: body.location
-#                value: DEFAULT
-#              dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep

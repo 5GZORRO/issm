@@ -562,12 +562,6 @@ spec:
         sys.stdout.write('\n')
         did = r.json()['did']
 
-        #for r in rsc_list:
-        #  if r['name'] == 'vsdName':
-        #    vsdName = r['resourceSpecCharacteristicValue'][0]['value']['value']
-        #    sys.stdout.write('vsdName: %s \n' % vsdName)
-        #    break
-
         with open('/tmp/vsbName.txt', 'w') as f:
             f.write(str("vCDN_edge_ICOM"))
 
