@@ -171,3 +171,39 @@ spec:
       command: [python]
       source: |
         print(str("{{inputs.parameters.mno_name}}").replace('_','-').lower())
+
+  - name: sla-breach-data
+    inputs:
+      parameters:
+      - name: sla_breach
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import sys
+      
+        applicable = {{inputs.parameters.sla_breach}}['applicable']
+        sys.stdout.write('applicable: "%s" \n' % applicable)
+        transaction_uuid = "Not-applicble"
+        try:
+            transaction_uuid = {{inputs.parameters.sla_breach}}['breachPredictionNotification']['transactionID']
+            sys.stdout.write('transaction_uuid: "%s" \n' % transaction_uuid)
+        except:
+            # missing breachPredictionNotification, its ok
+            pass
+
+        with open('/tmp/applicable.txt', 'w') as f:
+            f.write(str(applicable))
+
+        with open('/tmp/transaction_uuid.txt', 'w') as f:
+            f.write(str(transaction_uuid))
+    outputs:
+      parameters:
+      - name: applicable
+        valueFrom:
+          path: /tmp/applicable.txt
+
+      - name: transaction_uuid
+        valueFrom:
+          path: /tmp/transaction_uuid.txt

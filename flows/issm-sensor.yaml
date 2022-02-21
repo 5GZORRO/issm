@@ -145,6 +145,8 @@ spec:
                     # passed to sla-event on instantiation flow
                     value: OVERRIDE
 
+                  - name: sla_breach
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -271,3 +273,12 @@ spec:
                 dataKey: body.place
                 value: DEFAULT
               dest: spec.arguments.parameters.20.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.sla_breach
+                value: |
+                  {
+                    "applicable": "false"
+                  }
+              dest: spec.arguments.parameters.21.value

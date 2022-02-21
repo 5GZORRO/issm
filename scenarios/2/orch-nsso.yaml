@@ -218,6 +218,35 @@ spec:
           - name: kafka_port
             value: "{{workflow.parameters.kafka_dl_port}}"
 
+      - name: sla-breach-data
+        dependencies: [nsso-poll]
+        templateRef:
+          name: workflow-base
+          template: sla-breach-data
+        arguments:
+          parameters:
+          - name: sla_breach
+            value: "{{workflow.parameters.sla_breach}}"
+
+      - name: sla-send-ack
+        dependencies: [sla-breach-data]
+        when: "{{tasks.sla-breach-data.outputs.parameters.applicable}} == true"
+        template: whalesay
+        arguments:
+          parameters:
+          - name: message
+            value: "Sending ACK"
+
+  - name: whalesay
+    inputs:
+      parameters:
+      - name: message
+    container:
+      image: docker/whalesay
+      imagePullPolicy: IfNotPresent
+      command: [cowsay]
+      args: ["{{inputs.parameters.message}}"]
+
   - name: create-descriptor
     # Create a new VSD from the given blueprint name
     #
