@@ -131,6 +131,38 @@ spec:
           - name: kafka_port
             value: "{{workflow.parameters.kafka_dl_port}}"
 
+      - name: sla-breach-data
+        dependencies: [mec-cnmp-poll]
+        templateRef:
+          name: workflow-base
+          template: sla-breach-data
+        arguments:
+          parameters:
+          - name: sla_breach
+            value: "{{workflow.parameters.sla_breach}}"
+
+      - name: sla-send-ack
+        dependencies: [sla-breach-data]
+        when: "{{tasks.sla-breach-data.outputs.parameters.applicable}} == true"
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "eventType": "new_SLA_ACK",
+                "transactionID": "{{tasks.sla-breach-data.outputs.parameters.transaction_uuid}}",
+                "status": "COMPLETED"
+              }
+          - name: kafka_topic
+            value: "isbp-topic"
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_dl_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_dl_port}}"
+
+
   - name: mec-cnmp-create-nssi
     inputs:
       parameters:

@@ -231,21 +231,23 @@ spec:
       - name: sla-send-ack
         dependencies: [sla-breach-data]
         when: "{{tasks.sla-breach-data.outputs.parameters.applicable}} == true"
-        template: whalesay
+        templateRef:
+          name: workflow-base
+          template: produce
         arguments:
           parameters:
-          - name: message
-            value: "Sending ACK"
-
-  - name: whalesay
-    inputs:
-      parameters:
-      - name: message
-    container:
-      image: docker/whalesay
-      imagePullPolicy: IfNotPresent
-      command: [cowsay]
-      args: ["{{inputs.parameters.message}}"]
+          - name: data
+            value: |
+              { "eventType": "new_SLA_ACK",
+                "transactionID": "{{tasks.sla-breach-data.outputs.parameters.transaction_uuid}}",
+                "status": "COMPLETED"
+              }
+          - name: kafka_topic
+            value: "isbp-topic"
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_dl_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_dl_port}}"
 
   - name: create-descriptor
     # Create a new VSD from the given blueprint name
