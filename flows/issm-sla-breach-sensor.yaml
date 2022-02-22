@@ -88,7 +88,7 @@ spec:
                   - name: transaction_uuid
                   - name: place
                   - name: instance_id
-                  - name: product_id
+                  - name: product_DID
 
                   - name: scenario
                     value: 2

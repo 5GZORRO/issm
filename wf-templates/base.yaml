@@ -187,7 +187,7 @@ spec:
         applicable = {{inputs.parameters.sla_breach}}['applicable']
         sys.stdout.write('applicable: "%s" \n' % applicable)
         transaction_uuid = "Not-applicble"
-        product_id = "Not-applicble"
+        product_DID = "Not-applicble"
         try:
             transaction_uuid = {{inputs.parameters.sla_breach}}['breachPredictionNotification']['transactionID']
             sys.stdout.write('transaction_uuid: "%s" \n' % transaction_uuid)
@@ -196,11 +196,11 @@ spec:
             sys.stdout.write('missing transaction_uuid \n')
 
         try:
-            product_id = {{inputs.parameters.sla_breach}}['breachPredictionNotification']['productID']
-            sys.stdout.write('product_id: "%s" \n' % product_id)
+            product_DID = {{inputs.parameters.sla_breach}}['breachPredictionNotification']['productID']
+            sys.stdout.write('product_DID: "%s" \n' % product_DID)
         except:
             # missing breachPredictionNotification, its ok
-            sys.stdout.write('missing product_id \n')
+            sys.stdout.write('missing product_DID \n')
 
         with open('/tmp/applicable.txt', 'w') as f:
             f.write(str(applicable))
@@ -208,8 +208,8 @@ spec:
         with open('/tmp/transaction_uuid.txt', 'w') as f:
             f.write(str(transaction_uuid))
 
-        with open('/tmp/product_id.txt', 'w') as f:
-            f.write(str(product_id))
+        with open('/tmp/product_DID.txt', 'w') as f:
+            f.write(str(product_DID))
     outputs:
       parameters:
       - name: applicable
@@ -220,6 +220,6 @@ spec:
         valueFrom:
           path: /tmp/transaction_uuid.txt
 
-      - name: product_id
+      - name: product_DID
         valueFrom:
-          path: /tmp/product_id.txt
+          path: /tmp/product_DID.txt

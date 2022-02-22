@@ -62,7 +62,7 @@ spec:
             value: "{{workflow.parameters.resource_vsb}}"
           - name: userdata
             value: |
-              { "product_id": "{{workflow.parameters.product_id}}",
+              { "product_id": "{{workflow.parameters.product_DID}}",
                 "transaction_id": "{{workflow.parameters.transaction_uuid}}"}
 
       - name: nsso-poll
@@ -106,7 +106,7 @@ spec:
             value: |
               { "eventType": "new_SLA",
                 "transactionID": "{{workflow.parameters.transaction_uuid}}",
-                "productID": "{{workflow.parameters.product_id}}",
+                "productID": "{{workflow.parameters.product_DID}}",
                 "instanceID": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}",
                 "place": {{workflow.parameters.place}},
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
@@ -160,7 +160,7 @@ spec:
             value: "{{workflow.parameters.resource_vsb}}"
           - name: userdata
             value: |
-              { "product_id": "{{workflow.parameters.product_id}}",
+              { "product_id": "{{workflow.parameters.product_DID}}",
                 "transaction_id": "{{workflow.parameters.transaction_uuid}}",
                 "vsi_id": "{{workflow.parameters.service_id}}" }
 
@@ -205,7 +205,7 @@ spec:
             value: |
               { "eventType": "new_SLA",
                 "transactionID": "{{workflow.parameters.transaction_uuid}}",
-                "productID": "{{workflow.parameters.product_id}}",
+                "productID": "{{workflow.parameters.product_DID}}",
                 "instanceID": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}",
                 "place": {{workflow.parameters.place}},
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
@@ -240,7 +240,7 @@ spec:
             value: |
               { "eventType": "new_SLA_ACK",
                 "transactionID": "{{tasks.sla-breach-data.outputs.parameters.transaction_uuid}}",
-                "productID": "{{tasks.sla-breach-data.outputs.parameters.product_id}}",
+                "productID": "{{tasks.sla-breach-data.outputs.parameters.product_DID}}",
                 "status": "COMPLETED"
               }
           - name: kafka_topic

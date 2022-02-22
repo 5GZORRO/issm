@@ -43,9 +43,9 @@ spec:
       value: "31-01-2022T05:55"
 
     - name: transaction_id
-      value: 5f1da43fcc3c46809ce70b3186d0d2cd
-    - name: product_id
-      value: 3e922f24-01ec-4f83-8328-b69dc9ab8f8e
+      value: 366303cd4e1b4856b6b8044ede35959d
+    - name: product_DID
+      value: VHRN56FxhC5YQYkZSLK5KG
     - name: instance_id
       value: "012"
     - name: place
@@ -89,7 +89,7 @@ spec:
                   "datatimeViolation": "{{workflow.parameters.datatime_violation}}",
                   "datatimePrediction": "{{workflow.parameters.datatime_prediction}}",
                   "transactionID": "{{workflow.parameters.transaction_id}}",
-                  "productID": "{{workflow.parameters.product_id}}",
+                  "productID": "{{workflow.parameters.product_DID}}",
                   "instanceID": "{{workflow.parameters.instance_id}}",
                   "place": {{workflow.parameters.place}}
                 }

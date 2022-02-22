@@ -39,9 +39,9 @@ spec:
     # payload attributes
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     - name: transaction_id
-      value: 123
-    - name: product_id
-      value: 456
+      value: 366303cd4e1b4856b6b8044ede35959d
+    - name: product_DID
+      value: VHRN56FxhC5YQYkZSLK5KG
     - name: instance_id
       value: 012
     - name: place
@@ -95,7 +95,7 @@ spec:
             value: |
               { "eventType": "new_SLA",
                 "transactionID": "{{workflow.parameters.transaction_id}}",
-                "productID": "{{workflow.parameters.product_id}}",
+                "productID": "{{workflow.parameters.product_DID}}",
                 "instanceID": "{{workflow.parameters.instance_id}}",
                 "place": {{workflow.parameters.place}},
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}",

@@ -118,7 +118,7 @@ spec:
             value: |
               { "eventType": "new_SLA",
                 "transactionID": "{{workflow.parameters.transaction_uuid}}",
-                "productID": "{{workflow.parameters.product_id}}",
+                "productID": "{{workflow.parameters.product_DID}}",
                 "instanceID": "{{tasks.mec-cnmp-create-nssi.outputs.parameters.nssi_id}}",
                 "place": {{workflow.parameters.place}},
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
@@ -153,7 +153,7 @@ spec:
             value: |
               { "eventType": "new_SLA_ACK",
                 "transactionID": "{{tasks.sla-breach-data.outputs.parameters.transaction_uuid}}",
-                "productID": "{{tasks.sla-breach-data.outputs.parameters.product_id}}",
+                "productID": "{{tasks.sla-breach-data.outputs.parameters.product_DID}}",
                 "status": "COMPLETED"
               }
           - name: kafka_topic
@@ -201,7 +201,7 @@ spec:
           "namespace": "{{inputs.parameters.namespace}}",
           "cluster_core": "{{inputs.parameters.cluster_core}}",
           "core_namespace": "{{inputs.parameters.core_namespace}}",
-          "product_id": "{{workflow.parameters.product_id}}",
+          "product_id": "{{workflow.parameters.product_DID}}",
           "elma_url": "{{workflow.parameters.elma_url}}",
           "sst": "{{inputs.parameters.sst}}",
           "sd": "{{inputs.parameters.sd}}",

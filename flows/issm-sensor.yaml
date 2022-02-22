@@ -147,6 +147,9 @@ spec:
 
                   - name: sla_breach
 
+                  - name: product_DID
+                    value: OVERRIDE
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -282,3 +285,9 @@ spec:
                     "applicable": "false"
                   }
               dest: spec.arguments.parameters.21.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.product_DID
+                value: DEFAULT
+              dest: spec.arguments.parameters.22.value
