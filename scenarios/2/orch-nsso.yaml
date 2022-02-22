@@ -240,6 +240,7 @@ spec:
             value: |
               { "eventType": "new_SLA_ACK",
                 "transactionID": "{{tasks.sla-breach-data.outputs.parameters.transaction_uuid}}",
+                "productID": "{{tasks.sla-breach-data.outputs.parameters.product_id}}",
                 "status": "COMPLETED"
               }
           - name: kafka_topic

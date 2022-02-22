@@ -183,21 +183,33 @@ spec:
       source: |
         import sys
       
+        # mandatory to exist
         applicable = {{inputs.parameters.sla_breach}}['applicable']
         sys.stdout.write('applicable: "%s" \n' % applicable)
         transaction_uuid = "Not-applicble"
+        product_id = "Not-applicble"
         try:
             transaction_uuid = {{inputs.parameters.sla_breach}}['breachPredictionNotification']['transactionID']
             sys.stdout.write('transaction_uuid: "%s" \n' % transaction_uuid)
         except:
             # missing breachPredictionNotification, its ok
-            pass
+            sys.stdout.write('missing transaction_uuid \n')
+
+        try:
+            product_id = {{inputs.parameters.sla_breach}}['breachPredictionNotification']['productID']
+            sys.stdout.write('product_id: "%s" \n' % product_id)
+        except:
+            # missing breachPredictionNotification, its ok
+            sys.stdout.write('missing product_id \n')
 
         with open('/tmp/applicable.txt', 'w') as f:
             f.write(str(applicable))
 
         with open('/tmp/transaction_uuid.txt', 'w') as f:
             f.write(str(transaction_uuid))
+
+        with open('/tmp/product_id.txt', 'w') as f:
+            f.write(str(product_id))
     outputs:
       parameters:
       - name: applicable
@@ -207,3 +219,7 @@ spec:
       - name: transaction_uuid
         valueFrom:
           path: /tmp/transaction_uuid.txt
+
+      - name: product_id
+        valueFrom:
+          path: /tmp/product_id.txt
