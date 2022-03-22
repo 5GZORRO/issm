@@ -161,8 +161,7 @@ spec:
           - name: userdata
             value: |
               { "product_id": "{{workflow.parameters.product_DID}}",
-                "transaction_id": "{{workflow.parameters.transaction_uuid}}",
-                "vsi_id": "{{workflow.parameters.service_id}}" }
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}" }
 
       - name: nsso-poll
         dependencies: [nsso-create-vsi]

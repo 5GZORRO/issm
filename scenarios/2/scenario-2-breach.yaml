@@ -25,7 +25,7 @@
 # Parameters:
 #
 #     transaction_uuid: the uuid of the transaction that instantiated the service where the SLA breach occured
-#     service_id: the instance id of this service that caused this violation
+#     # service_id: the instance id of this service that caused this violation
 #     product_DID: the DID of the SW offer this service instance is from
 #     place: the location of where this violation occured (PO TMF format)
 #
@@ -39,7 +39,7 @@
 #
 # * If scaleout operation occured in this location for this service_id, in last x time - ignore
 #
-# * Send scale out intent on behalf of service_owner (the stakeholder) with service_id,
+# * Send scale out intent on behalf of service_owner (the stakeholder) with # service_id,
 #       product_id, place, catalogue_url, elma_url
 #
 # ==============================================================================
