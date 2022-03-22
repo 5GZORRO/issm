@@ -512,6 +512,13 @@ spec:
         sys.stdout.write('\n')
 
         rsc_list = r.json()[0]['resourceSpecCharacteristic']
+        # 1. vsbName
+        element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
+        if not element:
+            raise Exception("*** Unable to find 'vsbName' ***")
+
+        vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
+        sys.stdout.write('vsbName: "%s" \n' % vsbName)
 
         # 2. vCPU Requirements
         element = find(rsc_list, lambda e: e.get('name', '') == 'vCPU Requirements')
@@ -532,7 +539,6 @@ spec:
 
         sys.stdout.write('cpu_min/max: "%s, %s" \n' % (cpu_min, cpu_max))
 
-
         # 3. Virtual Memory Requirements
         element = find(rsc_list, lambda e: e.get('name', '') == 'Virtual Memory Requirements')
         if not element:
@@ -543,6 +549,7 @@ spec:
         if not min:
             raise Exception("*** Unable to find 'min-virtual-memory' ***")
         mem_min = min['value']['value']
+        mem_unit = min['unitOfMeasure']
 
         # max
         max = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-virtual-memory')
@@ -551,8 +558,9 @@ spec:
         mem_max = max['value']['value']
 
         sys.stdout.write('mem_min/max: "%s, %s" \n' % (mem_min, mem_max))
+        sys.stdout.write('mem_unit: "%s" \n' % mem_unit)
 
-        # 4. retrieve Storage Requirements
+        # 4. Storage Requirements
         element = find(rsc_list, lambda e: e.get('name', '') == 'Storage Requirements')
         if not element:
             raise Exception("*** Unable to find 'Storage Requirements' ***")
@@ -562,6 +570,7 @@ spec:
         if not min:
             raise Exception("*** Unable to find 'min-storage' ***")
         storage_min = min['value']['value']
+        storage_unit = min['unitOfMeasure']
 
         # max
         max = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-storage')
@@ -570,6 +579,7 @@ spec:
         storage_max = max['value']['value']
 
         sys.stdout.write('storage_min/max: "%s, %s" \n' % (storage_min, storage_max))
+        sys.stdout.write('storage_unit: "%s" \n' % storage_unit)
 
         r = requests.get("{{workflow.parameters.catalogue_url}}/tmf-api/productCatalogManagement/v4/productOfferingStatus/{{inputs.parameters.product_id}}",
             headers=headers)
@@ -578,11 +588,10 @@ spec:
         did = r.json()['did']
 
         with open('/tmp/vsbName.txt', 'w') as f:
-            f.write(str("vCDN_edge_ICOM"))
+            f.write(str(vsbName))
 
         with open('/tmp/mem_unit.txt', 'w') as f:
-            # TODO: change to GB once value is updated in PO
-            f.write(str("MB"))
+            f.write(str(mem_unit))
 
         with open('/tmp/mem_min.txt', 'w') as f:
             f.write(str(mem_min))
@@ -595,7 +604,7 @@ spec:
             f.write(str(cpu_max))
 
         with open('/tmp/storage_unit.txt', 'w') as f:
-            f.write(str("GB"))
+            f.write(str(storage_unit))
 
         with open('/tmp/storage_min.txt', 'w') as f:
             f.write(str(storage_min))
