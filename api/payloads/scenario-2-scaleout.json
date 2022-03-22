@@ -1,7 +1,7 @@
 {
     "scenario": "2",
     "operation": "scaleout",
-    "product_id": "3e922f24-01ec-4f83-8328-b69dc9ab8f8e",
+    "product_id": "03f0f8a5-a785-4575-a608-ecf93b819153",
     "service_id": "23",
     "elma_url": "http://172.28.3.42:31880",
     "catalogue_url": "http://172.28.3.126:31080",
