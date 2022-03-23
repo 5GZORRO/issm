@@ -119,6 +119,7 @@ spec:
               { "eventType": "new_SLA",
                 "transactionID": "{{workflow.parameters.transaction_uuid}}",
                 "productID": "{{workflow.parameters.product_DID}}",
+                "slaID": "{{workflow.parameters.sla_DID}}",
                 "instanceID": "{{tasks.mec-cnmp-create-nssi.outputs.parameters.nssi_id}}",
                 "place": {{workflow.parameters.place}},
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
