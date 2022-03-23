@@ -5,8 +5,6 @@
     "elma_url": "http://172.28.3.42:31880",
     "catalogue_url": "http://172.28.3.126:31080",
     "place": {
-      "id": "1a508502-cab2-425b-acc1-c7ecc175dead",
-      "href": "http://172.28.3.126:32080/tmf-api/geographicAddressManagement/v4/geographicAddress/1a508502-cab2-425b-acc1-c7ecc175dead",
       "city": "Pisa",
       "country": "Italy",
       "locality": "San Piero A Grado, Pisa",
