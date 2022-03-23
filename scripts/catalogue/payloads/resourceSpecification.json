@@ -1,13 +1,31 @@
 {
   "attachment": [],
-  "description": "Resource spec for free5gc UPF",
   "feature": [],
-  "name": "Resource spec for free5gc UPF",
+  "name": "free5gc UPF - resource specification",
   "relatedParty": [],
   "resourceSpecCharacteristic": [
     {
+      "description": "vCPU requirements for free5gc UPF",
+      "name": "vCPU Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "min-vCPU",
+            "value": "1"
+          }
+        },
+        {
+          "value": {
+            "alias": "max-vCPU",
+            "value": "1"
+          }
+        }
+      ]
+    },
+    {
       "description": "Memory requirements for free5gc UPF",
-      "name": "memory",
+      "name": "Virtual Memory Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
         {
@@ -22,6 +40,27 @@
           "value": {
             "alias": "max-virtual-memory",
             "value": "128.0"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Storage requirements for free5gc UPF",
+      "name": "Storage Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "MB",
+          "value": {
+            "alias": "min-storage",
+            "value": "256.0"
+          }
+        },
+        {
+          "unitOfMeasure": "MB",
+          "value": {
+            "alias": "max-storage",
+            "value": "256.0"
           }
         }
       ]

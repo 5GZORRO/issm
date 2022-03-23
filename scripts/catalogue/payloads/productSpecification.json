@@ -1,22 +1,21 @@
 {
   "attachment": [],
   "bundledProductSpecification": [],
-  "description": "string",
-  "name": "Product specification for free5gc UPF",
+  "name": "free5gc UPF",
   "productSpecCharacteristic": [],
   "productSpecificationRelationship": [],
   "relatedParty": [
     {
-      "href": "http://172.28.3.126:31080/tmf-api/party/v4/organization/",
+      "href": "http://172.28.3.126:31080/tmf-api/party/v4/organization/"
       "id": "f2dc826d-cfe5-4b79-b793-cc3b586ca14e",
       "name": "Operator-a"
     }
   ],
   "resourceSpecification": [
     {
-      "href": "TODO",
-      "id": "TODO",
-      "name": "free5gc-upf",
+      "href": "http://172.28.3.126:31080/tmf-api/resourceCatalogManagement/v2/resourceSpecification/24aaa428-4193-4a8a-8692-eb9e2a6a6d80",
+      "id": "24aaa428-4193-4a8a-8692-eb9e2a6a6d80",
+      "name": "free5gc UPF - resource specification",
       "version": "1.0"
     }
   ],
