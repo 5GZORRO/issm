@@ -42,6 +42,8 @@ spec:
       value: 366303cd4e1b4856b6b8044ede35959d
     - name: product_DID
       value: MjTShRh41FHFsw3bcdutT3
+    - name: sla_DID
+      value: V7qnCySru2jdDEjbXpERaB
     - name: instance_id
       value: 012
     - name: place
@@ -94,6 +96,7 @@ spec:
               { "eventType": "new_SLA",
                 "transactionID": "{{workflow.parameters.transaction_id}}",
                 "productID": "{{workflow.parameters.product_DID}}",
+                "SLAID": "{{workflow.parameters.sla_DID}}",
                 "instanceID": "{{workflow.parameters.instance_id}}",
                 "place": {{workflow.parameters.place}},
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}",
