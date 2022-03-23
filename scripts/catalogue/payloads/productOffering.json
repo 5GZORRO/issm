@@ -1,0 +1,44 @@
+{
+  "agreement": [],
+  "attachment": [],
+  "bundledProductOffering": [],
+  "category": [
+    {
+      "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/category/2146216d-6e9e-4d2b-9354-5f9a4a8ba716",
+      "id": "2146216d-6e9e-4d2b-9354-5f9a4a8ba716",
+      "name": "VNF"
+    }
+  ],
+  "channel": [],
+  "description": "Product Offer for the forwarding element VNF",
+  "isBundle": true,
+  "isSellable": true,
+  "lastUpdate": "2022-03-23T12:20:03.240Z",
+  "lifecycleStatus": "string",
+  "marketSegment": [],
+  "name": "string",
+  "place": [
+    {
+      "href": "http://172.28.3.126:31080/tmf-api/geographicAddressManagement/v4/geographicAddress/3ddbd262-4997-4bb5-b756-550240eed28d",
+      "id": "3ddbd262-4997-4bb5-b756-550240eed28d"
+    }
+  ],
+  "prodSpecCharValueUse": [],
+  "productOfferingPrice": [
+    {
+      "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productOfferingPrice/1243e1d2-69ea-4caf-af3e-3ea2a3f7705f",
+      "id": "1243e1d2-69ea-4caf-af3e-3ea2a3f7705f"
+    }
+  ],
+  "productOfferingTerm": [],
+  "productSpecification": {
+    "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productSpecification/279e4259-2c18-4c63-9b5e-2c30f87269ef",
+    "id": "279e4259-2c18-4c63-9b5e-2c30f87269ef"
+  },
+  "statusReason": "string",
+  "validFor": {
+    "endDateTime": "string",
+    "startDateTime": "string"
+  },
+  "version": "string"
+}

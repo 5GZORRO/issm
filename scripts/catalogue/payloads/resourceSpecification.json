@@ -1,0 +1,36 @@
+{
+  "attachment": [],
+  "description": "Resource spec for free5gc UPF",
+  "feature": [],
+  "name": "Resource spec for free5gc UPF",
+  "relatedParty": [],
+  "resourceSpecCharacteristic": [
+    {
+      "description": "Memory requirements for free5gc UPF",
+      "name": "memory",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "MB",
+          "value": {
+            "alias": "min-virtual-memory",
+            "value": "128.0"
+          }
+        },
+        {
+          "unitOfMeasure": "MB",
+          "value": {
+            "alias": "max-virtual-memory",
+            "value": "128.0"
+          }
+        }
+      ]
+    }
+  ],
+  "resourceSpecRelationship": [],
+  "validFor": {
+    "endDateTime": "string",
+    "startDateTime": "string"
+  },
+  "version": "0.1"
+}
