@@ -19,8 +19,8 @@
   "prodSpecCharValueUse": [],
   "productOfferingPrice": [
     {
-      "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productOfferingPrice/dc1443bc-9b73-4619-bcc4-a7863bd66b4f",
-      "id": "dc1443bc-9b73-4619-bcc4-a7863bd66b4f"
+      "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productOfferingPrice/FILL-IN",
+      "id": "FILL-IN"
     }
   ],
   "productOfferingTerm": [],

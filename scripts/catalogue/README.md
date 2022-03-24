@@ -32,7 +32,7 @@ curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productOffering/$ID" -H  "
 
 ### Create productOffering
 
-Customize `payloads/productOffering.json` and set productSpecification ID
+Customize `upf/payloads/productOffering.json` and set productSpecification, productOfferingPrice IDs
 
 ```
 curl -X POST -d "@upf/payloads/productOffering.json" "$URL/tmf-api/productCatalogManagement/v4/productOffering" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
@@ -46,6 +46,16 @@ export ID=e67c4dbd-744e-4611-9269-17486f83cf48
 
 ```
 curl -X DELETE "$URL/tmf-api/productCatalogManagement/v4/productOffering/$ID" -H  "accept: application/json" -H "Content-Type: application/json"
+```
+
+## Product Offer Price
+
+### Create productOfferingPrice
+
+Customize `upf/payloads/productOfferingPrice.json` and set productSpecification ID
+
+```
+curl -X POST -d "@upf/payloads/productOfferingPrice.json" "$URL/tmf-api/productCatalogManagement/v4/productOfferingPrice" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
 ```
 
 ## Product Specification
@@ -75,7 +85,7 @@ curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productSpecification/$ID" 
 
 ### Create productSpecification
 
-Customize `payloads/productSpecification.json` and set resourceSpecification ID
+Customize `upf/payloads/productSpecification.json` and set resourceSpecification ID
 
 ```
 curl -X POST -d "@upf/payloads/productSpecification.json" "$URL/tmf-api/productCatalogManagement/v4/productSpecification" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
@@ -117,7 +127,7 @@ curl -X GET "$URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification/$ID
 
 ### Create resourceSpecification
 
-Customize `payloads/resourceSpecification.json`
+Customize `upf/payloads/resourceSpecification.json`
 
 ```
 curl -X POST -d "@upf/payloads/resourceSpecification.json" "$URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
