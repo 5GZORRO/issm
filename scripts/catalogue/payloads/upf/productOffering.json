@@ -29,8 +29,8 @@
     "id": "FILL-IN"
   },
   "validFor": {
-    "endDateTime": "string",
-    "startDateTime": "string"
+    "endDateTime": "2023-12-28T11:00:00.000Z",
+    "startDateTime": "2022-01-27T11:00:00.000Z"
   },
   "version": "0.1"
 }
