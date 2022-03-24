@@ -1,10 +1,19 @@
 # Catalogue Endpoints for managing POs
 
-Define your catalogue URL
+This page summarizes (bottom up) the steps to define resource specification, offer specification, pop, and product offer
+
+* Create resourceSpecification: [here](./README.md#create-resourcespecification)
+* Create productSpecification: [here](./README.md#create-productspecification)
+* Create productOfferingPrice: [here](./README.md#create-productofferingprice)
+* Create productOffering: [here](./README.md#create-productoffering)
+
+Throughout the steps define your catalogue URL
 
 ```
 export URL=http://172.28.3.126:31080
 ```
+
+**NOTE:** update ID variable accordingly per the below curls
 
 ## Product Offer
 
@@ -38,6 +47,14 @@ Customize `upf/payloads/productOffering.json` and set productSpecification, prod
 curl -X POST -d "@payloads/upf/productOffering.json" "$URL/tmf-api/productCatalogManagement/v4/productOffering" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
 ```
 
+**Important: register your offer with elicensing service**
+
+update values (URL, productId, nsDescriptorId) accordingly
+
+```
+curl -X POST  --header "Content-Type:application/json"  -d '{"productId": "2a8ffjFXUdX4ciQd1e9dZa", "nsDescriptorId": "fiveg-subnet", "nsInstanceId": ""}' http://172.28.3.42:31880/checkLicensing | jq .
+``` 
+
 ### Delete productOffering
 
 ```
@@ -70,6 +87,16 @@ export ID=03f0f8a5-a785-4575-a608-ecf93b819153
 
 ```
 curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productOfferingPrice/$ID" -H  "accept: application/json" | jq .
+```
+
+### Delete productOfferingPrice
+
+```
+export ID=03f0f8a5-a785-4575-a608-ecf93b819153
+```
+
+```
+curl -X DELETE "$URL/tmf-api/productCatalogManagement/v4/productOfferingPrice/$ID" -H  "accept: application/json"
 ```
 
 
@@ -157,4 +184,16 @@ export ID=e67c4dbd-744e-4611-9269-17486f83cf48
 
 ```
 curl -X DELETE "$URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification/$ID" -H  "accept: application/json" -H "Content-Type: application/json"
+```
+
+## Product Offer status
+
+### Get specific productOfferingStatus
+
+```
+export ID=e67c4dbd-744e-4611-9269-17486f83cf48
+```
+
+```
+curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productOfferingStatus/$ID" -H  "accept: application/json" | jq .
 ```

@@ -1,19 +1,146 @@
 {
+  "@baseType": null,
+  "@schemaLocation": null,
+  "@type": "ProductOfferingPrice",
   "bundledPopRelationship": [],
   "constraint": [],
   "description": "free5gc UPF - pricing",
+  "isBundle": false,
+  "lastUpdate": null,
   "name": "free5gc UPF - pricing",
+  "percentage": 0.0,
   "place": [],
   "popRelationship": [],
   "price": {
     "unit": "EUR",
-    "value": 165
+    "value": 20
   },
-  "priceType": "Recurring",
+  "priceType": "usage",
   "pricingLogicAlgorithm": [],
-  "prodSpecCharValueUse": [],
+  "prodSpecCharValueUse": [
+    {
+      "@baseType": null,
+      "@schemaLocation": null,
+      "@type": "prodSpecCharValueUse",
+      "description": "Descriptor name which links this specification to an actual Virtual Network Function",
+      "href": null,
+      "lastUpdate": null,
+      "lifecycleStatus": null,
+      "lifecycleStatusEnum": null,
+      "maxCardinality": null,
+      "minCardinality": null,
+      "name": "FunctionDescriptorId",
+      "productSpecCharacteristicValue": [
+        {
+          "@baseType": null,
+          "@schemaLocation": null,
+          "@type": "productSpecCharacteristicValue",
+          "href": null,
+          "isDefault": true,
+          "rangeInterval": null,
+          "regex": null,
+          "unitOfMeasure": null,
+          "validFor": null,
+          "value": {
+            "alias": "FunctionDescriptorId",
+            "value": "fiveg-subnet"
+          },
+          "valueFrom": null,
+          "valueTo": null,
+          "valueType": "string"
+        }
+      ],
+      "productSpecification": null,
+      "validFor": null,
+      "valueType": null,
+      "version": null
+    },
+    {
+      "@baseType": null,
+      "@schemaLocation": null,
+      "@type": null,
+      "description": "Type of component that correspond to the FunctionDescriptorId values in a POP. This PSC affects to the entire POP, therefore each type of FunctionDescriptorId would require a new POP.",
+      "href": null,
+      "lastUpdate": null,
+      "lifecycleStatus": null,
+      "lifecycleStatusEnum": null,
+      "maxCardinality": null,
+      "minCardinality": null,
+      "name": "FunctionDescriptorType",
+      "productSpecCharacteristicValue": [
+        {
+          "@baseType": null,
+          "@schemaLocation": null,
+          "@type": "productSpecCharacteristicValue",
+          "href": null,
+          "isDefault": true,
+          "rangeInterval": null,
+          "regex": null,
+          "unitOfMeasure": null,
+          "validFor": null,
+          "value": {
+            "alias": "FunctionDescriptorType",
+            "value": "CNF"
+          },
+          "valueFrom": null,
+          "valueTo": null,
+          "valueType": "string"
+        }
+      ],
+      "productSpecification": null,
+      "validFor": null,
+      "valueType": null,
+      "version": null
+    },
+    {
+      "@baseType": null,
+      "@schemaLocation": null,
+      "@type": null,
+      "description": "Type of logic applied to the productOfferingPrice",
+      "href": null,
+      "lastUpdate": null,
+      "lifecycleStatus": null,
+      "lifecycleStatusEnum": null,
+      "maxCardinality": null,
+      "minCardinality": null,
+      "name": "PriceLogic",
+      "productSpecCharacteristicValue": [
+        {
+          "@baseType": null,
+          "@schemaLocation": null,
+          "@type": null,
+          "href": null,
+          "isDefault": true,
+          "rangeInterval": null,
+          "regex": null,
+          "unitOfMeasure": null,
+          "validFor": null,
+          "value": {
+            "alias": "PriceLogic",
+            "value": "TIME_OF_USE"
+          },
+          "valueFrom": null,
+          "valueTo": null,
+          "valueType": "string"
+        }
+      ],
+      "productSpecification": null,
+      "validFor": null,
+      "valueType": null,
+      "version": null
+    }
+  ],
   "productOfferingTerm": [],
   "recurringChargePeriodLength": 1,
-  "recurringChargePeriodType": "monthly",
-  "tax": []
+  "recurringChargePeriodType": "month",
+  "tax": [],
+  "unitOfMeasure": {
+    "amount": 1.0,
+    "units": "hour"
+  },
+  "validFor": {
+    "endDateTime": "2023-12-28T11:00:00.000Z",
+    "startDateTime": "2022-01-27T11:00:00.000Z"
+  },
+  "version": "0.1"
 }
