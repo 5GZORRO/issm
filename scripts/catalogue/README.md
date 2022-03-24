@@ -14,6 +14,12 @@ export URL=http://172.28.3.126:31080
 curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productOffering" -H  "accept: application/json" | jq .
 ```
 
+### List UPF productOfferings
+
+```
+curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productOffering" -H  "accept: application/json" | jq -r '.[] | select(.name=="free5gc UPF").id'
+```
+
 ### Get specific productOffering
 
 ```
@@ -50,6 +56,13 @@ curl -X DELETE "$URL/tmf-api/productCatalogManagement/v4/productOffering/$ID" -H
 curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productSpecification" -H  "accept: application/json" | jq .
 ```
 
+### List UPF productSpecifications
+
+```
+curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productSpecification" -H  "accept: application/json" | jq -r '.[] | select(.name=="free5gc UPF").id'
+```
+
+
 ### Get specific productSpecification
 
 ```
@@ -84,6 +97,12 @@ curl -X DELETE "$URL/tmf-api/productCatalogManagement/v4/productSpecification/$I
 
 ```
 curl -X GET "$URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification" -H  "accept: application/json" | jq .
+```
+
+### List UPF resourceSpecifications
+
+```
+curl -X GET "$URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification" -H  "accept: application/json" | jq -r '.[] | select(.name=="free5gc UPF").id'
 ```
 
 ### Get specific resourceSpecification

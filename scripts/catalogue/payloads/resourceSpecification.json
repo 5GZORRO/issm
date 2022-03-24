@@ -1,7 +1,8 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "free5gc UPF - resource specification",
+  "name": "free5gc UPF",
+  "description": "free5gc UPF - resource specification",
   "relatedParty": [],
   "resourceSpecCharacteristic": [
     {

@@ -1,7 +1,8 @@
 {
   "attachment": [],
   "bundledProductSpecification": [],
-  "name": "free5gc UPF - product specification",
+  "name": "free5gc UPF",
+  "description": "free5gc UPF - product specification",
   "productSpecCharacteristic": [],
   "productSpecificationRelationship": [],
   "relatedParty": [
@@ -15,7 +16,7 @@
     {
       "href": "http://172.28.3.126:31080/tmf-api/resourceCatalogManagement/v2/resourceSpecification/FILL-IN",
       "id": "FILL-IN",
-      "name": "free5gc UPF - resource specification",
+      "name": "free5gc UPF",
       "version": "1.0"
     }
   ],

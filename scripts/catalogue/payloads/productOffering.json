@@ -13,18 +13,14 @@
   "isBundle": true,
   "isSellable": true,
   "marketSegment": [],
-  "name": "free5gc UPF - product offer",
-  "place": [
-    {
-      "href": "http://172.28.3.126:31080/tmf-api/geographicAddressManagement/v4/geographicAddress/3ddbd262-4997-4bb5-b756-550240eed28d",
-      "id": "3ddbd262-4997-4bb5-b756-550240eed28d"
-    }
-  ],
+  "name": "free5gc UPF",
+  "description": "free5gc UPF - product offer",
+  "place": [],
   "prodSpecCharValueUse": [],
   "productOfferingPrice": [
     {
-      "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productOfferingPrice/1243e1d2-69ea-4caf-af3e-3ea2a3f7705f",
-      "id": "1243e1d2-69ea-4caf-af3e-3ea2a3f7705f"
+      "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productOfferingPrice/dc1443bc-9b73-4619-bcc4-a7863bd66b4f",
+      "id": "dc1443bc-9b73-4619-bcc4-a7863bd66b4f"
     }
   ],
   "productOfferingTerm": [],
