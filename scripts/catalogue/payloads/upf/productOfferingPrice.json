@@ -1,0 +1,19 @@
+{
+  "bundledPopRelationship": [],
+  "constraint": [],
+  "description": "free5gc UPF - pricing",
+  "name": "free5gc UPF - pricing",
+  "place": [],
+  "popRelationship": [],
+  "price": {
+    "unit": "EUR",
+    "value": 165
+  },
+  "priceType": "Recurring",
+  "pricingLogicAlgorithm": [],
+  "prodSpecCharValueUse": [],
+  "productOfferingTerm": [],
+  "recurringChargePeriodLength": 1,
+  "recurringChargePeriodType": "monthly",
+  "tax": []
+}

@@ -34,11 +34,12 @@
 #       - service_owner (stakeholder)
 #       - VSB
 #       - DID
+#       - sla_DID
 #
 # * Orchestrate the instantiation of the SW at the stakeholder premises and return the instance_id
 #
 # * Send SLA event to start SLA monitoring
-#   SLA event includes: transaction_uuid, product_DID, instance_id, place
+#   SLA event includes: transaction_uuid, product_DID, sla_DID, instance_id, place
 #                       (as denoted in input parameter)
 #
 # ==============================================================================
@@ -46,11 +47,14 @@
 # Scaleout. Scaleout of an existing service - into a best 3rd party edge premises
 #           that fulfils service's sizing demands
 #
+# NOTE: currently `service_id` is emitted and the NSSO scaleout call is identical
+#       to instantiate
+#
 # Parameters:
 #
 #     product_id: the id of the SW offer to scaleout (e.g. 3e922f24-01ec-4f83-8328-b69dc9ab8f8e)
 #     service_owner: stakeholder name (e.g. operator-a)
-#     service_id: the existing running instance id to be scaled out
+#     # service_id: the existing running instance id to be scaled out
 #     place: the location of where we would like to scaleout (PO TMF format)
 #
 # Steps:
@@ -60,6 +64,7 @@
 #       - CPU, RAM, Storage
 #       - VSB
 #       - DID
+#       - sla_DID
 #
 # * Build sizing intent out from the above extracted data
 #
@@ -74,17 +79,13 @@
 #
 # * Aquire IaaS resource offer from marketplace
 #
-# * Orchestration:
-#
-#   - (NSSO) Asymetric-orchestrate, using the stakeholder orchestration stack to
-#     orchestrate the scaleout operation of an instance id denoted by service_id,
-#     VSB in product_id PO - into 3rd party premises (as denoted in the
-#     selected IaaS resource) and connect it to the stakeholder's instance id
+#   - (NSSO) Orchestrate the instantiation of the SW at the selected 3rd party premises
+#            and return the instance_id (TBD stiching part)
 #
 #   - (MEC-CNMP) UPF is deployed into 3rd party domain (i.e. 3rd party namespace)
 #     and get connected to stakeholder's core
 #
-# * SLA event includes: transaction_uuid, product_DID, instance_id, location (of IaaS resource)
+# * SLA event includes: transaction_uuid, product_DID, sla_DID, instance_id, location (of IaaS resource)
 # 
 ###############################################################################
 
@@ -161,6 +162,8 @@ spec:
             value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.vsbName}}"
           - name: product_DID
             value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.did}}"
+          - name: sla_DID
+            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.sla_did}}"
           - name: place
             value: "{{workflow.parameters.place}}"
             
@@ -261,6 +264,8 @@ spec:
             value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.vsbName}}"
           - name: product_DID
             value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.did}}"
+          - name: sla_DID
+            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.sla_did}}"
         withParam: "{{workflow.parameters.resources}}"
 
   - name: loop-best-offers
@@ -269,6 +274,7 @@ spec:
       - name: best_offer
       - name: resource_vsb
       - name: product_DID
+      - name: sla_DID
     dag:
       tasks:
       - name: resource-service-owner
@@ -326,6 +332,8 @@ spec:
             value: "{{inputs.parameters.resource_vsb}}"
           - name: product_DID
             value: "{{inputs.parameters.product_DID}}"
+          - name: sla_DID
+            value: "{{inputs.parameters.sla_DID}}"
           - name: place
             value: "{{tasks.resource-location.outputs.result}}"
 
@@ -344,18 +352,18 @@ spec:
       command: [python]
       source: |
         import sys
-        # intent/$(urlencode 'storage 96 GB ram 2730 MB edge Barcelona'))
+        # Example format: intent/$(urlencode 'storage 96 GB ram 2730 MB edge Barcelona'))
         location = {{inputs.parameters.place}}['city']
+
         cpu_max = str("{{inputs.parameters.cpu_max}}")
+
         mem_max = str("{{inputs.parameters.mem_max}}")
         mem_unit = str("{{inputs.parameters.mem_unit}}")
 
         storage_max = str("{{inputs.parameters.storage_max}}")
-        # TODO: remove once IaaS edge resource matches storage of VNF PO 
-        storage_max = "96"
         storage_unit = str("{{inputs.parameters.storage_unit}}")
-        
-        sys.stdout.write(cpu_max + " cores" + " storage " + storage_max + " " + storage_unit + " ram " + mem_max + " " + mem_unit + " edge " +  location)
+
+        sys.stdout.write(cpu_max + " cores" + " storage " + storage_max + " " + storage_unit + " ram " + mem_max + " " + mem_unit + " edge " +  location + " \n")
 
   - name: srds-service
     inputs:
@@ -440,6 +448,7 @@ spec:
       - name: resource_owner
       - name: resource_vsb
       - name: product_DID
+      - name: sla_DID
       - name: place
     steps:
       - - name: event-uuid
@@ -459,6 +468,7 @@ spec:
                   "place": {{inputs.parameters.place}},
                   "scenario": "{{workflow.parameters.scenario}}", "elma_url": "{{workflow.parameters.elma_url}}",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_DID": "{{inputs.parameters.product_DID}}",
+                  "sla_DID": "{{inputs.parameters.sla_DID}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
                   "resource_owner": "{{inputs.parameters.resource_owner}}",
                   "sla_breach": {{workflow.parameters.sla_breach}}
@@ -501,6 +511,10 @@ spec:
                 raise Exception('*** PO must be VNF ***')
         except:
             raise
+
+        sla_did = r.json().get('serviceLevelAgreement', {}).get('id', "")
+        sys.stdout.write('sla_did: "%s" \n' % sla_did)
+
         href = r.json()['productSpecification']['href']
         r = requests.get(str(href), headers=headers)
         json.dump(r.json(), sys.stdout)
@@ -512,6 +526,13 @@ spec:
         sys.stdout.write('\n')
 
         rsc_list = r.json()[0]['resourceSpecCharacteristic']
+        # 1. vsbName
+        element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
+        if not element:
+            raise Exception("*** Unable to find 'vsbName' ***")
+
+        vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
+        sys.stdout.write('vsbName: "%s" \n' % vsbName)
 
         # 2. vCPU Requirements
         element = find(rsc_list, lambda e: e.get('name', '') == 'vCPU Requirements')
@@ -532,7 +553,6 @@ spec:
 
         sys.stdout.write('cpu_min/max: "%s, %s" \n' % (cpu_min, cpu_max))
 
-
         # 3. Virtual Memory Requirements
         element = find(rsc_list, lambda e: e.get('name', '') == 'Virtual Memory Requirements')
         if not element:
@@ -543,6 +563,7 @@ spec:
         if not min:
             raise Exception("*** Unable to find 'min-virtual-memory' ***")
         mem_min = min['value']['value']
+        mem_unit = min['unitOfMeasure']
 
         # max
         max = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-virtual-memory')
@@ -551,8 +572,9 @@ spec:
         mem_max = max['value']['value']
 
         sys.stdout.write('mem_min/max: "%s, %s" \n' % (mem_min, mem_max))
+        sys.stdout.write('mem_unit: "%s" \n' % mem_unit)
 
-        # 4. retrieve Storage Requirements
+        # 4. Storage Requirements
         element = find(rsc_list, lambda e: e.get('name', '') == 'Storage Requirements')
         if not element:
             raise Exception("*** Unable to find 'Storage Requirements' ***")
@@ -562,6 +584,7 @@ spec:
         if not min:
             raise Exception("*** Unable to find 'min-storage' ***")
         storage_min = min['value']['value']
+        storage_unit = min['unitOfMeasure']
 
         # max
         max = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-storage')
@@ -570,6 +593,7 @@ spec:
         storage_max = max['value']['value']
 
         sys.stdout.write('storage_min/max: "%s, %s" \n' % (storage_min, storage_max))
+        sys.stdout.write('storage_unit: "%s" \n' % storage_unit)
 
         r = requests.get("{{workflow.parameters.catalogue_url}}/tmf-api/productCatalogManagement/v4/productOfferingStatus/{{inputs.parameters.product_id}}",
             headers=headers)
@@ -577,12 +601,14 @@ spec:
         sys.stdout.write('\n')
         did = r.json()['did']
 
+        with open('/tmp/sla_did.txt', 'w') as f:
+            f.write(str(sla_did))
+
         with open('/tmp/vsbName.txt', 'w') as f:
-            f.write(str("vCDN_edge_ICOM"))
+            f.write(str(vsbName))
 
         with open('/tmp/mem_unit.txt', 'w') as f:
-            # TODO: change to GB once value is updated in PO
-            f.write(str("MB"))
+            f.write(str(mem_unit))
 
         with open('/tmp/mem_min.txt', 'w') as f:
             f.write(str(mem_min))
@@ -595,7 +621,7 @@ spec:
             f.write(str(cpu_max))
 
         with open('/tmp/storage_unit.txt', 'w') as f:
-            f.write(str("GB"))
+            f.write(str(storage_unit))
 
         with open('/tmp/storage_min.txt', 'w') as f:
             f.write(str(storage_min))
@@ -607,6 +633,10 @@ spec:
 
     outputs:
       parameters:
+      - name: sla_did
+        valueFrom:
+          path: /tmp/sla_did.txt
+
       - name: vsbName
         valueFrom:
           path: /tmp/vsbName.txt

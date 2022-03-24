@@ -1,0 +1,89 @@
+{
+  "attachment": [],
+  "feature": [],
+  "name": "free5gc UPF",
+  "description": "free5gc UPF - resource specification",
+  "relatedParty": [],
+  "resourceSpecCharacteristic": [
+    {
+      "description": "Vertical Service Blueprint",
+      "name": "vsbName",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "vsbName",
+            "value": "NA"
+          }
+        }
+      ]
+    },
+    {
+      "description": "vCPU requirements for free5gc UPF",
+      "name": "vCPU Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "min-vCPU",
+            "value": "1"
+          }
+        },
+        {
+          "value": {
+            "alias": "max-vCPU",
+            "value": "1"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Memory requirements for free5gc UPF",
+      "name": "Virtual Memory Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "MB",
+          "value": {
+            "alias": "min-virtual-memory",
+            "value": "128.0"
+          }
+        },
+        {
+          "unitOfMeasure": "MB",
+          "value": {
+            "alias": "max-virtual-memory",
+            "value": "128.0"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Storage requirements for free5gc UPF",
+      "name": "Storage Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "MB",
+          "value": {
+            "alias": "min-storage",
+            "value": "256.0"
+          }
+        },
+        {
+          "unitOfMeasure": "MB",
+          "value": {
+            "alias": "max-storage",
+            "value": "256.0"
+          }
+        }
+      ]
+    }
+  ],
+  "resourceSpecRelationship": [],
+  "validFor": {
+    "endDateTime": "string",
+    "startDateTime": "string"
+  },
+  "version": "0.1"
+}

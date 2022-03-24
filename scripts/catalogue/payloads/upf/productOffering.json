@@ -1,0 +1,36 @@
+{
+  "agreement": [],
+  "attachment": [],
+  "bundledProductOffering": [],
+  "category": [
+    {
+      "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/category/70cd65af-cba3-469f-803e-00e38b8ce71b",
+      "id": "70cd65af-cba3-469f-803e-00e38b8ce71b",
+      "name": "VNF"
+    }
+  ],
+  "channel": [],
+  "isBundle": true,
+  "isSellable": true,
+  "marketSegment": [],
+  "name": "free5gc UPF",
+  "description": "free5gc UPF - product offer",
+  "place": [],
+  "prodSpecCharValueUse": [],
+  "productOfferingPrice": [
+    {
+      "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productOfferingPrice/FILL-IN",
+      "id": "FILL-IN"
+    }
+  ],
+  "productOfferingTerm": [],
+  "productSpecification": {
+    "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productSpecification/FILL-IN",
+    "id": "FILL-IN"
+  },
+  "validFor": {
+    "endDateTime": "string",
+    "startDateTime": "string"
+  },
+  "version": "0.1"
+}

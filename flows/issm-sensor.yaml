@@ -150,6 +150,9 @@ spec:
                   - name: product_DID
                     value: OVERRIDE
 
+                  - name: sla_DID
+                    value: OVERRIDE
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -291,3 +294,9 @@ spec:
                 dataKey: body.product_DID
                 value: DEFAULT
               dest: spec.arguments.parameters.22.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.sla_DID
+                value: DEFAULT
+              dest: spec.arguments.parameters.23.value
