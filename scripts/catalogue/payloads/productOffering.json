@@ -10,11 +10,10 @@
     }
   ],
   "channel": [],
-  "description": "Product Offer for the forwarding element VNF",
   "isBundle": true,
   "isSellable": true,
   "marketSegment": [],
-  "name": "free5gc UPF",
+  "name": "free5gc UPF - product offer",
   "place": [
     {
       "href": "http://172.28.3.126:31080/tmf-api/geographicAddressManagement/v4/geographicAddress/3ddbd262-4997-4bb5-b756-550240eed28d",
@@ -30,8 +29,8 @@
   ],
   "productOfferingTerm": [],
   "productSpecification": {
-    "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productSpecification/e1bc7429-369f-4df8-afe8-ec5b3b45b233",
-    "id": "e1bc7429-369f-4df8-afe8-ec5b3b45b233"
+    "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productSpecification/FILL-IN",
+    "id": "FILL-IN"
   },
   "validFor": {
     "endDateTime": "string",
