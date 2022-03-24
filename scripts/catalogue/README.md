@@ -35,7 +35,7 @@ curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productOffering/$ID" -H  "
 Customize `payloads/productOffering.json` and set productSpecification ID
 
 ```
-curl -X POST -d "@payloads/productOffering.json" "$URL/tmf-api/productCatalogManagement/v4/productOffering" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
+curl -X POST -d "@upf/payloads/productOffering.json" "$URL/tmf-api/productCatalogManagement/v4/productOffering" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
 ```
 
 ### Delete productOffering
@@ -78,7 +78,7 @@ curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productSpecification/$ID" 
 Customize `payloads/productSpecification.json` and set resourceSpecification ID
 
 ```
-curl -X POST -d "@payloads/productSpecification.json" "$URL/tmf-api/productCatalogManagement/v4/productSpecification" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
+curl -X POST -d "@upf/payloads/productSpecification.json" "$URL/tmf-api/productCatalogManagement/v4/productSpecification" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
 ```
 
 ### Delete productSpecification
@@ -120,7 +120,7 @@ curl -X GET "$URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification/$ID
 Customize `payloads/resourceSpecification.json`
 
 ```
-curl -X POST -d "@payloads/resourceSpecification.json" "$URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
+curl -X POST -d "@upf/payloads/resourceSpecification.json" "$URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification" -H  "accept: application/json" -H "Content-Type: application/json" | jq -r .id
 ```
 
 ### Delete resourceSpecification
