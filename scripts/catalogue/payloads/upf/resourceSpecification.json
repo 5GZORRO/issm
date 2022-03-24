@@ -6,6 +6,19 @@
   "relatedParty": [],
   "resourceSpecCharacteristic": [
     {
+      "description": "Vertical Service Blueprint",
+      "name": "vsbName",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "vsbName",
+            "value": "NA"
+          }
+        }
+      ]
+    },
+    {
       "description": "vCPU requirements for free5gc UPF",
       "name": "vCPU Requirements",
       "resourceSpecCharRelationship": [],
