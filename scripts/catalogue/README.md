@@ -62,6 +62,17 @@ curl -X POST -d "@payloads/upf/productOfferingPrice.json" "$URL/tmf-api/productC
 curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productOfferingPrice" -H  "accept: application/json" | jq -r '.[] | select(.name=="free5gc UPF - pricing").id'
 ```
 
+### Get specific productOfferingPrice
+
+```
+export ID=03f0f8a5-a785-4575-a608-ecf93b819153
+```
+
+```
+curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productOfferingPrice/$ID" -H  "accept: application/json" | jq .
+```
+
+
 
 ## Product Specification
 
