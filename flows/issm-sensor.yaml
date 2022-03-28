@@ -168,6 +168,12 @@ spec:
                         template: handle-submit
                       when: "{{workflow.parameters.scenario}} == 2"
 
+                  - - name: submit-scenario-3
+                      templateRef:
+                        name: scenario-3-submit
+                        template: handle-submit
+                      when: "{{workflow.parameters.scenario}} == 3"
+
           parameters:
             - src:
                 #
