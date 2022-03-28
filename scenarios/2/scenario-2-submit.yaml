@@ -387,14 +387,8 @@ spec:
         iq = urllib.parse.quote(intent_query)
         r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + iq, headers=headers)
         offers = r.json()
-        for e in offers:
-            try:
-                # TODO: kafka produce does not like json bool true/false
-                del e['offer_object']['serviceLevelAgreement']['approved']
-            except:
-                pass
         # return all
-        json.dump(offers, sys.stdout)
+        print(offers)
 
   - name: acquire
     # acquire is devided into two sub-tasks:
