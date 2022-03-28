@@ -1,0 +1,167 @@
+{
+  "attachment": [],
+  "feature": [],
+  "name": "free5gc Core",
+  "description": "free5gc Core - resource specification",
+  "relatedParty": [],
+  "resourceSpecCharacteristic": [
+    {
+      "description": "vCPU requirements for free5gc Core",
+      "name": "vCPU Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "min-vCPU",
+            "value": "8"
+          }
+        },
+        {
+          "value": {
+            "alias": "max-vCPU",
+            "value": "8"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Memory requirements for free5gc Core",
+      "name": "Virtual Memory Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "min-virtual-memory",
+            "value": "8"
+          }
+        },
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "max-virtual-memory",
+            "value": "8"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Storage requirements for free5gc Core",
+      "name": "Storage Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "min-storage",
+            "value": "100"
+          }
+        },
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "max-storage",
+            "value": "100"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Registry URL for AMF image",
+      "name": "AMF Registry",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "registry",
+            "value": "ghcr.io/5gzorro/free5gc-k8s/free5gc-amf:latest"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Registry URL for SMF image",
+      "name": "SMF Registry",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "registry",
+            "value": "ghcr.io/5gzorro/free5gc-k8s/free5gc-smf:latest"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Registry URL for NRF image",
+      "name": "NRF Registry",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "registry",
+            "value": "ghcr.io/5gzorro/free5gc-k8s/free5gc-nrf:latest"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Registry URL for NSSF image",
+      "name": "NSSF Registry",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "registry",
+            "value": "ghcr.io/5gzorro/free5gc-k8s/free5gc-nssf:latest"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Registry URL for UDR image",
+      "name": "UDR Registry",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "registry",
+            "value": "ghcr.io/5gzorro/free5gc-k8s/free5gc-udr:latest"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Registry URL for UDM image",
+      "name": "UDM Registry",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "registry",
+            "value": "ghcr.io/5gzorro/free5gc-k8s/free5gc-udm:latest"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Registry URL for PCF image",
+      "name": "PCF Registry",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "registry",
+            "value": "ghcr.io/5gzorro/free5gc-k8s/free5gc-pcf:latest"
+          }
+        }
+      ]
+    }
+  ],
+  "resourceSpecRelationship": [],
+  "validFor": {
+    "endDateTime": "string",
+    "startDateTime": "string"
+  },
+  "version": "0.1"
+}
