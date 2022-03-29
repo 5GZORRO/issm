@@ -1,0 +1,41 @@
+{
+  "agreement": [],
+  "attachment": [],
+  "bundledProductOffering": [],
+  "category": [
+    {
+      "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/category/7278b46e-398b-4434-a5af-b1d7e021b80c",
+      "id": "7278b46e-398b-4434-a5af-b1d7e021b80c",
+      "name": "Edge"
+    }
+  ],
+  "channel": [],
+  "isBundle": true,
+  "isSellable": true,
+  "marketSegment": [],
+  "name": "IaaS Edge Resource",
+  "description": "IaaS Edge Resource - product offer",
+  "place": [
+    {
+      "href": "http://172.28.3.126:31080/tmf-api/geographicAddressManagement/v4/geographicAddress/9d6301ac-698c-4ed0-bd28-b0446b0b305c",
+      "id": "9d6301ac-698c-4ed0-bd28-b0446b0b305c"
+    }
+  ],
+  "prodSpecCharValueUse": [],
+  "productOfferingPrice": [
+    {
+      "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productOfferingPrice/FILL-IN",
+      "id": "FILL-IN"
+    }
+  ],
+  "productOfferingTerm": [],
+  "productSpecification": {
+    "href": "http://172.28.3.126:31080/tmf-api/productCatalogManagement/v4/productSpecification/FILL-IN",
+    "id": "FILL-IN"
+  },
+  "validFor": {
+    "endDateTime": "2023-12-28T11:00:00.000Z",
+    "startDateTime": "2022-01-27T11:00:00.000Z"
+  },
+  "version": "0.1"
+}

@@ -1,0 +1,17 @@
+{
+  "bundledPopRelationship": [],
+  "constraint": [],
+  "description": "IaaS Edge Resource - pricing",
+  "name": "IaaS Edge Resource - pricing",
+  "place": [],
+  "popRelationship": [],
+  "price": {
+    "unit": "EUR",
+    "value": 5
+  },
+  "priceType": "One time",
+  "pricingLogicAlgorithm": [],
+  "prodSpecCharValueUse": [],
+  "productOfferingTerm": [],
+  "tax": []
+}

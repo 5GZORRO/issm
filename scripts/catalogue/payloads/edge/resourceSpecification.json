@@ -1,0 +1,59 @@
+{
+   "description":"IaaS Edge Resource",
+   "name":"IaaS Edge Resource",
+   "category": "Edge",
+   "resourceSpecCharacteristic":[
+      {
+         "name":"cpu",
+         "description": "Central Processing Unit",
+         "resourceSpecCharacteristicValue":[
+            {
+               "value":{
+                  "alias":"cpu",
+                  "value":"1"
+               }
+            }
+         ]
+      },
+      {
+         "name":"memory",
+         "description": "Random Access Memory",
+         "resourceSpecCharacteristicValue":[
+            {
+               "unitOfMeasure":"MB",
+               "value":{
+                  "alias":"memory",
+                  "value":"128"
+               }
+            }
+         ]
+      },
+      {
+         "name":"storage",
+         "description": "Storage",
+         "resourceSpecCharacteristicValue":[
+            {
+               "unitOfMeasure":"MB",
+               "value":{
+                  "alias":"storage",
+                  "value":"256"
+               }
+            }
+         ]
+      },
+      {
+         "name":"bandwidth",
+         "description": "Bandwidth",
+         "resourceSpecCharacteristicValue":[
+            {
+               "unitOfMeasure":"Mbps",
+               "value":{
+                  "alias":"bandwidth",
+                  "value":"200"
+               }
+            }
+         ]
+      }
+   ],
+   "version":"v1"
+}
