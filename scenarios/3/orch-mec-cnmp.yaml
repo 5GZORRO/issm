@@ -34,7 +34,7 @@ spec:
             value: "domain-{{workflow.parameters.resource_owner}}"
 
           - name: cluster
-            value: cluster-1
+            value: cluster-2
 
           - name: networks
             value: |
@@ -56,7 +56,7 @@ spec:
               ]
 
       - name: mec-cnmp-poll
-        dependencies: [mec-cnmp-create-nssi]
+        dependencies: [mec-cnmp-create-core]
         template: poll
         arguments:
           parameters:

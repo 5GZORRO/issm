@@ -140,7 +140,7 @@ spec:
         arguments:
           parameters:
           - name: resource_owner
-            # set this to stakeholder name so that orch request is routed to it
+            # stakeholder name for the orch request to be routed to
             value: "{{workflow.parameters.service_owner}}"
           - name: product_DID
             value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.did}}"
@@ -204,8 +204,7 @@ spec:
                 "service_owner": "{{workflow.parameters.service_owner}}", "elma_url": "{{workflow.parameters.elma_url}}",
                 "product_id": "{{workflow.parameters.product_id}}",
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",
-                "service_id": "{{workflow.parameters.service_id}}",
-                "sla_breach": {{workflow.parameters.sla_breach}}
+                "service_id": "{{workflow.parameters.service_id}}"
               }
           - name: kafka_topic
             value: issm-optimizer
@@ -240,12 +239,8 @@ spec:
           parameters:
           - name: best_offer
             value: "{{item}}"
-          - name: resource_vsb
-            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.vsbName}}"
           - name: product_DID
             value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.did}}"
-          - name: sla_DID
-            value: "{{tasks.get-product-offer-from-catalog.outputs.parameters.sla_did}}"
         withParam: "{{workflow.parameters.resources}}"
 
   - name: loop-best-offers
@@ -254,7 +249,6 @@ spec:
       - name: best_offer
       - name: resource_vsb
       - name: product_DID
-      - name: sla_DID
     dag:
       tasks:
       - name: resource-service-owner
@@ -307,6 +301,7 @@ spec:
         arguments:
           parameters:
           - name: resource_owner
+            # stakeholder name for the orch request to be routed to
             value: "{{tasks.process-mno-name.outputs.result}}"
           - name: product_DID
             value: "{{inputs.parameters.product_DID}}"
@@ -416,9 +411,7 @@ spec:
     inputs:
       parameters:
       - name: resource_owner
-      - name: resource_vsb
       - name: product_DID
-      - name: sla_DID
       - name: place
     steps:
       - - name: event-uuid
@@ -437,11 +430,9 @@ spec:
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "submit_orchestration",
                   "place": {{inputs.parameters.place}},
                   "scenario": "{{workflow.parameters.scenario}}", "elma_url": "{{workflow.parameters.elma_url}}",
-                  "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_DID": "{{inputs.parameters.product_DID}}",
-                  "sla_DID": "{{inputs.parameters.sla_DID}}",
+                  "product_DID": "{{inputs.parameters.product_DID}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", "service_id": "{{workflow.parameters.service_id}}",
-                  "resource_owner": "{{inputs.parameters.resource_owner}}",
-                  "sla_breach": {{workflow.parameters.sla_breach}}
+                  "resource_owner": "{{inputs.parameters.resource_owner}}"
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"
@@ -496,13 +487,6 @@ spec:
         sys.stdout.write('\n')
 
         rsc_list = r.json()[0]['resourceSpecCharacteristic']
-        # 1. vsbName
-        element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
-        if not element:
-            raise Exception("*** Unable to find 'vsbName' ***")
-
-        vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
-        sys.stdout.write('vsbName: "%s" \n' % vsbName)
 
         # 2. vCPU Requirements
         element = find(rsc_list, lambda e: e.get('name', '') == 'vCPU Requirements')
@@ -574,9 +558,6 @@ spec:
         with open('/tmp/sla_did.txt', 'w') as f:
             f.write(str(sla_did))
 
-        with open('/tmp/vsbName.txt', 'w') as f:
-            f.write(str(vsbName))
-
         with open('/tmp/mem_unit.txt', 'w') as f:
             f.write(str(mem_unit))
 
@@ -606,10 +587,6 @@ spec:
       - name: sla_did
         valueFrom:
           path: /tmp/sla_did.txt
-
-      - name: vsbName
-        valueFrom:
-          path: /tmp/vsbName.txt
 
       - name: mem_unit
         valueFrom:
