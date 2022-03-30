@@ -7,14 +7,14 @@ This is the __Intelligent slice and service manager__ component responsible for 
 To install ISSM follow the installation guidelines per component following the below flow:
 1. **Provision kubernetes cluster**. The guidelines are available [here](docs/kubernetes.md).
 2. **Install kafka broker.** Follow the guidelines [here](docs/kafka.md).
-3. **Install Argo and Argo-events**. Follow the guidelines [here](docs/argo.md).
-4. **Install Datalake services**. Follow the guidelines [here](https://github.com/5GZORRO/datalake).
-5. **Install NSSO**. Follow the guidelines [here](https://github.com/5GZORRO/nsso).
-6. **Install SRSD**. Follow the guidelines [here](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/tree/main/demo_June_21).
-7. **Install ISSM-API**. Follow the guidelines [here](api).
-8. **Install ISSM-O**. Follow the guidelines [here](https://github.com/5GZORRO/issm-optimizer).
+3. **Install Datalake services**. Follow the guidelines [here](https://github.com/5GZORRO/datalake).
+4. **Install SRSD**. Follow the guidelines [here](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/tree/main/demo_June_21).
+5. **Install ISSM-O**. Follow the guidelines [here](https://github.com/5GZORRO/issm-optimizer).
 
-ISSM is comprised of a centralized component and a local instance running at the mobile network operator (MNO) premises
+**Orchestration:**
+For each mobile network operator (MNO), install either [NSSO](https://github.com/5GZORRO/nsso) or [ISSM-MEC-CNMP](https://github.com/5GZORRO/issm-mec-cnmp).
+
+ISSM is comprised of a centralized component and a local instance running at the MNO premises
 
 ![Testbed](images/issm-distributed.png)
 
@@ -23,15 +23,18 @@ ISSM is comprised of a centralized component and a local instance running at the
 
 Log into 5GZorro platform kuberneters master
 
-### Create namespace
+### Argo and Argo-events
+
+Perform these [instructions](./docs/argo.md) to install Argo
+
+### ISSM-API
+
+Follow the guidelines [here](./api/README.md)
+
+### Create Eventbus in issm namespace
 
 ```
 kubectl create namespace issm
-```
-
-### Create Eventbus in MNO namespace
-
-```
 kubectl apply -n issm -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
 ```
 
@@ -178,7 +181,7 @@ kubectl apply -f flows/issm-sensor.yaml -n $MNO_NAMESPACE
 
 ### Deploy common templates
 
-Deploy common libraries according to your orchestration stack the mno supports
+Deploy common libraries according to the orchestration stack the mno supports
 
 ```
 ./apply.sh NSSO
@@ -187,7 +190,7 @@ Deploy common libraries according to your orchestration stack the mno supports
 or
 
 ```
-./apply.sh ISSM-MEC
+./apply.sh ISSM-MEC-NCMP
 ```
 
 ## Trigger ISSM business flow
