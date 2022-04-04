@@ -14,10 +14,10 @@
 
 ###############################################################################
 #
-# ISBP breach handler Scenario 2:
+# ISBP breach handler Scenario uc3:
 # ===============================
 #
-# Scenario 2 deals with instantiating a SW and scaling it out by selecting the
+# Scenario uc3 deals with instantiating a SW and scaling it out by selecting the
 # best 3rd party operator that fulfils its sizing demands.
 #
 # This handler is being triggered whenver an SLA breach notification arrives from ISBP module.
@@ -44,11 +44,10 @@
 #
 # ==============================================================================
 
-# TODO: if transaction belongs to scenarion other than 2 -- abort
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: scenario-2-breach
+  name: uc3-breach
 spec:
   templates:
   - name: handle-breach

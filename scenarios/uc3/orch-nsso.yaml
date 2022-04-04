@@ -22,7 +22,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   # Note: this name must be identical accross all domain operators
-  name: scenario-2-orchestration-template
+  name: uc3-orchestration-template
 spec:
   templates:
   - name: orchestration-instantiate

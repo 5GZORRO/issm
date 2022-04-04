@@ -102,11 +102,11 @@ spec:
                         template: handle-breach
                       when: "{{workflow.parameters.scenario}} == 1"
 
-                  - - name: breach-scenario-2
+                  - - name: breach-uc3
                       templateRef:
-                        name: scenario-2-breach
+                        name: uc3-breach
                         template: handle-breach
-                      when: "{{workflow.parameters.scenario}} == 2"
+                      when: "{{workflow.parameters.scenario}} == uc3"
 
           parameters:
             - src:

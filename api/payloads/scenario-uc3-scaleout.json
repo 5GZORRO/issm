@@ -1,5 +1,5 @@
 {
-    "scenario": "2",
+    "scenario": "uc3",
     "operation": "scaleout",
     "product_id": "03f0f8a5-a785-4575-a608-ecf93b819153",
     "elma_url": "http://172.28.3.42:31880",

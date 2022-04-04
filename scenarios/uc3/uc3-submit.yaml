@@ -92,7 +92,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: scenario-2-submit
+  name: uc3-submit
 spec:
   templates:
   - name: handle-submit
@@ -117,7 +117,7 @@ spec:
 
     - - name: handle-orchestration-instantiate
         templateRef:
-          name: scenario-2-orchestration-template
+          name: uc3-orchestration-template
           template: orchestration-instantiate
         when: "{{workflow.parameters.sub_operation}} == \"submit_orchestration\""
 
@@ -135,7 +135,7 @@ spec:
 
     - - name: handle-orchestration
         templateRef:
-          name: scenario-2-orchestration-template
+          name: uc3-orchestration-template
           template: orchestration-scaleout
         when: "{{workflow.parameters.sub_operation}} == \"submit_orchestration\""
 
