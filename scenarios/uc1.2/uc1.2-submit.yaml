@@ -18,8 +18,8 @@
 # ==============================
 #
 # Scenario UC1.2 deals with instantiating a 5G UPF in stakeholder premises where it is
-# assumed that 5G core already deployed there. It also deals with extending the service
-# by instantiating 5G UPF in a 3rd party domain where this UPF is registered to stakeholder's core
+# assumed that 5G core already runs there. It also deals with extending the service
+# by instantiating another 5G UPF in a 3rd party domain where that UPF is registered to stakeholder's core
 #
 # Instantiate. Instantiation of an already purshased 5G UPF SW offer
 #
@@ -27,6 +27,8 @@
 #
 #     product_id: the id of the UPF offer to instantiate (e.g. 3e922f24-01ec-4f83-8328-b69dc9ab8f8e)
 #     service_owner: stakeholder name (e.g. operator-a)
+#     elma_url: domain license agent
+#     catalogue_url: domain calatlogue service
 #
 # Steps:
 #
@@ -47,6 +49,9 @@
 #     product_id: the id of the UPF offer to scaleout (e.g. 3e922f24-01ec-4f83-8328-b69dc9ab8f8e)
 #     service_owner: stakeholder name (e.g. operator-a)
 #     place: the location of where we would like to scaleout (PO TMF format)
+#     elma_url: domain license agent
+#     catalogue_url: domain calatlogue service
+#
 #
 # Steps:
 #

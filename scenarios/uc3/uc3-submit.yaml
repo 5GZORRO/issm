@@ -27,6 +27,8 @@
 #     product_id: the id of the SW offer to instantiate (e.g. 3e922f24-01ec-4f83-8328-b69dc9ab8f8e)
 #     service_owner: stakeholder name (e.g. operator-a)
 #     place: the location of where this instantiation is going to be (PO TMF format)
+#     elma_url: domain license agent
+#     catalogue_url: domain calatlogue service
 #
 # Steps:
 #
@@ -56,6 +58,9 @@
 #     service_owner: stakeholder name (e.g. operator-a)
 #     # service_id: the existing running instance id to be scaled out
 #     place: the location of where we would like to scaleout (PO TMF format)
+#     elma_url: domain license agent
+#     catalogue_url: domain calatlogue service
+#
 #
 # Steps:
 #
