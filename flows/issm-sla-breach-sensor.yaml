@@ -91,7 +91,7 @@ spec:
                   - name: product_DID
 
                   - name: scenario
-                    value: 2
+                    value: uc3
 
                 templates:
                 - name: handlerequest
