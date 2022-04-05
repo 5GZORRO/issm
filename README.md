@@ -190,7 +190,7 @@ Deploy common libraries according to the orchestration stack the mno supports
 or
 
 ```
-./apply.sh ISSM-MEC-NCMP
+./apply.sh MEC
 ```
 
 ## Trigger ISSM business flow
