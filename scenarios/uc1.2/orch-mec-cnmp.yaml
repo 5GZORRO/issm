@@ -31,13 +31,23 @@ spec:
             value: "30055"
 
           - name: namespace
-            value: "domain-{{workflow.parameters.resource_owner}}"
+            # stakeholder
+            value: "domain-{{workflow.parameters.service_owner}}"
+
+          - name: core_namespace
+            # stakeholder
+            value: "domain-{{workflow.parameters.service_owner}}"
 
           - name: cluster
             value: cluster-1
 
           - name: cluster_core
             value: cluster-2
+
+          - name: sst
+            value: "1"
+          - name: sd
+            value: "010203"
 
           - name: networks
             value: |
@@ -173,12 +183,6 @@ spec:
 
       - name: cluster_core
 
-      - name: network_name
-      - name: network_master
-      - name: network_range
-      - name: network_start
-      - name: network_end
-
       - name: networks
 
     script:
@@ -198,11 +202,6 @@ spec:
           "elma_url": "{{workflow.parameters.elma_url}}",
           "sst": "{{inputs.parameters.sst}}",
           "sd": "{{inputs.parameters.sd}}",
-          "network_name": "{{inputs.parameters.network_name}}",
-          "network_master": "{{inputs.parameters.network_master}}",
-          "network_range": "{{inputs.parameters.network_range}}",
-          "network_start": "{{inputs.parameters.network_start}}",
-          "network_end": "{{inputs.parameters.network_end}}",
           "networks": {{inputs.parameters.networks}}
         }
         EOF

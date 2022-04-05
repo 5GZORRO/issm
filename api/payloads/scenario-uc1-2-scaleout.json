@@ -1,7 +1,7 @@
 {
-    "scenario": "3",
+    "scenario": "uc12",
     "operation": "scaleout",
-    "product_id": "e7205895-6998-4d33-9579-c63fd52aa000",
+    "product_id": "4de1c4bd-8c95-49a2-9b11-57f984579d87",
     "elma_url": "http://172.28.3.42:31880",
     "catalogue_url": "http://172.28.3.126:31080",
     "place": {

@@ -1,4 +1,4 @@
-# Copyright 2021 - 2022 IBM Corporation
+# Copyright 2020 - 2021 IBM Corporation
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: uc3-orchestration-template
+  name: uc1-2-orchestration-template
 spec:
   templates:
   - name: orchestration-instantiate
@@ -25,7 +25,7 @@ spec:
         arguments:
           parameters:
           - name: message
-            value: "ISSM-MEC not supported in UC3"
+            value: "NSSO not supported in UC1.2"
 
   - name: orchestration-scaleout
     steps:
@@ -34,7 +34,7 @@ spec:
         arguments:
           parameters:
           - name: message
-            value: "ISSM-MEC not supported in UC3"
+            value: "NSSO not supported in UC1.2"
 
   - name: whalesay
     inputs:
