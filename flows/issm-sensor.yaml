@@ -162,6 +162,12 @@ spec:
                         template: handle-submit
                       when: "{{workflow.parameters.scenario}} == 1"
 
+                  - - name: submit-uc1-2
+                      templateRef:
+                        name: uc1-2-submit
+                        template: handle-submit
+                      when: "{{workflow.parameters.scenario}} == uc1-2"
+
                   - - name: submit-uc3
                       templateRef:
                         name: uc3-submit
