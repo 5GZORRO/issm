@@ -93,6 +93,8 @@ spec:
             value: "{{tasks.transaction-data.outputs.parameters.elma_url}}"
           - name: catalogue_url
             value: "{{tasks.transaction-data.outputs.parameters.catalogue_url}}"
+          - name: trmf_url
+            value: "{{tasks.transaction-data.outputs.parameters.trmf_url}}"
 
   - name: trigger-scaleout
     inputs:
@@ -104,6 +106,7 @@ spec:
       - name: scenario
       - name: elma_url
       - name: catalogue_url
+      - name: trmf_url
     steps:
       - - name: event-uuid
           templateRef:
@@ -128,6 +131,7 @@ spec:
                   "service_id": "{{inputs.parameters.service_id}}",
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
+                  "trmf_url": "{{inputs.parameters.trmf_url}}",
                   "sla_breach": {
                     "applicable": "true",
                     "breachPredictionNotification": {{workflow.parameters.breachPredictionNotification}}
@@ -170,6 +174,7 @@ spec:
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="scenario").value' > /tmp/scenario.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="elma_url").value' > /tmp/elma_url.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="catalogue_url").value' > /tmp/catalogue_url.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="trmf_url").value' > /tmp/trmf_url.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="product_id").value' > /tmp/product_id.txt
     outputs:
       parameters:
@@ -188,6 +193,10 @@ spec:
       - name: catalogue_url
         valueFrom:
           path: /tmp/catalogue_url.txt
+
+      - name: trmf_url
+        valueFrom:
+          path: /tmp/trmf_url.txt
 
       - name: product_id
         valueFrom:
