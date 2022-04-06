@@ -139,6 +139,9 @@ spec:
                   - name: catalogue_url
                     value: OVERRIDE
 
+                  - name: trmf_url
+                    value: OVERRIDE
+
                   - name: place
                     # this domain location
                     # (should match IaaS resource PO)
@@ -282,9 +285,15 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.place
+                dataKey: body.trmf_url
                 value: DEFAULT
               dest: spec.arguments.parameters.20.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.place
+                value: DEFAULT
+              dest: spec.arguments.parameters.21.value
 
             - src:
                 dependencyName: test-dep
@@ -293,16 +302,16 @@ spec:
                   {
                     "applicable": "false"
                   }
-              dest: spec.arguments.parameters.21.value
+              dest: spec.arguments.parameters.22.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.product_DID
                 value: DEFAULT
-              dest: spec.arguments.parameters.22.value
+              dest: spec.arguments.parameters.23.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.sla_DID
                 value: DEFAULT
-              dest: spec.arguments.parameters.23.value
+              dest: spec.arguments.parameters.24.value
