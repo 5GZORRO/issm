@@ -49,6 +49,9 @@ spec:
           - name: sd
             value: "010203"
 
+          - name: pool
+            value: "60.61.0.0/16"
+
           - name: networks
             value: |
               [
@@ -123,6 +126,10 @@ spec:
           - name: sd
             value: "010203"
 
+          - name: pool
+            # TODO: should be generated automatically
+            value: "60.62.0.0/16"
+
           - name: cluster_core
             value: cluster-2
 
@@ -181,6 +188,8 @@ spec:
       - name: sst
       - name: sd
 
+      - name: pool
+
       - name: cluster_core
 
       - name: networks
@@ -202,6 +211,8 @@ spec:
           "elma_url": "{{workflow.parameters.elma_url}}",
           "sst": "{{inputs.parameters.sst}}",
           "sd": "{{inputs.parameters.sd}}",
+          "pool": "{{inputs.parameters.pool}}",
+          "connectedFrom": "gNB",
           "networks": {{inputs.parameters.networks}}
         }
         EOF
