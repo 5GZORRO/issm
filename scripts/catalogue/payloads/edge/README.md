@@ -14,7 +14,7 @@ Throughout the steps define your catalogue URL
 **Use the portal UI to create the offer itself**
 
 ```
-export URL=http://172.28.3.126:32080
+export URL=http://172.28.3.15:32080
 ```
 
 ## Product Offer

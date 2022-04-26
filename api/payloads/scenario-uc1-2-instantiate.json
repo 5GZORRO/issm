@@ -2,6 +2,6 @@
     "scenario": "uc12",
     "operation": "instantiate",
     "product_id": "4de1c4bd-8c95-49a2-9b11-57f984579d87",
-    "elma_url": "http://172.28.3.42:31880",
-    "catalogue_url": "http://172.28.3.126:31080"
+    "elma_url": "http://172.28.3.15:31880",
+    "catalogue_url": "http://172.28.3.15:31080"
 }

@@ -85,7 +85,7 @@ spec:
                   # Discovery service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: discovery_ip
-                    value: 172.28.3.42
+                    value: 172.28.3.15
                   - name: discovery_port
                     value: 32068
 

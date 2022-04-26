@@ -10,7 +10,7 @@ This page summarizes (bottom up) the steps to define resource specification, off
 Throughout the steps define your catalogue URL
 
 ```
-export URL=http://172.28.3.126:31080
+export URL=http://172.28.3.15:31080
 ```
 
 ## Product Offer
