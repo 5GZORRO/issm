@@ -28,7 +28,7 @@ export ISSM_KAFKA_PORT=9092
 export ARGO_SERVER=10.43.96.111:2746
 
 # externally accessed argo-server
-export LB_ARGO_SERVER=172.28.3.15:32026
+export LB_ARGO_SERVER=172.28.3.15:30886
 ```
 
 Deploy
