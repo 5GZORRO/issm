@@ -1,23 +1,24 @@
 {
     "scenario": "uc3",
     "operation": "instantiate",
-    "product_id": "03f0f8a5-a785-4575-a608-ecf93b819153",
+    "product_id": "479bbf27-98fa-450a-ad07-0e13c9b2735d",
     "elma_url": "http://172.28.3.15:31880",
     "trmf_url": "http://172.28.3.15:31113",
     "catalogue_url": "http://172.28.3.15:31080",
     "place": {
-      "city": "Pisa",
-      "country": "Italy",
-      "locality": "San Piero A Grado, Pisa",
+      "id": "cc0e6a51-bf14-4415-a4f2-e58696fb5a42",
+      "city": "Barcelona",
+      "country": "Spain",
+      "locality": "Barcelona",
       "geographicLocation": {
-        "id": "bc87f1b8-45ce-4d81-9380-6efa6577ad08",
-        "name": "Pisa Nextworks Area, Italy",
+        "id": "363edb63-569a-44df-9ded-7e44b1f010e7",
+        "name": "Barcelona i2CAT Area, Spain ",
         "geometryType": "string",
         "geometry": [
           {
-            "id": "e51826f6-4318-4a0e-9616-36728ab7810a",
-            "x": "10.400000",
-            "y": "43.716667",
+            "id": "8bae261d-2bf1-4e23-866f-0dce7a82fbe5",
+            "x": "41.3879",
+            "y": "2.1699",
             "z": "3388.0"
           }
         ]
