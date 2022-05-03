@@ -156,6 +156,12 @@ spec:
                   - name: sla_DID
                     value: OVERRIDE
 
+                  - name: vnf_order_id
+                    value: OVERRIDE
+
+                  - name: edge_order_id
+                    value: OVERRIDE
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -315,3 +321,15 @@ spec:
                 dataKey: body.sla_DID
                 value: DEFAULT
               dest: spec.arguments.parameters.24.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.vnf_order_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.25.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.edge_order_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.26.value

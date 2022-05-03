@@ -1,27 +1,9 @@
 {
     "scenario": "uc3",
     "operation": "instantiate",
-    "product_id": "479bbf27-98fa-450a-ad07-0e13c9b2735d",
+    "vnf_order_id": "3fecd4b8-6a90-47d5-a1cb-2bd4fb489024",
+    "edge_order_id": "c65b316c-4f1b-4820-b91d-b1c2f6ef23d1",
     "elma_url": "http://172.28.3.15:31880",
     "trmf_url": "http://172.28.3.15:31113",
-    "catalogue_url": "http://172.28.3.15:31080",
-    "place": {
-      "id": "cc0e6a51-bf14-4415-a4f2-e58696fb5a42",
-      "city": "Barcelona",
-      "country": "Spain",
-      "locality": "Barcelona",
-      "geographicLocation": {
-        "id": "363edb63-569a-44df-9ded-7e44b1f010e7",
-        "name": "Barcelona i2CAT Area, Spain ",
-        "geometryType": "string",
-        "geometry": [
-          {
-            "id": "8bae261d-2bf1-4e23-866f-0dce7a82fbe5",
-            "x": "41.3879",
-            "y": "2.1699",
-            "z": "3388.0"
-          }
-        ]
-      }
-    }
+    "catalogue_url": "http://172.28.3.15:31080"
 }
