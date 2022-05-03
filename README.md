@@ -168,7 +168,7 @@ Update access info for:
                   - name: kafka_dl_port
                     value: 9092
                   - name: discovery_ip
-                    value: 172.28.3.42
+                    value: 172.28.3.15
                   - name: discovery_port
                     value: 32000
 ```

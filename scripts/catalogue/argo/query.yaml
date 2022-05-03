@@ -21,7 +21,7 @@ spec:
   arguments:
     parameters:
     - name: catalogue_url
-      value: http://172.28.3.126:31080
+      value: http://172.28.3.15:31080
  
     - name: product_id
       value: 0f5460c1-efe4-42e6-85e5-57571989e270

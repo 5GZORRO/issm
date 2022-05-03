@@ -25,10 +25,10 @@ export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
 
 # cluster-IP
-export ARGO_SERVER=10.43.204.81:2746
+export ARGO_SERVER=10.43.96.111:2746
 
 # externally accessed argo-server
-export LB_ARGO_SERVER=172.28.3.42:32026
+export LB_ARGO_SERVER=172.28.3.15:30886
 ```
 
 Deploy
@@ -70,7 +70,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -X POST -d "@payloads/scenario-1-scaleout.json" http://172.28.3.42:30080/transactions/operator-a/scaleout
+    curl -H "Content-type: application/json" -X POST -d "@payloads/scenario-1-scaleout.json" http://172.28.3.15:30080/transactions/operator-a/scaleout
 
     {
         "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
@@ -105,24 +105,24 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/transactions/operator-a
+    curl -H "Content-type: application/json" -GET http://172.28.3.15:30080/transactions/operator-a
 [
   {
-    "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=b81c8c6cade04317b8c9240bb137715a",
+    "ref": "http://172.28.3.15:32026/workflows/domain-operator-a?label=transaction_uuid=b81c8c6cade04317b8c9240bb137715a",
     "created": "2022-01-19T12:28:42+00:00",
     "status": "Failed",
     "transaction_type": "scaleout",
     "transaction_uuid": "b81c8c6cade04317b8c9240bb137715a"
   },
   {
-    "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=86804b8548ff4bd8a914c12ef862a993",
+    "ref": "http://172.28.3.15:32026/workflows/domain-operator-a?label=transaction_uuid=86804b8548ff4bd8a914c12ef862a993",
     "created": "2022-01-17T17:28:01+00:00",
     "status": "Succeeded",
     "transaction_type": "instantiate",
     "transaction_uuid": "86804b8548ff4bd8a914c12ef862a993"
   },
   {
-    "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=9e20c8d3cf5d4a448810af4f9cc318a8",
+    "ref": "http://172.28.3.15:32026/workflows/domain-operator-a?label=transaction_uuid=9e20c8d3cf5d4a448810af4f9cc318a8",
     "created": "2021-12-15T10:58:59+00:00",
     "status": "Succeeded",
     "transaction_type": "scaleout",
@@ -160,17 +160,17 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/transactions/operator-a/scaleout
+    curl -H "Content-type: application/json" -GET http://172.28.3.15:30080/transactions/operator-a/scaleout
     [
       {
-        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=c5df607af95f469ca058919989968a33",
+        "ref": "http://172.28.3.15:32026/workflows/domain-operator-a?label=transaction_uuid=c5df607af95f469ca058919989968a33",
         "created": "2022-01-19T12:28:42+00:00",
         "status": "Running",
         "transaction_type": "scaleout",
         "transaction_uuid": "c5df607af95f469ca058919989968a33"
       },
       {
-        "ref": "http://172.28.3.42:32026/workflows/domain-operator-a?label=transaction_uuid=6261754de98c4537ba08bd6b3c8d7d36",
+        "ref": "http://172.28.3.15:32026/workflows/domain-operator-a?label=transaction_uuid=6261754de98c4537ba08bd6b3c8d7d36",
         "created": "2022-01-19T12:40:42+00:00",
         "status": "Succeeded",
         "transaction_type": "scaleout",
@@ -226,7 +226,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -GET http://172.28.3.42:30080/transactions_types
+    curl -H "Content-type: application/json" -GET http://172.28.3.15:30080/transactions_types
     [
       "instantiate",
       "scaleout"
