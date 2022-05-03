@@ -453,6 +453,8 @@ spec:
             parameters:
             - name: resource_did
               value: "{{inputs.parameters.resource_did}}"
+            - name: product_id
+              value: "{{inputs.parameters.product_id}}"
 
   - name: acquire-simulator
     # simulate a resource purchase with a return of a
@@ -714,6 +716,7 @@ spec:
     inputs:
       parameters:
       - name: resource_did
+      - name: product_id
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
       imagePullPolicy: IfNotPresent
@@ -734,9 +737,11 @@ spec:
             return http_error_msg
 
         resource_did = "{{inputs.parameters.resource_did}}"
+        product_id = "{{inputs.parameters.product_id}}"
         sys.stdout.write('Input parameters. resource_did: "%s"\n' % resource_did)
         payload = {
-            "offerDID": resource_did
+            "offerDID": resource_did,
+            "offerID": product_id
         }
 
         headers = {'Content-Type': 'application/json'}
