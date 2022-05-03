@@ -26,14 +26,14 @@
 #
 #     transaction_uuid: the uuid of the transaction that instantiated the service where the SLA breach occured
 #     # service_id: the instance id of this service that caused this violation
-#     product_DID: the DID of the SW offer this service instance is from
 #     place: the location of where this violation occured (PO TMF format)
 #
 # Steps:
 #
 # * Retrieve the transaction object from transaction_uuid
 #       - service_owner (the stakeholder)
-#       - product_id
+#       - vnf_order_id
+#       - edge_order_id
 #       - catalogue_url
 #       - elma_url
 #
@@ -83,8 +83,8 @@ spec:
             value: "{{tasks.transaction-data.outputs.parameters.service_owner}}"
           - name: place
             value: "{{workflow.parameters.place}}"
-          - name: product_id
-            value: "{{tasks.transaction-data.outputs.parameters.product_id}}"
+          - name: vnf_order_id
+            value: "{{tasks.transaction-data.outputs.parameters.vnf_order_id}}"
           - name: service_id
             value: "{{workflow.parameters.instance_id}}"
           - name: scenario
@@ -101,7 +101,7 @@ spec:
       parameters:
       - name: service_owner
       - name: place
-      - name: product_id
+      - name: vnf_order_id
       - name: service_id
       - name: scenario
       - name: elma_url
@@ -127,7 +127,7 @@ spec:
                   "operation": "scaleout", "sub_operation": "new_intent",
                   "place": {{inputs.parameters.place}},
                   "service_owner": "{{inputs.parameters.service_owner}}",
-                  "product_id": "{{inputs.parameters.product_id}}",
+                  "vnf_order_id": "{{inputs.parameters.vnf_order_id}}",
                   "service_id": "{{inputs.parameters.service_id}}",
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
@@ -175,7 +175,7 @@ spec:
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="elma_url").value' > /tmp/elma_url.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="catalogue_url").value' > /tmp/catalogue_url.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="trmf_url").value' > /tmp/trmf_url.txt
-        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="product_id").value' > /tmp/product_id.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="vnf_order_id").value' > /tmp/vnf_order_id.txt
     outputs:
       parameters:
       - name: service_owner
@@ -198,6 +198,6 @@ spec:
         valueFrom:
           path: /tmp/trmf_url.txt
 
-      - name: product_id
+      - name: vnf_order_id
         valueFrom:
-          path: /tmp/product_id.txt
+          path: /tmp/vnf_order_id.txt
