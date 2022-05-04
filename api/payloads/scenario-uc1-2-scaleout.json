@@ -10,12 +10,10 @@
       "country": "Italy",
       "locality": "San Piero A Grado, Pisa",
       "geographicLocation": {
-        "id": "bc87f1b8-45ce-4d81-9380-6efa6577ad08",
         "name": "Pisa Nextworks Area, Italy",
         "geometryType": "string",
         "geometry": [
           {
-            "id": "e51826f6-4318-4a0e-9616-36728ab7810a",
             "x": "10.400000",
             "y": "43.716667",
             "z": "3388.0"

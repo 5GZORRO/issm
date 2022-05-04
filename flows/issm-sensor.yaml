@@ -87,7 +87,7 @@ spec:
                   - name: discovery_ip
                     value: 172.28.3.15
                   - name: discovery_port
-                    value: 30574
+                    value: 32068
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Mandatory to exist

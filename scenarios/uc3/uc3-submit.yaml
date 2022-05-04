@@ -191,7 +191,7 @@ spec:
         template: get-order-from-catalog
         arguments:
           parameters:
-          - name: vnf_order_id
+          - name: order_id
             value: "{{workflow.parameters.vnf_order_id}}"
 
       - name: build-intent-query
