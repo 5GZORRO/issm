@@ -1,0 +1,30 @@
+{
+   "description":"Product Order illustration sample",
+   "requestedCompletionDate":"2023-05-02T08:13:59.506Z",
+   "requestedStartDate":"2022-05-03T08:13:59.506Z",
+   "productOrderItem":[
+      {
+         "quantity":1,
+         "action":"add",
+         "productOffering":{
+            "id":"FILL-IN",
+            "href":"http://172.28.3.15:32080/tmf-api/productCatalogManagement/v4/productOffering/FILL-IN",
+            "name":"Edge Resource"
+         }
+      }
+   ],
+   "relatedParty":[
+      {
+         "id":"FILL-IN",
+         "href":"http://172.28.3.15:32080/tmf-api/party/v4/organization/",
+         "name":"Operator-b",
+         "role":"Seller"
+      },
+      {
+         "id":"FILL-IN",
+         "href":"http://172.28.3.15:31080/tmf-api/party/v4/organization/",
+         "name":"Operator-a",
+         "role":"Buyer"
+      }
+   ]
+}

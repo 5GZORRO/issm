@@ -1,8 +1,8 @@
 {
     "scenario": "uc3",
     "operation": "instantiate",
-    "vnf_order_id": "3fecd4b8-6a90-47d5-a1cb-2bd4fb489024",
-    "edge_order_id": "c65b316c-4f1b-4820-b91d-b1c2f6ef23d1",
+    "vnf_order_id": "aa98d198-4565-434c-9276-fc41e4a9ba9f",
+    "edge_order_id": "a9aee407-fd31-4c6c-811e-d6748629e1a9",
     "elma_url": "http://172.28.3.15:31880",
     "trmf_url": "http://172.28.3.15:31113",
     "catalogue_url": "http://172.28.3.15:31080"
