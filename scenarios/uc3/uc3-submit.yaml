@@ -437,15 +437,7 @@ spec:
         r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + iq, headers=headers)
         offers = r.json()
 
-        location_valid_offers = []
-        for e in offers:
-            try:
-                if e['offer_object']['place'][0]['city'] == location:
-                    location_valid_offers.append(e)
-            except:
-                pass
-        # HACK UNTIL SRSD IS FIXED
-        print(location_valid_offers)
+        print(offers)
 
   - name: acquire
     # acquire is devided into two sub-tasks:
