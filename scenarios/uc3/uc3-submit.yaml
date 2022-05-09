@@ -256,7 +256,7 @@ spec:
         template: get-order-from-catalog
         arguments:
           parameters:
-          - name: vnf_order_id
+          - name: order_id
             value: "{{workflow.parameters.vnf_order_id}}"
 
       - name: handle-best-offers
@@ -468,18 +468,11 @@ spec:
             - name: operator_id_seller
               value: "{{inputs.parameters.operator_id_seller}}"
             - name: operator_id_buyer
-              # can it be passed as is ?
+              # TODO: can it be passed as is ?
               value: "{{workflow.parameters.service_owner}}"
-
-      - - name: fail-flow
-          templateRef:
-            name: workflow-base
-            template: fail
-          when: "{{steps.acquire-resource.outputs.parameters.status}} == \"FAIL\""
 
       - - name: notify-reputation-manager
           template: notify-trmf
-          when: "{{steps.acquire-resource.outputs.parameters.status}} != \"FAIL\""
           arguments:
             parameters:
             - name: resource_did
