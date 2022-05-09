@@ -363,7 +363,7 @@ spec:
           - name: operator_id_seller
             value: "{{tasks.resource-service-owner.outputs.result}}"
           - name: operator_id_buyer
-            value: "{{tasks.resource-service-owner.outputs.result}}"
+            value: "{{workflow.parameters.service_owner}}"
           - name: resource_did
             # 3rd party selected Edge resource
             value: "{{tasks.resource-did.outputs.result}}"
@@ -504,9 +504,10 @@ spec:
                 http_error_msg = '%s Server Error: %s' % (r.status_code, r.reason)
 
             return http_error_msg
-      
+
+        transaction_uuid = "{{workflow.parameters.transaction_uuid}}"
         payload = {
-           "description": "Product Order by ISSM",
+           "description": "Product Order by ISSM Transaction ID: %s" % transaction_uuid,
            "requestedStartDate": "2022-01-01T08:00:00.000Z",
            "requestedCompletionDate": "2023-12-31T08:00:00.000Z",
            "productOrderItem": [
