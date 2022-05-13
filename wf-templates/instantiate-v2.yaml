@@ -19,7 +19,11 @@ metadata:
 spec:
   templates:
   - name: instantiate
-    # Entry point of the scenario
+    ###############################
+    #
+    # Entry point for instantiate
+    #
+    ###############################
     steps:
     - - name: network-service-instantiate
         template: network-service-instantiate
@@ -66,7 +70,9 @@ spec:
     dag:
       tasks:
         - name: get-order-from-catalog
-          template: get-order-from-catalog
+          templateRef:
+            template: workflow-catalog
+            name: get-order-from-catalog
           arguments:
             parameters:
             - name: order_id
@@ -101,7 +107,9 @@ spec:
               value: "{{workflow.parameters.order_id}}"
 
         - name: get-edge-order-from-catalog
-          template: get-order-from-catalog
+          templateRef:
+            template: workflow-catalog
+            name: get-order-from-catalog
           arguments:
             parameters:
             - name: order_id
@@ -179,7 +187,7 @@ spec:
                 { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
                   "category": "{{workflow.parameters.category}}",
                   "resources": {{tasks.srds-service.outputs.result}},
-                  "operation": "{{workflow.parameters.operation}}", "sub_operation": "OPTIMIZED",
+                  "operation": "{{workflow.parameters.operation}}", "sub_operation": "BEST_OFFER_SELECTION",
                   "service_owner": "{{workflow.parameters.service_owner}}",
                   "sla_breach": {{workflow.parameters.sla_breach}},
                   "elma_url": "{{workflow.parameters.elma_url}}",
@@ -190,10 +198,11 @@ spec:
             - name: kafka_topic
               value: issm-optimizer
 
-  - name: optimized
+  - name: best-offer-selection
     ###############################
     #
-    # Handle the reply from ISSM-O
+    # Entry point for best offer
+    # selection
     #
     ###############################
     steps:
@@ -210,7 +219,9 @@ spec:
     dag:
       tasks:
       - name: get-order-from-catalog
-        template: get-order-from-catalog
+        templateRef:
+          template: workflow-catalog
+          name: get-order-from-catalog
         arguments:
           parameters:
           - name: order_id
@@ -340,6 +351,17 @@ spec:
           - name: place
             value: "{{tasks.resource-location.outputs.result}}"
 
+  - name: orchestrate
+    ###############################
+    #
+    # Entry point for orchestration
+    #
+    ###############################
+    templateRef:
+      name: orchestrate 
+      template: orchestrate
+
+
   - name: acquire
     # acquire is devided into two sub-tasks:
     # 1. the acquire operation itself
@@ -372,8 +394,6 @@ spec:
               value: "{{inputs.parameters.resource_did}}"
 
   - name: create-order
-    # simulate a resource purchase with a return of a
-    # fail/success status
     inputs:
       parameters:
       - name: resource_id
@@ -457,7 +477,7 @@ spec:
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "ORCHESTRATE",
                   "place": {{inputs.parameters.place}},
-                  "scenario": "{{workflow.parameters.scenario}}", "elma_url": "{{workflow.parameters.elma_url}}",
+                  "elma_url": "{{workflow.parameters.elma_url}}",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_DID": "{{inputs.parameters.product_DID}}",
                   "sla_DID": "{{inputs.parameters.sla_DID}}",
                   "service_owner": "{{workflow.parameters.service_owner}}", ???? "service_id": "{{workflow.parameters.service_id}}",
@@ -466,6 +486,12 @@ spec:
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"
+
+
+
+
+
+
 
 
 

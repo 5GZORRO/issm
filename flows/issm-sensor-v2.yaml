@@ -168,12 +168,12 @@ spec:
                   - - name: optimized
                       templateRef:
                         name: instantiate
-                        template: optimized
-                      when: "{{workflow.parameters.sub_operation}} == \"OPTIMIZED\""
+                        template: best-offer-selection
+                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
 
                   - - name: orchestrate
                       templateRef:
-                        name: orchestrate
+                        name: instantiate
                         template: orchestrate
                       when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
 
