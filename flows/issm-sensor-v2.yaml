@@ -1,0 +1,329 @@
+# Copyright 2020 - 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+#
+# Sensor that invokes a workflow locally on the operator premises
+# Every domain should have a sensor
+#
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: issm-branch
+spec:
+  template:
+    serviceAccountName: argo-events-sa
+  dependencies:
+    - name: test-dep
+      # connects to platform bus
+      eventSourceName: issm-kafka
+      eventName: intent
+  triggers:
+    - template:
+        name: kafka-workflow-trigger
+        k8s:
+          group: argoproj.io
+          version: v1alpha1
+          resource: workflows
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                #
+                # Workflow name is the event_uuid defined in the payload
+                # (see event parameters below)
+                #
+                name: "OVERRIDE"
+                labels:
+                  #
+                  # transaction_uuid lable contains the transaction uuid of
+                  # bussiness flow. NOTE: there could be several instances with
+                  # a same transaction uuid
+                  #
+                  transaction_uuid: OVERRIDE
+                  #
+                  # to denote that this wf belongs to ISSM component to be used
+                  # by ISSM-API queries
+                  issm: "true"
+              spec:
+                entrypoint: handlerequest
+                arguments:
+                  parameters:
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # ISSM kafka bus
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: kafka_ip
+                    value: 172.28.3.196
+                  - name: kafka_port
+                    value: 9092
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # DL kafka bus
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: kafka_dl_ip
+                    value: 172.28.3.196
+                  - name: kafka_dl_port
+                    value: 9092
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Discovery service
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: discovery_ip
+                    value: 172.28.3.15
+                  - name: discovery_port
+                    value: 32068
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Mandatory to exist
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: transaction_uuid
+                  - name: scenario
+                  # stakeholder
+                  - name: service_owner
+
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Below are scenario specific
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+                  # 'instantiate', 'scaleout'
+                  - name: operation
+                    value: OVERRIDE
+
+                  # the context within the scenario 
+                  - name: sub_operation
+                    value: OVERRIDE
+
+
+                  # High level intent query for smart offer search
+                  - name: intent_query
+                    value: OVERRIDE
+
+                  # SW offer related
+                  - name: product_id
+                    value: OVERRIDE
+                  - name: resource_vsb
+                    value: OVERRIDE
+                  - name: sla_id
+                    value: OVERRIDE
+
+                  # Id of existing instance (for scaleout)
+                  - name: service_id
+                    value: OVERRIDE
+
+                  - name: resources
+                    value: OVERRIDE
+
+                  - name: resource_owner
+                    # operator owner as denoted in the offer
+                    value: OVERRIDE
+
+                  - name: elma_url
+                    value: OVERRIDE
+
+                  - name: catalogue_url
+                    value: OVERRIDE
+
+                  - name: trmf_url
+                    value: OVERRIDE
+
+                  - name: place
+                    value: OVERRIDE
+
+                  - name: sla_breach
+
+                  - name: product_DID
+                    value: OVERRIDE
+
+                  - name: sla_DID
+                    value: OVERRIDE
+
+                  - name: order_id
+                    value: OVERRIDE
+
+                  - name: edge_order_id
+                    value: OVERRIDE
+
+                templates:
+                - name: handlerequest
+                  steps:
+                  - - name: instantiate
+                      templateRef:
+                        name: instantiate
+                        template: instantiate
+                      when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE\""
+
+                  - - name: optimized
+                      templateRef:
+                        name: instantiate
+                        template: optimized
+                      when: "{{workflow.parameters.sub_operation}} == \"OPTIMIZED\""
+
+                  - - name: orchestrate
+                      templateRef:
+                        name: orchestrate
+                        template: orchestrate
+                      when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
+
+          parameters:
+            - src:
+                #
+                # event_uuid is treated as an instance uuid for this
+                # flow instance
+                dependencyName: test-dep
+                dataKey: body.event_uuid
+              dest: metadata.name
+
+            - src:
+                #
+                # transaction_uuid is treated as the whole business transaction
+                # that can contain several flows (i.e. several event_uuids)
+                #
+                dependencyName: test-dep
+                dataKey: body.transaction_uuid
+              dest: metadata.labels.transaction_uuid
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.transaction_uuid
+                value: notapplicable
+              dest: spec.arguments.parameters.6.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.scenario
+                value: DEFAULT
+              dest: spec.arguments.parameters.7.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.service_owner
+                value: DEFAULT
+              dest: spec.arguments.parameters.8.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.operation
+              dest: spec.arguments.parameters.9.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.operation
+              dest: metadata.labels.operation
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.sub_operation
+                value: INSTANTIATE
+              dest: spec.arguments.parameters.10.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.intent_query
+                value: DEFAULT
+              dest: spec.arguments.parameters.11.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.product_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.12.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resource_vsb
+                value: DEFAULT
+              dest: spec.arguments.parameters.13.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.sla_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.14.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.service_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.15.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resources
+                value: DEFAULT
+              dest: spec.arguments.parameters.16.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resource_owner
+                value: DEFAULT
+              dest: spec.arguments.parameters.17.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.elma_url
+                value: DEFAULT
+              dest: spec.arguments.parameters.18.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.catalogue_url
+                value: DEFAULT
+              dest: spec.arguments.parameters.19.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.trmf_url
+                value: DEFAULT
+              dest: spec.arguments.parameters.20.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.place
+                value: DEFAULT
+              dest: spec.arguments.parameters.21.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.sla_breach
+                value: |
+                  {
+                    "applicable": "false"
+                  }
+              dest: spec.arguments.parameters.22.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.product_DID
+                value: DEFAULT
+              dest: spec.arguments.parameters.23.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.sla_DID
+                value: DEFAULT
+              dest: spec.arguments.parameters.24.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.vnf_order_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.25.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.edge_order_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.26.value

@@ -223,3 +223,13 @@ spec:
       - name: product_DID
         valueFrom:
           path: /tmp/product_DID.txt
+
+  - name: whalesay
+    inputs:
+      parameters:
+      - name: message
+    container:
+      image: docker/whalesay
+      imagePullPolicy: IfNotPresent
+      command: [cowsay]
+      args: ["{{inputs.parameters.message}}"]
