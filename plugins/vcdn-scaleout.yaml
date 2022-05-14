@@ -72,7 +72,8 @@ spec:
                 "order_id": "{{workflow.parameters.vnf_order_id}}",
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                 "trmf_url": "{{workflow.parameters.trmf_url}}",
-                "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}"
+                "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
+                "userdata": "{{workflow.parameters.userdata}}"
               }
           - name: kafka_topic
             value: issm-optimizer
@@ -203,8 +204,25 @@ spec:
             # selected Edge resource
             value: "{{tasks.resource-did.outputs.result}}"
 
-      - name: trigger-orchestration
+      - name: add-user-data
         dependencies: [acquire]
+        templateRef:
+          template: workflow-base
+          name: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: |
+              {{workflow.parameters.userdata}}
+          - name: dict2
+            value: |
+              {
+                "product_id": "{{inputs.parameters.product_DID}}",
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}"
+              }
+
+      - name: trigger-orchestration
+        dependencies: [add-user-data]
         template: trigger-orchestration
         arguments:
           parameters:
@@ -228,6 +246,7 @@ spec:
       - name: product_DID
       - name: sla_DID
       - name: place
+      - name: userdata      
     steps:
       - - name: event-uuid
           templateRef:
@@ -247,9 +266,10 @@ spec:
                   "elma_url": "{{workflow.parameters.elma_url}}",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_DID": "{{inputs.parameters.product_DID}}",
                   "sla_DID": "{{inputs.parameters.sla_DID}}",
-                  "service_owner": "{{workflow.parameters.service_owner}}", ???? "service_id": "{{workflow.parameters.service_id}}",
+                  "service_owner": "{{workflow.parameters.service_owner}}",
                   "resource_owner": "{{inputs.parameters.resource_owner}}",
-                  "sla_breach": {{workflow.parameters.sla_breach}}
+                  "sla_breach": {{workflow.parameters.sla_breach}},
+                  "userdata": {{inputs.parameters.userdata}}
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"

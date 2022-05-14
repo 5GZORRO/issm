@@ -156,6 +156,9 @@ spec:
                   - name: edge_order_id
                     value: OVERRIDE
 
+                  - name: userdata
+                    value: OVERRIDE
+
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # ISSM API service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -400,3 +403,11 @@ spec:
                 dataKey: body.edge_order_id
                 value: DEFAULT
               dest: spec.arguments.parameters.26.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.userdata
+                value: |
+                  {
+                  }
+              dest: spec.arguments.parameters.27.value

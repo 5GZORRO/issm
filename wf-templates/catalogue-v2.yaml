@@ -374,6 +374,7 @@ spec:
       - name: place
         valueFrom:
           path: /tmp/place.txt
+
       - name: resource_owner
         valueFrom:
           path: /tmp/resource_owner.txt

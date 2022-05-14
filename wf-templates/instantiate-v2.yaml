@@ -78,8 +78,25 @@ spec:
             - name: order_id
               value: "{{workflow.parameters.order_id}}"
 
-        - name: trigger-orchestration
+        - name: add-user-data
           dependencies: [get-order-from-catalog]
+          templateRef:
+            template: workflow-base
+            name: add-to-dict
+          arguments:
+            parameters:
+            - name: dict1
+              value: |
+                {{workflow.parameters.userdata}}
+            - name: dict2
+              value: |
+                {
+                  "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
+                  "transaction_id": "{{workflow.parameters.transaction_uuid}}"
+                }
+
+        - name: trigger-orchestration
+          dependencies: [add-user-data]
           template: trigger-orchestration
           arguments:
             parameters:
@@ -93,7 +110,8 @@ spec:
               value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
             - name: place
               value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
-
+            - name: userdata
+              value: "{{tasks.add-user-data.outputs.parameters.dict}}"
 
   - name: vnf-instantiate-manual
     # VNF known, Edge known
@@ -115,8 +133,26 @@ spec:
             - name: order_id
               value: "{{workflow.parameters.edge_order_id}}"
 
-        - name: trigger-orchestration
+        - name: add-user-data
           dependencies: [get-vnf-order-from-catalog, get-edge-order-from-catalog]
+          templateRef:
+            template: workflow-base
+            name: add-to-dict
+          arguments:
+            parameters:
+            - name: dict1
+              value: |
+                {{workflow.parameters.userdata}}
+            - name: dict2
+              value: |
+                {
+                  "product_id": "{{tasks.get-vnf-order-from-catalog.outputs.parameters.did}}",
+                  "transaction_id": "{{workflow.parameters.transaction_uuid}}"
+                }
+
+
+        - name: trigger-orchestration
+          dependencies: [add-user-data]
           template: trigger-orchestration
           arguments:
             parameters:
@@ -130,6 +166,9 @@ spec:
               value: "{{tasks.get-vnf-order-from-catalog.outputs.parameters.sla_did}}"
             - name: place
               value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.place}}"
+            - name: userdata
+              value: "{{tasks.add-user-data.outputs.parameters.dict}}"
+              
 
   - name: vnf-instantiate-zero-touch
     # VNF known, Edge unknown
@@ -193,7 +232,8 @@ spec:
                   "elma_url": "{{workflow.parameters.elma_url}}",
                   "order_id": "{{workflow.parameters.vnf_order_id}}",
                   "catalogue_url": "{{workflow.parameters.catalogue_url}}",
-                  "trmf_url": "{{workflow.parameters.trmf_url}}"
+                  "trmf_url": "{{workflow.parameters.trmf_url}}",
+                  "userdata": "{{workflow.parameters.userdata}}"
                 }
             - name: kafka_topic
               value: issm-optimizer
@@ -335,8 +375,25 @@ spec:
             # selected Edge resource
             value: "{{tasks.resource-did.outputs.result}}"
 
-      - name: trigger-orchestration
+      - name: add-user-data
         dependencies: [acquire]
+        templateRef:
+          template: workflow-base
+          name: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: |
+              {{workflow.parameters.userdata}}
+          - name: dict2
+            value: |
+              {
+                "product_id": "{{inputs.parameters.product_DID}}",
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}"
+              }
+
+      - name: trigger-orchestration
+        dependencies: [add-user-data]
         template: trigger-orchestration
         arguments:
           parameters:
@@ -344,12 +401,14 @@ spec:
             value: "{{tasks.process-mno-name.outputs.result}}"
           - name: resource_vsb
             value: "{{inputs.parameters.resource_vsb}}"
-          - name: product_DID
-            value: "{{inputs.parameters.product_DID}}"
           - name: sla_DID
             value: "{{inputs.parameters.sla_DID}}"
+          - name: product_DID
+            value: "{{inputs.parameters.product_DID}}"
           - name: place
             value: "{{tasks.resource-location.outputs.result}}"
+          - name: userdata
+            value: "{{tasks.add-user-data.outputs.parameters.dict}}"
 
   - name: scaleout
     ###############################
@@ -429,6 +488,7 @@ spec:
       - name: product_DID
       - name: sla_DID
       - name: place
+      - name: userdata
     steps:
       - - name: event-uuid
           templateRef:
@@ -448,13 +508,70 @@ spec:
                   "elma_url": "{{workflow.parameters.elma_url}}",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_DID": "{{inputs.parameters.product_DID}}",
                   "sla_DID": "{{inputs.parameters.sla_DID}}",
-                  "service_owner": "{{workflow.parameters.service_owner}}", ???? "service_id": "{{workflow.parameters.service_id}}",
+                  "service_owner": "{{workflow.parameters.service_owner}}",
                   "resource_owner": "{{inputs.parameters.resource_owner}}",
-                  "sla_breach": {{workflow.parameters.sla_breach}}
+                  "sla_breach": {{workflow.parameters.sla_breach}},
+                  "userdata": {{inputs.parameters.userdata}}
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"
 
+
+  - name: build-intent-query
+    inputs:
+      parameters:
+      - name: place
+      - name: cpu_max
+      - name: mem_max
+      - name: mem_unit
+      - name: storage_max
+      - name: storage_unit
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import sys
+        # Example format: intent/$(urlencode 'storage 96 GB ram 2730 MB edge Barcelona'))
+        location = {{inputs.parameters.place}}['city']
+
+        cpu_max = str("{{inputs.parameters.cpu_max}}")
+
+        mem_max = str("{{inputs.parameters.mem_max}}")
+        mem_unit = str("{{inputs.parameters.mem_unit}}")
+
+        storage_max = str("{{inputs.parameters.storage_max}}")
+        storage_unit = str("{{inputs.parameters.storage_unit}}")
+
+        sys.stdout.write(cpu_max + " cores" + " storage " + storage_max + " " + storage_unit + " ram " + mem_max + " " + mem_unit + " edge " +  location + " \n")
+
+
+  - name: srds-service
+    inputs:
+      parameters:
+      - name: service_ip
+      - name: service_port
+      - name: intent_query
+      - name: place
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+        import urllib
+        import urllib.parse
+
+        location = {{inputs.parameters.place}}['city']
+        headers = {'Content-Type': 'application/json'}
+        intent_query = str("{{inputs.parameters.intent_query}}")
+        iq = urllib.parse.quote(intent_query)
+        r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/intent/" + iq, headers=headers)
+        offers = r.json()
+
+        print(offers)
 
 
 
