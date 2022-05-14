@@ -1,8 +1,13 @@
 {
     "operation": "instantiate",
-    "order_id": "aa98d198-4565-434c-9276-fc41e4a9ba9f",
+    "category": "Network Service",
+    "order_id": "99b3faeb-d06e-4658-a8ce-24b69e223e72",
     "elma_url": "http://172.28.3.15:31880",
     "trmf_url": "http://172.28.3.15:31113",
     "catalogue_url": "http://172.28.3.15:31080",
-    "category": "Network Service"
+    "userdata": {
+        "sm.ssid": "ssid",
+        "sm.imsi_list": "imsi_list",
+        "sm.apn": "apn"
+    }
 }
