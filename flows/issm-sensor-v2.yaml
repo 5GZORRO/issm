@@ -401,7 +401,7 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.vnf_order_id
+                dataKey: body.order_id
                 value: DEFAULT
               dest: spec.arguments.parameters.25.value
 
