@@ -39,11 +39,11 @@ spec:
       tasks:
         - name: zero-touch
           # an optimal Edge should be used
-          when: "{{workflow.parameters.edge_order_id}} == \"DEFAULT\""
+          when: "\"{{workflow.parameters.edge_order_id}}\" == \"DEFAULT\""
           template: vnf-instantiate-zero-touch
 
         - name: manual
-          when: "{{workflow.parameters.edge_order_id}} != \"DEFAULT\""
+          when: "\"{{workflow.parameters.edge_order_id}}\" != \"DEFAULT\""
           template: vnf-instantiate-manual
 
 
@@ -52,7 +52,7 @@ spec:
       tasks:
         - name: print-message
           # an optimal NS should be used
-          when: "{{workflow.parameters.order_id}} == \"DEFAULT\""
+          when: "\"{{workflow.parameters.order_id}}\" == \"DEFAULT\""
           templateRef:
             name: workflow-base
             template: whalesay
@@ -62,7 +62,7 @@ spec:
               value: "Zero touch Network Service instantiation not supported"
 
         - name: manual
-          when: "{{workflow.parameters.order_id}} != \"DEFAULT\""
+          when: "\"{{workflow.parameters.order_id}}\" != \"DEFAULT\""
           template: network-service-instantiate-manual
 
 
@@ -71,8 +71,8 @@ spec:
       tasks:
         - name: get-order-from-catalog
           templateRef:
-            template: workflow-catalog
-            name: get-order-from-catalog
+            name: workflow-catalog
+            template: get-order-from-catalog
           arguments:
             parameters:
             - name: order_id
@@ -126,8 +126,8 @@ spec:
 
         - name: get-edge-order-from-catalog
           templateRef:
-            template: workflow-catalog
-            name: get-order-from-catalog
+            name: workflow-catalog
+            template: get-order-from-catalog
           arguments:
             parameters:
             - name: order_id
