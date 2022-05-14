@@ -27,7 +27,7 @@ spec:
     steps:
     - - name: network-service-instantiate
         template: network-service-instantiate
-        when: "{{workflow.parameters.category}} == \"Network Service\""
+        when: "\"{{workflow.parameters.category}}\" == \"Network Service\""
 
     - - name: vnf-instantiate
         template: vnf-instantiate
@@ -54,8 +54,8 @@ spec:
           # an optimal NS should be used
           when: "{{workflow.parameters.order_id}} == \"DEFAULT\""
           templateRef:
-            template: workflow-base
-            name: whalesay
+            name: workflow-base
+            template: whalesay
           arguments:
             parameters:
             - name: message
@@ -102,7 +102,7 @@ spec:
             parameters:
             - name: resource_owner
               value: "{{tasks.get-order-from-catalog.outputs.parameters.resource_owner}}"
-            - name: resource_vsb
+            - name: vsbName
               value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
             - name: product_DID
               value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
@@ -158,7 +158,7 @@ spec:
             parameters:
             - name: resource_owner
               value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.resource_owner}}"
-            - name: resource_vsb
+            - name: vsbName
               value: "{{tasks.get-vnf-order-from-catalog.outputs.parameters.vsbName}}"
             - name: product_DID
               value: "{{tasks.get-vnf-order-from-catalog.outputs.parameters.did}}"
@@ -255,7 +255,7 @@ spec:
           parameters:
           - name: message
             value: "Network Service offer selection not suppported"
-        when: "{{workflow.parameters.category}} == \"Network Service\""
+        when: "\"{{workflow.parameters.category}}\" == \"Network Service\""
 
     - - name: edge-cloud-best-offers
         template: edge-cloud-best-offers
@@ -294,7 +294,7 @@ spec:
           parameters:
           - name: best_offer
             value: "{{item}}"
-          - name: resource_vsb
+          - name: vsbName
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
           - name: product_DID
             value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
@@ -306,7 +306,7 @@ spec:
     inputs:
       parameters:
       - name: best_offer
-      - name: resource_vsb
+      - name: vsbName
       - name: product_DID
       - name: sla_DID
     dag:
@@ -405,8 +405,8 @@ spec:
           parameters:
           - name: resource_owner
             value: "{{tasks.process-mno-name.outputs.result}}"
-          - name: resource_vsb
-            value: "{{inputs.parameters.resource_vsb}}"
+          - name: vsbName
+            value: "{{inputs.parameters.vsbName}}"
           - name: sla_DID
             value: "{{inputs.parameters.sla_DID}}"
           - name: product_DID
@@ -489,7 +489,7 @@ spec:
     inputs:
       parameters:
       - name: resource_owner
-      - name: resource_vsb
+      - name: vsbName
       - name: product_DID
       - name: sla_DID
       - name: place
@@ -511,7 +511,7 @@ spec:
                   "operation": "instantiate", "sub_operation": "ORCHESTRATE",
                   "place": {{inputs.parameters.place}},
                   "elma_url": "{{workflow.parameters.elma_url}}",
-                  "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_DID": "{{inputs.parameters.product_DID}}",
+                  "vsbName": "{{inputs.parameters.vsbName}}", "product_DID": "{{inputs.parameters.product_DID}}",
                   "sla_DID": "{{inputs.parameters.sla_DID}}",
                   "service_owner": "{{workflow.parameters.service_owner}}",
                   "resource_owner": "{{inputs.parameters.resource_owner}}",

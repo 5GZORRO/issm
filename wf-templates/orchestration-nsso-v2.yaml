@@ -171,7 +171,7 @@ spec:
     # nsso_ip: ipaddress of the vertical slicer service (str)
     # nsso_port: port of the vertical slicer service (str)    
     # tenant_name: the name of the vertical tenant (str)
-    # blueprint_name: the name of the blueprint VSD is created from
+    # vsbName: the name of the blueprint VSD is created from
     # name: VSD name
     # parameters: qos parameters to be given to this VSD
     #
@@ -182,7 +182,7 @@ spec:
       - name: nsso_ip
       - name: nsso_port
       - name: tenant_name
-      - name: blueprint_name
+      - name: vsbName
       - name: parameters
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
@@ -213,8 +213,8 @@ spec:
         echo "Retrieve blueprints.."
         bp_list="$(curl -b /tmp/a_c http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/portal/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
 
-        bp_id="$(echo $bp_list | jq -r '.[] | select(.name=="{{inputs.parameters.blueprint_name}}") | .vsBlueprintId')"
-        echo "Blueprint id [$bp_id] matches blueprint_name [{{inputs.parameters.blueprint_name}}]"
+        bp_id="$(echo $bp_list | jq -r '.[] | select(.name=="{{inputs.parameters.vsbName}}") | .vsBlueprintId')"
+        echo "Blueprint id [$bp_id] matches vsbName [{{inputs.parameters.vsbName}}]"
 
         echo "Log in {{inputs.parameters.tenant_name}}.."
         curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/login

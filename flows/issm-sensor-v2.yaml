@@ -224,16 +224,20 @@ spec:
                         parameters:
                         - name: order_id
                           value: "{{workflow.parameters.order_id}}"
-            
+
                   - - name: scaleout
                       templateRef:
-                        name: "{{steps.get-order-from-catalog.outputs.parameters.name}}"
+                        # TODO: remove hard coding
+                        name: vcdn-service
+                        #name: "{{steps.get-order-from-catalog.outputs.parameters.name}}"
                         template: scaleout
                         when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
                   
                   - - name: scaleout-best-offer-selection
                       templateRef:
-                        name: "{{steps.get-order-from-catalog.outputs.parameters.name}}"
+                        # TODO: remove hard coding
+                        name: vcdn-service
+                        #name: "{{steps.get-order-from-catalog.outputs.parameters.name}}"
                         template: best-offer-selection
                         when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
                   
