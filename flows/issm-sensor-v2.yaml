@@ -114,7 +114,7 @@ spec:
                   # SW offer related
                   - name: product_id
                     value: OVERRIDE
-                  - name: resource_vsb
+                  - name: vsbName
                     value: OVERRIDE
                   - name: sla_id
                     value: OVERRIDE
@@ -157,6 +157,9 @@ spec:
                     value: OVERRIDE
 
                   - name: userdata
+                    value: OVERRIDE
+
+                  - name: category
                     value: OVERRIDE
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -319,7 +322,7 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.resource_vsb
+                dataKey: body.vsbName
                 value: DEFAULT
               dest: spec.arguments.parameters.13.value
 
@@ -411,3 +414,9 @@ spec:
                   {
                   }
               dest: spec.arguments.parameters.27.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.category
+                value: DEFAULT
+              dest: spec.arguments.parameters.28.value

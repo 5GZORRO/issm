@@ -68,11 +68,11 @@ spec:
             value: "{{workflow.parameters.place}}"
           - name: order_id
             value: "{{tasks.transaction-data.outputs.parameters.order_id}}"
+          - name: category
+            value: "{{tasks.transaction-data.outputs.parameters.category}}"
           - name: instance_id
             # TODO: inside the transaction
             value: "{{workflow.parameters.instance_id}}"
-          - name: scenario
-            value: "{{tasks.transaction-data.outputs.parameters.scenario}}"
           - name: elma_url
             value: "{{tasks.transaction-data.outputs.parameters.elma_url}}"
           - name: catalogue_url
@@ -87,7 +87,7 @@ spec:
       - name: place
       - name: order_id
       - name: instance_id
-      - name: scenario
+      - name: category
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
@@ -112,6 +112,7 @@ spec:
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "order_id": "{{inputs.parameters.order_id}}",
                   "instance_id": "{{inputs.parameters.instance_id}}",
+                  "category": "{{inputs.parameters.category}}",
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
                   "trmf_url": "{{inputs.parameters.trmf_url}}",

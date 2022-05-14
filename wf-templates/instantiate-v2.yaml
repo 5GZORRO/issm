@@ -81,8 +81,8 @@ spec:
         - name: add-user-data
           dependencies: [get-order-from-catalog]
           templateRef:
-            template: workflow-base
-            name: add-to-dict
+            name: workflow-base
+            template: add-to-dict
           arguments:
             parameters:
             - name: dict1
@@ -136,8 +136,8 @@ spec:
         - name: add-user-data
           dependencies: [get-vnf-order-from-catalog, get-edge-order-from-catalog]
           templateRef:
-            template: workflow-base
-            name: add-to-dict
+            name: workflow-base
+            template: add-to-dict
           arguments:
             parameters:
             - name: dict1
@@ -233,7 +233,8 @@ spec:
                   "order_id": "{{workflow.parameters.vnf_order_id}}",
                   "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                   "trmf_url": "{{workflow.parameters.trmf_url}}",
-                  "userdata": "{{workflow.parameters.userdata}}"
+                  "userdata": "{{workflow.parameters.userdata}}",
+                  "category": "{{workflow.parameters.category}}"
                 }
             - name: kafka_topic
               value: issm-optimizer
@@ -265,8 +266,8 @@ spec:
       tasks:
       - name: get-order-from-catalog
         templateRef:
-          template: workflow-catalog
-          name: get-order-from-catalog
+          name: workflow-catalog
+          template: get-order-from-catalog
         arguments:
           parameters:
           - name: order_id
@@ -373,7 +374,7 @@ spec:
           - name: resource_id
             value: "{{tasks.resource-id.outputs.result}}"
           - name: operator_id_seller
-            value: "{{tasks.resource-service-owner.outputs.result}}"
+            value: "{{tasks.resource-owner.outputs.result}}"
           - name: operator_id_buyer
             value: "{{workflow.parameters.service_owner}}"
           - name: resource_did
@@ -383,8 +384,8 @@ spec:
       - name: add-user-data
         dependencies: [acquire]
         templateRef:
-          template: workflow-base
-          name: add-to-dict
+          name: workflow-base
+          template: add-to-dict
         arguments:
           parameters:
           - name: dict1

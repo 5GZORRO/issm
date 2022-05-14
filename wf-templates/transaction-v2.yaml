@@ -53,6 +53,7 @@ spec:
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="catalogue_url").value' > /tmp/catalogue_url.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="trmf_url").value' > /tmp/trmf_url.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="order_id").value' > /tmp/order_id.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="category").value' > /tmp/category.txt
     outputs:
       parameters:
       - name: service_owner
@@ -75,7 +76,11 @@ spec:
         valueFrom:
           path: /tmp/trmf_url.txt
 
-      - name: vnf_order_id
+      - name: order_id
         valueFrom:
-          path: /tmp/vnf_order_id.txt
+          path: /tmp/order_id.txt
+
+      - name: category
+        valueFrom:
+          path: /tmp/category.txt
   

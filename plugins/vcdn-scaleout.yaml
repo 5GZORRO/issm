@@ -73,7 +73,8 @@ spec:
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                 "trmf_url": "{{workflow.parameters.trmf_url}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
-                "userdata": "{{workflow.parameters.userdata}}"
+                "userdata": "{{workflow.parameters.userdata}}",
+                "category": "{{workflow.parameters.category}}"                
               }
           - name: kafka_topic
             value: issm-optimizer
@@ -197,7 +198,7 @@ spec:
           - name: resource_id
             value: "{{tasks.resource-id.outputs.result}}"
           - name: operator_id_seller
-            value: "{{tasks.resource-service-owner.outputs.result}}"
+            value: "{{tasks.resource-owner.outputs.result}}"
           - name: operator_id_buyer
             value: "{{workflow.parameters.service_owner}}"
           - name: resource_did
