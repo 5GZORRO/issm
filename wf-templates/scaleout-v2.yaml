@@ -17,9 +17,15 @@
 # Entry point for API
 # Input:
 #
-# workflow.parameters.transaction_uuid
-# workflow.parameters.instance_id
+# workflow.parameters.service_owner
 # workflow.parameters.place
+# workflow.parameters.order_id
+# workflow.parameters.category
+# workflow.parameters.elma_url
+# workflow.parameters.catalogue_url
+# workflow.parameters.trmf_url
+# workflow.parameters.catalogue_url
+# workflow.parameters.userdata
 #
 ###############################
 
@@ -32,53 +38,27 @@ spec:
   - name: scaleout
     dag:
       tasks:
-      - name: get-transaction
-        templateRef:
-          name: workflow-transaction
-          template: issm-api-get-transaction
-        arguments:
-          parameters:
-          - name: service_ip
-            value: "{{workflow.parameters.service_ip}}"
-          - name: service_port
-            value: "{{workflow.parameters.service_port}}"
-          - name: transaction_uuid
-            value: "{{workflow.parameters.transaction_uuid}}"
-
-      - name: transaction-data
-        # Retrieve 'service_owner' (stakeholder), access
-        # infos
-        dependencies: [get-transaction]
-        templateRef:
-          name: workflow-transaction
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{tasks.get-transaction.outputs.result}}"
-
       - name: trigger-scaleout
         template: trigger-scaleout
-        dependencies: [transaction-data]
         arguments:
           parameters:
           - name: service_owner
-            value: "{{tasks.transaction-data.outputs.parameters.service_owner}}"
+            value: "{{workflow.parameters.service_owner}}"
           - name: place
             value: "{{workflow.parameters.place}}"
           - name: order_id
-            value: "{{tasks.transaction-data.outputs.parameters.order_id}}"
+            value: "{{workflow.parameters.order_id}}"
           - name: category
-            value: "{{tasks.transaction-data.outputs.parameters.category}}"
-          - name: instance_id
-            # TODO: inside the transaction
-            value: "{{workflow.parameters.instance_id}}"
+            value: "{{workflow.parameters.category}}"
           - name: elma_url
-            value: "{{tasks.transaction-data.outputs.parameters.elma_url}}"
+            value: "{{workflow.parameters.elma_url}}"
           - name: catalogue_url
-            value: "{{tasks.transaction-data.outputs.parameters.catalogue_url}}"
+            value: "{{workflow.parameters.catalogue_url}}"
           - name: trmf_url
-            value: "{{tasks.transaction-data.outputs.parameters.trmf_url}}"
+            value: "{{workflow.parameters.trmf_url}}"
+          - name: userdata
+            value: "{{workflow.parameters.userdata}}"
+          
 
   - name: trigger-scaleout
     inputs:
@@ -86,11 +66,11 @@ spec:
       - name: service_owner
       - name: place
       - name: order_id
-      - name: instance_id
       - name: category
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
+      - name: userdata
     steps:
       - - name: event-uuid
           templateRef:
@@ -106,22 +86,17 @@ spec:
               # Triggering here a new bussines transaction:
               # important that event and transaction uuids are the same
               value: |
-                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}",
+                  "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                   "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
                   "place": {{inputs.parameters.place}},
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "order_id": "{{inputs.parameters.order_id}}",
-                  "instance_id": "{{inputs.parameters.instance_id}}",
+                  "userdata": {{inputs.parameters.userdata}},
                   "category": "{{inputs.parameters.category}}",
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
-                  "trmf_url": "{{inputs.parameters.trmf_url}}",
-                  "sla_breach": {
-                    "applicable": "true",
-                    "breachPredictionNotification": {{workflow.parameters.breachPredictionNotification}}
-                  }
+                  "trmf_url": "{{inputs.parameters.trmf_url}}"
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"
-
-
