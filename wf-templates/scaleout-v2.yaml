@@ -14,7 +14,7 @@
 
 ###############################
 #
-# Entry point for ISBP breach
+# Entry point for API
 # Input:
 #
 # workflow.parameters.transaction_uuid
@@ -26,10 +26,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: breach
+  name: scaleout
 spec:
   templates:
-  - name: breach
+  - name: scaleout
     dag:
       tasks:
       - name: get-transaction
@@ -122,3 +122,5 @@ spec:
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"
+
+

@@ -381,6 +381,105 @@ spec:
       - name: did
         valueFrom:
           path: /tmp/did.txt
+
       - name: name
         valueFrom:
           path: /tmp/name.txt
+
+  - name: create-order
+    inputs:
+      parameters:
+      - name: resource_id
+      - name: operator_id_seller
+      - name: operator_id_buyer
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        def raise_for_status(r):
+            http_error_msg = ''
+            if 400 <= r.status_code < 500:
+                http_error_msg = '%s Client Error: %s' % (r.status_code, r.reason)
+
+            elif 500 <= r.status_code < 600:
+                http_error_msg = '%s Server Error: %s' % (r.status_code, r.reason)
+
+            return http_error_msg
+
+        transaction_uuid = "{{workflow.parameters.transaction_uuid}}"
+        payload = {
+           "description": "Product Order by ISSM Transaction ID: %s" % transaction_uuid,
+           "requestedStartDate": "2022-01-01T08:00:00.000Z",
+           "requestedCompletionDate": "2023-12-31T08:00:00.000Z",
+           "productOrderItem": [
+              {
+                 "quantity": 1,
+                 "action": "add",
+                 "productOffering": {
+                    "id": "{{inputs.parameters.resource_id}}"
+                 }
+              }
+           ],
+           "relatedParty": [
+              {
+                 "name": "{{inputs.parameters.operator_id_seller}}",
+                 "role": "Seller"
+              },
+              {
+                 "name": "{{inputs.parameters.operator_id_buyer}}",
+                 "role": "Buyer"
+              }
+           ]
+        }
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.post("{{workflow.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/productOrder",
+            json=payload,
+            headers=headers)
+        sys.stdout.write('r.text [%s]\n' % r.text)
+        error_msg = raise_for_status(r)
+        if error_msg:
+            raise Exception('%s. %s' % (error_msg, r.text))
+
+  - name: notify-trmf
+    inputs:
+      parameters:
+      - name: resource_did
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        def raise_for_status(r):
+            http_error_msg = ''
+            if 400 <= r.status_code < 500:
+                http_error_msg = '%s Client Error: %s' % (r.status_code, r.reason)
+
+            elif 500 <= r.status_code < 600:
+                http_error_msg = '%s Server Error: %s' % (r.status_code, r.reason)
+
+            return http_error_msg
+
+        resource_did = "{{inputs.parameters.resource_did}}"
+        sys.stdout.write('Input parameters. resource_did: "%s"\n' % resource_did)
+        payload = {
+            "offerDID": resource_did
+        }
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.post("{{workflow.parameters.trmf_url}}/notify_final_selection",
+            json=payload,
+            headers=headers)
+        sys.stdout.write('r.text [%s]\n' % r.text)
+        error_msg = raise_for_status(r)
+        if error_msg:
+            raise Exception('%s. %s' % (error_msg, r.text))

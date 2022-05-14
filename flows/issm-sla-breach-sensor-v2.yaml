@@ -70,7 +70,7 @@ spec:
                     value: 9092
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # API service
+                  # ISSM API service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: service_ip
                     value: 172.28.3.15

@@ -1,0 +1,81 @@
+# Copyright 2020 - 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: workflow-transaction
+spec:
+  templates:
+  - name: issm-api-get-transaction
+    inputs:
+      parameters:
+      - name: service_ip
+      - name: service_port
+      - name: transaction_uuid
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        headers = {'Content-Type': 'application/json'}
+
+        r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/workflows/{{inputs.parameters.transaction_uuid}}",
+            headers=headers)
+        json.dump(r.json(), sys.stdout)
+
+  - name: jq-script
+    inputs:
+      parameters:
+      - name: json_str
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="service_owner").value' > /tmp/service_owner.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="elma_url").value' > /tmp/elma_url.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="catalogue_url").value' > /tmp/catalogue_url.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="trmf_url").value' > /tmp/trmf_url.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="order_id").value' > /tmp/order_id.txt
+    outputs:
+      parameters:
+      - name: service_owner
+        valueFrom:
+          path: /tmp/service_owner.txt
+
+      - name: scenario
+        valueFrom:
+          path: /tmp/scenario.txt
+
+      - name: elma_url
+        valueFrom:
+          path: /tmp/elma_url.txt
+
+      - name: catalogue_url
+        valueFrom:
+          path: /tmp/catalogue_url.txt
+
+      - name: trmf_url
+        valueFrom:
+          path: /tmp/trmf_url.txt
+
+      - name: vnf_order_id
+        valueFrom:
+          path: /tmp/vnf_order_id.txt
+  

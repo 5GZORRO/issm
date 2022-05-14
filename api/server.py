@@ -135,7 +135,7 @@ class Proxy:
 
         payload = dict(event_uuid=event_uuid, transaction_uuid=event_uuid,
                        service_owner=service_owner,
-                       operation=transaction_type, sub_operation='new_intent')
+                       operation=transaction_type, sub_operation='API')
         payload['callback'] = dict(type='kafka', kafka_topic=service_owner)
         payload.update(intent)
         publish_intent(KAFKA_IP, KAFKA_PORT,

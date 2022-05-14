@@ -120,7 +120,7 @@ spec:
                     value: OVERRIDE
 
                   # Id of existing instance (for scaleout)
-                  - name: service_id
+                  - name: instance_id
                     value: OVERRIDE
 
                   - name: resources
@@ -156,14 +156,33 @@ spec:
                   - name: edge_order_id
                     value: OVERRIDE
 
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # ISSM API service
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: service_ip
+                    value: 172.28.3.15
+                  - name: service_port
+                    value: 30080
+
                 templates:
                 - name: handlerequest
                   steps:
                   - - name: instantiate
+                      when: "{{workflow.parameters.operation}} == \"INSTANTIATE\""
+                      template: instantiate
+
+                  - - name: scaleout
+                      when: "{{workflow.parameters.operation}} == \"SCALEOUT\""
+                      template: scaleout
+
+
+                - name: instantiate
+                  steps:
+                  - - name: instantiate-api
                       templateRef:
                         name: instantiate
                         template: instantiate
-                      when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE\""
+                      when: "{{workflow.parameters.sub_operation}} == \"API\""
 
                   - - name: optimized
                       templateRef:
@@ -177,6 +196,60 @@ spec:
                         template: orchestrate
                       when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
 
+                - name: scaleout
+                  steps:
+                  - - name: scaleout-api
+                      templateRef:
+                        name: scaleout
+                        template: scaleout
+                      when: "{{workflow.parameters.sub_operation}} == \"API\""
+
+                  - - name: scaleout-service
+                      template: scaleout-do
+                      when: "{{workflow.parameters.sub_operation}} != \"API\""
+
+                - name: scaleout-service
+                  steps:
+                  - - name: get-order-from-catalog
+                      templateRef:
+                        name: workflow-catalog
+                        template: get-order-from-catalog
+                      arguments:
+                        parameters:
+                        - name: order_id
+                          value: "{{workflow.parameters.order_id}}"
+            
+                  - - name: service-scaleout
+                      templateRef:
+                        name: "{{steps.get-order-from-catalog.outputs.parameters.name}}"
+                        template: scaleout
+                        when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
+                  
+                  - - name: service-scaleout-selection
+                      templateRef:
+                        name: "{{steps.get-order-from-catalog.outputs.parameters.name}}"
+                        template: best-offer-selection
+                        when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
+                  
+                  
+                  
+                  
+                  
+                  - - name: scaleout
+                      # triggered from API Workflow or SLA Breach Workflow
+                      templateRef:
+                        name: instantiate
+                        template: scaleout
+                        when: "{{workflow.parameters.sub_operation}} == \"DO_SCALEOUT\""
+
+                  - - name: scaleout
+                      # triggered from ISSM API scaleout endpoint
+                      templateRef:
+                        name: scaleout
+                        template: scaleout
+                        when: "{{workflow.parameters.sub_operation}} == \"API\""
+                      
+                
           parameters:
             - src:
                 #
@@ -255,7 +328,7 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.service_id
+                dataKey: body.instance_id
                 value: DEFAULT
               dest: spec.arguments.parameters.15.value
 
