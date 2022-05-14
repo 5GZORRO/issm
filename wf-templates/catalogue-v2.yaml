@@ -95,7 +95,8 @@ spec:
         sys.stdout.write('place: "%s" \n' % place)
 
         # resource owner
-        if category in ['NetworkService', 'Edge', 'Cloud']:
+        # TODO: revise 'VNF'
+        if category in ['NetworkService', 'Edge', 'Cloud', 'VNF']:
             href = po['productSpecification']['href']
             r = requests.get(str(href), headers=headers)
             json.dump(r.json(), sys.stdout)

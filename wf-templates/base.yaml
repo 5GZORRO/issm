@@ -170,6 +170,7 @@ spec:
       imagePullPolicy: IfNotPresent
       command: [python]
       source: |
+        import json
         import sys
 
         dict1 = {{inputs.parameters.dict1}}
