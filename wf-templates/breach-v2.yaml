@@ -107,7 +107,7 @@ spec:
               # important that event and transaction uuids are the same
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
-                  "operation": "SCALEOUT", "sub_operation": "SCALEOUT_SERVICE",
+                  "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
                   "place": {{inputs.parameters.place}},
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "order_id": "{{inputs.parameters.order_id}}",

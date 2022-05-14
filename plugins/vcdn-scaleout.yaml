@@ -65,7 +65,7 @@ spec:
               { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
                 "category": "{{workflow.parameters.category}}",
                 "resources": {{tasks.srds-service.outputs.result}},
-                "operation": "SCALEOUT", "sub_operation": "BEST_OFFER_SELECTION",
+                "operation": "scaleout", "sub_operation": "BEST_OFFER_SELECTION",
                 "service_owner": "{{workflow.parameters.service_owner}}",
                 "sla_breach": {{workflow.parameters.sla_breach}},
                 "elma_url": "{{workflow.parameters.elma_url}}",
@@ -261,7 +261,7 @@ spec:
             - name: data
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-                  "operation": "INSTANTIATE", "sub_operation": "ORCHESTRATE",
+                  "operation": "instantiate", "sub_operation": "ORCHESTRATE",
                   "place": {{inputs.parameters.place}},
                   "elma_url": "{{workflow.parameters.elma_url}}",
                   "resource_vsb": "{{inputs.parameters.resource_vsb}}", "product_DID": "{{inputs.parameters.product_DID}}",

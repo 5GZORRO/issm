@@ -171,11 +171,11 @@ spec:
                 - name: handlerequest
                   steps:
                   - - name: instantiate
-                      when: "{{workflow.parameters.operation}} == \"INSTANTIATE\""
+                      when: "{{workflow.parameters.operation}} == \"instantiate\""
                       template: instantiate
 
                   - - name: scaleout
-                      when: "{{workflow.parameters.operation}} == \"SCALEOUT\""
+                      when: "{{workflow.parameters.operation}} == \"scaleout\""
                       template: scaleout
 
 
@@ -208,7 +208,7 @@ spec:
                       when: "{{workflow.parameters.sub_operation}} == \"API\""
 
                   - - name: scaleout-service
-                      template: scaleout-do
+                      template: scaleout-service
                       when: "{{workflow.parameters.sub_operation}} != \"API\""
 
                 - name: scaleout-service
@@ -222,13 +222,13 @@ spec:
                         - name: order_id
                           value: "{{workflow.parameters.order_id}}"
             
-                  - - name: service-scaleout
+                  - - name: scaleout
                       templateRef:
                         name: "{{steps.get-order-from-catalog.outputs.parameters.name}}"
                         template: scaleout
                         when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
                   
-                  - - name: service-scaleout-selection
+                  - - name: scaleout-best-offer-selection
                       templateRef:
                         name: "{{steps.get-order-from-catalog.outputs.parameters.name}}"
                         template: best-offer-selection
@@ -238,19 +238,19 @@ spec:
                   
                   
                   
-                  - - name: scaleout
-                      # triggered from API Workflow or SLA Breach Workflow
-                      templateRef:
-                        name: instantiate
-                        template: scaleout
-                        when: "{{workflow.parameters.sub_operation}} == \"DO_SCALEOUT\""
-
-                  - - name: scaleout
-                      # triggered from ISSM API scaleout endpoint
-                      templateRef:
-                        name: scaleout
-                        template: scaleout
-                        when: "{{workflow.parameters.sub_operation}} == \"API\""
+#                  - - name: scaleout
+#                      # triggered from API Workflow or SLA Breach Workflow
+#                      templateRef:
+#                        name: instantiate
+#                        template: scaleout
+#                        when: "{{workflow.parameters.sub_operation}} == \"DO_SCALEOUT\""
+#
+#                  - - name: scaleout
+#                      # triggered from ISSM API scaleout endpoint
+#                      templateRef:
+#                        name: scaleout
+#                        template: scaleout
+#                        when: "{{workflow.parameters.sub_operation}} == \"API\""
                       
                 
           parameters:
@@ -302,7 +302,7 @@ spec:
             - src:
                 dependencyName: test-dep
                 dataKey: body.sub_operation
-                value: INSTANTIATE
+                value: instantiate
               dest: spec.arguments.parameters.10.value
 
             - src:
