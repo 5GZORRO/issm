@@ -184,7 +184,9 @@ spec:
 
         - name: build-intent-query
           dependencies: [get-order-from-catalog]
-          template: build-intent-query
+          templateRef:
+            name: workflow-discovery
+            template: build-intent-query
           arguments:
             parameters:
             - name: place
@@ -416,28 +418,28 @@ spec:
           - name: userdata
             value: "{{tasks.add-user-data.outputs.parameters.dict}}"
 
-  - name: scaleout
-    ###############################
-    #
-    # Entry point for scaleout
-    #
-    ###############################
-    dag:
-      tasks:
-      - name: get-order-from-catalog
-        templateRef:
-          name: workflow-catalog
-          template: get-order-from-catalog
-        arguments:
-          parameters:
-          - name: order_id
-            value: "{{workflow.parameters.order_id}}"
-
-      - name: service-scaleout
-        dependencies: [get-order-from-catalog]
-        templateRef:
-          name: "{{tasks.get-order-from-catalog.outputs.parameters.name}}"
-          template: scaleout
+#  - name: scaleout
+#    ###############################
+#    #
+#    # Entry point for scaleout
+#    #
+#    ###############################
+#    dag:
+#      tasks:
+#      - name: get-order-from-catalog
+#        templateRef:
+#          name: workflow-catalog
+#          template: get-order-from-catalog
+#        arguments:
+#          parameters:
+#          - name: order_id
+#            value: "{{workflow.parameters.order_id}}"
+#
+#      - name: service-scaleout
+#        dependencies: [get-order-from-catalog]
+#        templateRef:
+#          name: "{{tasks.get-order-from-catalog.outputs.parameters.name}}"
+#          template: scaleout
 
 
   - name: orchestrate
@@ -520,35 +522,6 @@ spec:
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"
-
-
-  - name: build-intent-query
-    inputs:
-      parameters:
-      - name: place
-      - name: cpu_max
-      - name: mem_max
-      - name: mem_unit
-      - name: storage_max
-      - name: storage_unit
-    script:
-      image: python:alpine3.6
-      imagePullPolicy: IfNotPresent
-      command: [python]
-      source: |
-        import sys
-        # Example format: intent/$(urlencode 'storage 96 GB ram 2730 MB edge Barcelona'))
-        location = {{inputs.parameters.place}}['city']
-
-        cpu_max = str("{{inputs.parameters.cpu_max}}")
-
-        mem_max = str("{{inputs.parameters.mem_max}}")
-        mem_unit = str("{{inputs.parameters.mem_unit}}")
-
-        storage_max = str("{{inputs.parameters.storage_max}}")
-        storage_unit = str("{{inputs.parameters.storage_unit}}")
-
-        sys.stdout.write(cpu_max + " cores" + " storage " + storage_max + " " + storage_unit + " ram " + mem_max + " " + mem_unit + " edge " +  location + " \n")
 
 
   - name: srds-service

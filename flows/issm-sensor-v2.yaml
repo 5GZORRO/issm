@@ -241,25 +241,6 @@ spec:
                         template: best-offer-selection
                         when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
                   
-                  
-                  
-                  
-                  
-#                  - - name: scaleout
-#                      # triggered from API Workflow or SLA Breach Workflow
-#                      templateRef:
-#                        name: instantiate
-#                        template: scaleout
-#                        when: "{{workflow.parameters.sub_operation}} == \"DO_SCALEOUT\""
-#
-#                  - - name: scaleout
-#                      # triggered from ISSM API scaleout endpoint
-#                      templateRef:
-#                        name: scaleout
-#                        template: scaleout
-#                        when: "{{workflow.parameters.sub_operation}} == \"API\""
-                      
-                
           parameters:
             - src:
                 #
