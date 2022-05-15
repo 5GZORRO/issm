@@ -232,7 +232,7 @@ spec:
                   "service_owner": "{{workflow.parameters.service_owner}}",
                   "sla_breach": {{workflow.parameters.sla_breach}},
                   "elma_url": "{{workflow.parameters.elma_url}}",
-                  "order_id": "{{workflow.parameters.vnf_order_id}}",
+                  "order_id": "{{workflow.parameters.order_id}}",
                   "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                   "trmf_url": "{{workflow.parameters.trmf_url}}",
                   "userdata": "{{workflow.parameters.userdata}}",

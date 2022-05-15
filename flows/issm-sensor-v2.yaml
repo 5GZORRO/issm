@@ -205,42 +205,29 @@ spec:
                 - name: scaleout
                   steps:
                   - - name: scaleout-api
+                      when: "{{workflow.parameters.sub_operation}} == \"API\""
                       templateRef:
                         name: scaleout
                         template: scaleout
-                      when: "{{workflow.parameters.sub_operation}} == \"API\""
 
                   - - name: scaleout-service
-                      template: scaleout-service
                       when: "{{workflow.parameters.sub_operation}} != \"API\""
+                      template: scaleout-service
 
                 - name: scaleout-service
                   steps:
-                  - - name: get-order-from-catalog
-                      templateRef:
-                        name: workflow-catalog
-                        template: get-order-from-catalog
-                      arguments:
-                        parameters:
-                        - name: order_id
-                          value: "{{workflow.parameters.order_id}}"
-
                   - - name: scaleout
+                      when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
                       templateRef:
-                        # TODO: remove hard coding
                         name: vcdn-service
-                        #name: "{{steps.get-order-from-catalog.outputs.parameters.name}}"
                         template: scaleout
-                        when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
-                  
+
                   - - name: scaleout-best-offer-selection
+                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
                       templateRef:
-                        # TODO: remove hard coding
                         name: vcdn-service
-                        #name: "{{steps.get-order-from-catalog.outputs.parameters.name}}"
                         template: best-offer-selection
-                        when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
-                  
+
           parameters:
             - src:
                 #

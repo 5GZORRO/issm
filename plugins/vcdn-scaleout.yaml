@@ -66,14 +66,15 @@ spec:
           parameters:
           - name: data
             value: |
-              { "transaction_uuid": "{{workflow.name}}", "topic": "issm-in-{{workflow.parameters.service_owner}}", 
+              { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                "topic": "issm-in-{{workflow.parameters.service_owner}}", 
                 "category": "{{workflow.parameters.category}}",
                 "resources": {{tasks.srds-service.outputs.result}},
                 "operation": "scaleout", "sub_operation": "BEST_OFFER_SELECTION",
                 "service_owner": "{{workflow.parameters.service_owner}}",
                 "sla_breach": {{workflow.parameters.sla_breach}},
                 "elma_url": "{{workflow.parameters.elma_url}}",
-                "order_id": "{{workflow.parameters.vnf_order_id}}",
+                "order_id": "{{workflow.parameters.order_id}}",
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                 "trmf_url": "{{workflow.parameters.trmf_url}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
@@ -94,12 +95,11 @@ spec:
       tasks:
       - name: get-order-from-catalog
         templateRef:
-          template: workflow-catalog
-          name: get-order-from-catalog
+          name: workflow-catalog
+          template: get-order-from-catalog
         arguments:
           parameters:
           - name: order_id
-            # NS order
             value: "{{workflow.parameters.order_id}}"
 
       - name: handle-best-offers
@@ -212,8 +212,8 @@ spec:
       - name: add-user-data
         dependencies: [acquire]
         templateRef:
-          template: workflow-base
-          name: add-to-dict
+          name: workflow-base
+          template: add-to-dict
         arguments:
           parameters:
           - name: dict1
@@ -241,6 +241,8 @@ spec:
             value: "{{inputs.parameters.sla_DID}}"
           - name: place
             value: "{{tasks.resource-location.outputs.result}}"
+          - name: userdata
+            value: "{{tasks.add-user-data.outputs.parameters.dict}}"
 
 
   - name: srds-service
@@ -269,6 +271,41 @@ spec:
         offers = r.json()
 
         print(offers)
+
+
+  - name: acquire
+    # acquire is devided into two sub-tasks:
+    # 1. the acquire operation itself
+    # 2. branch to inspect acquire status and either fail the flow
+    # or proceed as normal with notifying trmf with the acquired offer
+    inputs:
+      parameters:
+      - name: resource_id
+      - name: operator_id_seller
+      - name: operator_id_buyer
+      - name: resource_did
+    steps:
+      - - name: acquire-resource
+          templateRef:
+            name: workflow-catalog
+            template: create-order
+          arguments:
+            parameters:
+            - name: resource_id
+              value: "{{inputs.parameters.resource_id}}"
+            - name: operator_id_seller
+              value: "{{inputs.parameters.operator_id_seller}}"
+            - name: operator_id_buyer
+              value: "{{workflow.parameters.service_owner}}"
+
+      - - name: notify-reputation-manager
+          templateRef:
+            name: workflow-catalog
+            template: notify-trmf
+          arguments:
+            parameters:
+            - name: resource_did
+              value: "{{inputs.parameters.resource_did}}"
 
 
   - name: trigger-orchestration
