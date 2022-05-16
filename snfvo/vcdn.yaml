@@ -218,7 +218,7 @@ spec:
             # TODO: drain topic messages first so we do not consume stale messages
             payload = json.loads(msg.value.decode('utf-8', 'ignore'))
             sys.stdout.write('Received payload: %s \n' % payload)
-            if payload['msg_id'] == MSG_ID:
+            if payload.get('msg_id', '') == MSG_ID:
                 sys.stdout.write('It is my message: %s \n' % payload)
                 break
 

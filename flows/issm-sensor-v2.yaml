@@ -187,20 +187,30 @@ spec:
                       when: "{{workflow.parameters.operation}} == \"scaleout\""
                       template: scaleout
 
-                  - - name: orchestrate
-                      when: "{{workflow.parameters.operation}} == \"orchestrate\""
-                      template: orchestrate
+#                  - - name: orchestrate
+#                      when: "{{workflow.parameters.operation}} == \"orchestrate\""
+#                      template: orchestrate
 
 
                 - name: instantiate
                   steps:
                   - - name: instantiate-invoke-snfvo
+                      when: "{{workflow.parameters.sub_operation}} != \"ORCHESTRATE\""
                       template: instantiate-invoke-snfvo
+
+                  - - name: instantiate-orchestrate
+                      when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
+                      template: orchestrate
 
                 - name: scaleout
                   steps:
                   - - name: scaleout-invoke-snfvo
+                      when: "{{workflow.parameters.sub_operation}} != \"ORCHESTRATE\""
                       template: scaleout-invoke-snfvo
+
+                  - - name: scaleout-orchestrate
+                      when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
+                      template: orchestrate
 
                 - name: orchestrate
                   templateRef:

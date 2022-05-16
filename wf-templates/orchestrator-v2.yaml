@@ -41,7 +41,7 @@ spec:
             - name: data
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-                  "operation": "orchestrate", "sub_operation": "-",
+                  "operation": "{{workflow.parameters.operation}}", "sub_operation": "ORCHESTRATE",
                   "place": {{inputs.parameters.place}},
                   "elma_url": "{{workflow.parameters.elma_url}}",
                   "vsbName": "{{inputs.parameters.vsbName}}", "product_DID": "{{inputs.parameters.product_DID}}",
