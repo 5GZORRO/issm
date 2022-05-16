@@ -156,22 +156,253 @@ spec:
             value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
 
 
-
   - name: scaleout
+    steps:
+    - - name: scaleout-service
+        when: "{{workflow.parameters.sub_operation}} == \"API\""
+        template: scaleout-service
+    - - name: best-offer-selection
+        when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
+        template: best-offer-selection
+
+
+###
+
+
+  - name: scaleout-service
     dag:
       tasks:
-        - name: print-message
-          # an optimal NS should be used
-          when: "\"{{workflow.parameters.order_id}}\" == \"DEFAULT\""
-          templateRef:
-            name: workflow-base
-            template: whalesay
-          arguments:
-            parameters:
-            - name: message
-              value: "scaleout will be supported soon"
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: build-intent-query
+        dependencies: [get-order-from-catalog]
+        templateRef:
+          name: workflow-discovery
+          template: build-intent-query
+        arguments:
+          parameters:
+          - name: place
+            value: "{{workflow.parameters.place}}"
+          - name: cpu_max
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.cpu_max}}"
+          - name: mem_max
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.mem_max}}"
+          - name: mem_unit
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.mem_unit}}"
+          - name: storage_max
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.storage_max}}"
+          - name: storage_unit
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.storage_unit}}"
+  
+      - name: srds-service
+        templateRef:
+          name: workflow-discovery
+          template: srds-service
+        dependencies: [build-intent-query]
+        arguments:
+          parameters:
+          - name: service_ip
+            value: "{{workflow.parameters.discovery_ip}}"
+          - name: service_port
+            value: "{{workflow.parameters.discovery_port}}"
+          - name: intent_query
+            value: "{{tasks.build-intent-query.outputs.result}}"
+          - name: place
+            value: "{{workflow.parameters.place}}"
+  
+      - name: send-resouces-to-optimizer
+        dependencies: [srds-service]
+        templateRef:
+          name: workflow-base
+          template: publish-on-kafka
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                "topic": "issm-in-{{workflow.parameters.service_owner}}", 
+                "category": "{{workflow.parameters.category}}",
+                "resources": {{tasks.srds-service.outputs.result}},
+                "operation": "scaleout", "sub_operation": "BEST_OFFER_SELECTION",
+                "service_owner": "{{workflow.parameters.service_owner}}",
+                "sla_breach": {{workflow.parameters.sla_breach}},
+                "elma_url": "{{workflow.parameters.elma_url}}",
+                "order_id": "{{workflow.parameters.order_id}}",
+                "catalogue_url": "{{workflow.parameters.catalogue_url}}",
+                "trmf_url": "{{workflow.parameters.trmf_url}}",
+                "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
+                "userdata": {{workflow.parameters.userdata}},
+                "category": "{{workflow.parameters.category}}"                
+              }
+          - name: kafka_topic
+            value: issm-optimizer
 
 
+###
+
+
+  - name: best-offer-selection
+    dag:
+      tasks:
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: handle-best-offers
+        # pretty print
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{workflow.parameters.resources}}"
+          - name: jq_query
+            value: '.'
+
+      - name: loop-best-offers-resource
+        # loop through 'resource' type offers
+        dependencies: [handle-best-offers, get-order-from-catalog]
+        template: loop-best-offers
+        arguments:
+          parameters:
+          - name: best_offer
+            value: "{{item}}"
+          - name: vsbName
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
+          - name: product_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
+          - name: sla_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
+        withParam: "{{workflow.parameters.resources}}"
+
+  - name: loop-best-offers
+    inputs:
+      parameters:
+      - name: best_offer
+      - name: vsbName
+      - name: product_DID
+      - name: sla_DID
+    dag:
+      tasks:
+      - name: resource-owner
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.offer_object.productSpecification.relatedParty[0].name'
+
+      - name: process-mno-name
+        dependencies: [resource-owner]
+        templateRef:
+          name: workflow-base
+          template: correct-mno-name
+        arguments:
+          parameters:
+          - name: mno_name
+            value: "{{tasks.resource-owner.outputs.result}}"
+
+      - name: resource-id
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.offer_object.id'
+
+      - name: resource-location
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.offer_object.place[0]'
+
+      - name: resource-did
+        # for TRMF
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.offer_did'
+
+      - name: acquire
+        dependencies: [process-mno-name, resource-location, resource-did, resource-id]
+        template: acquire
+        arguments:
+          parameters:
+          - name: resource_id
+            value: "{{tasks.resource-id.outputs.result}}"
+          - name: operator_id_seller
+            value: "{{tasks.resource-owner.outputs.result}}"
+          - name: operator_id_buyer
+            value: "{{workflow.parameters.service_owner}}"
+          - name: resource_did
+            # selected Edge resource
+            value: "{{tasks.resource-did.outputs.result}}"
+
+      - name: add-user-data
+        dependencies: [acquire]
+        templateRef:
+          name: workflow-base
+          template: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: |
+              { }
+          - name: dict2
+            value: |
+              {
+                "product_id": "{{inputs.parameters.product_DID}}",
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}"
+              }
+
+      - name: trigger-orchestration
+        dependencies: [add-user-data]
+        template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            value: "{{tasks.process-mno-name.outputs.result}}"
+          - name: vsbName
+            value: "{{inputs.parameters.vsbName}}"
+          - name: product_DID
+            value: "{{inputs.parameters.product_DID}}"
+          - name: sla_DID
+            value: "{{inputs.parameters.sla_DID}}"
+          - name: place
+            value: "{{tasks.resource-location.outputs.result}}"
+          - name: userdata
+            value: "{{tasks.add-user-data.outputs.parameters.dict}}"
+
+# TODO: what are the next steps ?
 
   - name: consume
     # TODO: move to base.yaml
