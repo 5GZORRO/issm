@@ -96,7 +96,7 @@ spec:
 
         # resource owner
         # TODO: revise 'VNF'
-        if category in ['Network Service', 'Edge', 'Cloud', 'VNF']:
+        if category in ['Network Service', 'Slice', 'Edge', 'Cloud', 'VNF']:
             href = po['productSpecification']['href']
             r = requests.get(str(href), headers=headers)
             json.dump(r.json(), sys.stdout)
@@ -276,7 +276,7 @@ spec:
             json.dump(r.json(), sys.stdout)
             sys.stdout.write('\n')
     
-            rsc_list = r.json()[0]['serviceSpecCharacteristic']
+            rsc_list = r.json()['serviceSpecCharacteristic']
             # 1. vsbName
             element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
             if not element:

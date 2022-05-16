@@ -1,0 +1,232 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: snfvo-vcdn-flow
+spec:
+  templates:
+  - name: instantiate
+    dag:
+      tasks:
+      - name: get-slice-order-id
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: slice_order_id
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: get-slice-order-from-catalog
+        dependencies: [get-slice-order-id]
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.get-slice-order-id.outputs.result}}"
+
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: add-user-data-slice
+        dependencies: [get-order-from-catalog, get-slice-order-from-catalog]
+        templateRef:
+          name: workflow-base
+          template: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            # TODO: from where to retrieve?
+            value: |
+              {
+                "sm.ssid": "ssid",
+                "sm.imsi_list": "imsi_list",
+                "sm.apn": "apn"
+              }
+          - name: dict2
+            value: |
+              {
+                "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}"
+              }
+
+      - name: trigger-orchestration-slice
+        dependencies: [add-user-data-slice]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            value: "{{workflow.parameters.related_party}}"
+
+          - name: vsbName
+            value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
+
+          - name: product_DID
+            # TODO: what product_id to send for slice orcestration?
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
+
+          - name: sla_DID
+            # TODO: what product_id to send for slice orcestration?
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
+
+          - name: place
+            value: "{{workflow.parameters.place}}"
+
+          - name: userdata
+            # TODO: what userdata to be used for slice orchestration ?
+            value: "{{tasks.add-user-data-slice.outputs.parameters.dict}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-slice]
+        template: consume
+        arguments:
+          parameters:
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{workflow.parameters.transaction_uuid}}"
+
+      - name: get-edge-id
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            # TODO: use correct key
+            value: edge_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: add-user-data-vcdn
+        dependencies: [get-edge-id]
+        templateRef:
+          name: workflow-base
+          template: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: |
+              { }
+          - name: dict2
+            value: |
+              {
+                "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}",
+                "edge_id": "{{tasks.get-edge-id.outputs.result}}"
+              }
+
+
+      - name: trigger-orchestration-vcdn-service
+        dependencies: [add-user-data-vcdn]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            value: "{{workflow.parameters.related_party}}"
+          - name: vsbName
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
+          - name: product_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
+          - name: sla_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
+          - name: place
+            value: "{{workflow.parameters.place}}"
+          - name: userdata
+            value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
+
+
+
+  - name: scaleout
+    dag:
+      tasks:
+        - name: print-message
+          # an optimal NS should be used
+          when: "\"{{workflow.parameters.order_id}}\" == \"DEFAULT\""
+          templateRef:
+            name: workflow-base
+            template: whalesay
+          arguments:
+            parameters:
+            - name: message
+              value: "scaleout will be supported soon"
+
+
+
+  - name: consume
+    # TODO: move to base.yaml
+    # Consumes a message from kafka broker
+    #
+    # Parameters
+    # kafka_topic: the topic to publish the message on (string)
+    # kafka_ip: ipaddress of the kafka broker (string)
+    # kafka_port: kafka broker port (number)
+    # msg_id: the id of the message to look for (str)
+    inputs:
+      parameters:
+      - name: kafka_topic
+      - name: kafka_ip
+      - name: kafka_port
+      - name: msg_id
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import os
+        import sys
+
+        from kafka import KafkaConsumer
+        from kafka.errors import KafkaError
+
+        KAFKA_TOPIC = '{{inputs.parameters.kafka_topic}}'
+        KAFKA_TIMEOUT = 10
+        KAFKA_API_VERSION = (1, 1, 0)
+
+        MSG_ID = "{{inputs.parameters.msg_id}}"
+        payload = {}
+
+        KAFKA_SERVER = "{}:{}".format("{{inputs.parameters.kafka_ip}}", "{{inputs.parameters.kafka_port}}")
+        consumer = KafkaConsumer(bootstrap_servers=KAFKA_SERVER,
+                                 client_id="aaa",
+                                 enable_auto_commit=True,
+                                 api_version=KAFKA_API_VERSION, group_id=MSG_ID)
+        consumer.subscribe(pattern=KAFKA_TOPIC)
+
+        for msg in consumer:
+            # TODO: drain topic messages first so we do not consume stale messages
+            payload = json.loads(msg.value.decode('utf-8', 'ignore'))
+            sys.stdout.write('Received payload: %s \n' % payload)
+            if payload['msg_id'] == MSG_ID:
+                sys.stdout.write('It is my message: %s \n' % payload)
+                break
+
+        with open('/tmp/payload.txt', 'w') as f:
+            json.dump(payload, f)
+
+    outputs:
+      parameters:
+      - name: payload
+        valueFrom:
+          path: /tmp/payload.txt

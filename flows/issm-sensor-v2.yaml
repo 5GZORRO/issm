@@ -162,6 +162,12 @@ spec:
                   - name: category
                     value: OVERRIDE
 
+                  - name: snfvo_data
+                    value: OVERRIDE
+
+                  - name: related_party
+                    value: OVERRIDE
+                  
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # ISSM API service
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,52 +187,159 @@ spec:
                       when: "{{workflow.parameters.operation}} == \"scaleout\""
                       template: scaleout
 
+                  - - name: orchestrate
+                      when: "{{workflow.parameters.operation}} == \"orchestrate\""
+                      template: orchestrate
+
 
                 - name: instantiate
                   steps:
-                  - - name: instantiate-api
-                      templateRef:
-                        name: instantiate
-                        template: instantiate
-                      when: "{{workflow.parameters.sub_operation}} == \"API\""
-
-                  - - name: optimized
-                      templateRef:
-                        name: instantiate
-                        template: best-offer-selection
-                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
-
-                  - - name: orchestrate
-                      templateRef:
-                        name: instantiate
-                        template: orchestrate
-                      when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
+                  - - name: instantiate-invoke-snfvo
+                      template: instantiate-invoke-snfvo
 
                 - name: scaleout
                   steps:
-                  - - name: scaleout-api
-                      when: "{{workflow.parameters.sub_operation}} == \"API\""
-                      templateRef:
-                        name: scaleout
-                        template: scaleout
+                  - - name: scaleout-invoke-snfvo
+                      template: scaleout-invoke-snfvo
 
-                  - - name: scaleout-service
-                      when: "{{workflow.parameters.sub_operation}} != \"API\""
-                      template: scaleout-service
+                - name: orchestrate
+                  templateRef:
+                    name: orchestrate
+                    template: orchestrate
 
-                - name: scaleout-service
+
+                - name: instantiate-invoke-snfvo
+                  # 
+                  # Invoke proper s-nfvo (Instantiate)
+                  #
                   steps:
-                  - - name: scaleout
-                      when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
+                  - - name: get-order-from-catalog
                       templateRef:
-                        name: vcdn-service
+                        name: workflow-catalog
+                        template: get-order-from-catalog
+                      arguments:
+                        parameters:
+                        - name: order_id
+                          value: "{{workflow.parameters.order_id}}"
+
+                  - - name: snfvo-vcdn
+                      when: "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"Offer vCDN\""
+                      templateRef:
+                        name: snfvo-vcdn-flow
+                        template: instantiate
+
+#                  - - name: snfvo-automative-update
+#                      when: "{{steps.get-order-from-catalog.outputs.parameters.name}} == \"Offer Automotive Firmware Upgrade\""
+#                      templateRef:
+#                        name: snfvo-automative-flow
+#                        template: instantiate
+
+                - name: scaleout-invoke-snfvo
+                  # 
+                  # Invoke proper s-nfvo (Scaleout)
+                  #
+                  steps:
+                  - - name: get-order-from-catalog
+                      templateRef:
+                        name: workflow-catalog
+                        template: get-order-from-catalog
+                      arguments:
+                        parameters:
+                        - name: order_id
+                          value: "{{workflow.parameters.order_id}}"
+
+                  - - name: snfvo-vcdn
+                      when: "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"Offer vCDN\""
+                      templateRef:
+                        name: snfvo-vcdn-flow
                         template: scaleout
 
-                  - - name: scaleout-best-offer-selection
-                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
-                      templateRef:
-                        name: vcdn-service
-                        template: best-offer-selection
+#                  - - name: snfvo-automative-update
+#                      when: "{{steps.get-order-from-catalog.outputs.parameters.name}} == \"Offer Automotive Firmware Upgrade\""
+#                      templateRef:
+#                        name: snfvo-automative-flow
+#                        template: scaleout
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#                - name: instantiate
+#                  steps:
+#                  - - name: instantiate-api
+#                      templateRef:
+#                        name: instantiate
+#                        template: instantiate
+#                      when: "{{workflow.parameters.sub_operation}} == \"API\""
+#
+#                  - - name: optimized
+#                      templateRef:
+#                        name: instantiate
+#                        template: best-offer-selection
+#                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
+#
+#                  - - name: orchestrate
+#                      templateRef:
+#                        name: instantiate
+#                        template: orchestrate
+#                      when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
+#
+#                - name: scaleout
+#                  steps:
+#                  - - name: scaleout-api
+#                      when: "{{workflow.parameters.sub_operation}} == \"API\""
+#                      templateRef:
+#                        name: scaleout
+#                        template: scaleout
+#
+#                  - - name: scaleout-service
+#                      when: "{{workflow.parameters.sub_operation}} != \"API\""
+#                      template: scaleout-service
+#
+#                - name: scaleout-service
+#                  steps:
+#                  - - name: scaleout
+#                      when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
+#                      templateRef:
+#                        name: vcdn-service
+#                        template: scaleout
+#
+#                  - - name: scaleout-best-offer-selection
+#                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
+#                      templateRef:
+#                        name: vcdn-service
+#                        template: best-offer-selection
 
           parameters:
             - src:
@@ -392,3 +505,20 @@ spec:
                 dataKey: body.category
                 value: DEFAULT
               dest: spec.arguments.parameters.28.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.snfvo_data
+                value: |
+                  {
+                  }
+              dest: spec.arguments.parameters.29.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.related_party
+                value: DEFAULT
+              dest: spec.arguments.parameters.30.value
+
+
+

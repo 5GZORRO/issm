@@ -21,11 +21,11 @@
 #
 # Parameters being used:
 #
-# service_owner: this domain's name
+# service_owner: stakeholder name
 # vsbName: blue-print name
 # transaction_uuid: transaction uuid
-# product_DID: PO global ID
-# sla_DID: SLA global ID
+# product_DID: PO global ID of the service being orchestrated
+# sla_DID: SLA global ID of the SLA of the service
 #
 #
 apiVersion: argoproj.io/v1alpha1
@@ -128,6 +128,28 @@ spec:
             value: "{{workflow.parameters.kafka_dl_ip}}"
           - name: kafka_port
             value: "{{workflow.parameters.kafka_dl_port}}"
+
+      - name: publish-status
+        dependencies: [nsso-poll]
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_port}}"
+
+          - name: data
+            # TODO: pass nsso-poll response (that contains additional info
+            # of the service instance)
+            value: |
+              { "msg_id": "{{workflow.parameters.transaction_uuid}}",
+                "edge_id": 17
+              }
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
 
       - name: sla-breach-data
         dependencies: [nsso-poll]
