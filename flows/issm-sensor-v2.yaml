@@ -187,36 +187,103 @@ spec:
                       when: "{{workflow.parameters.operation}} == \"scaleout\""
                       template: scaleout
 
-#                  - - name: orchestrate
-#                      when: "{{workflow.parameters.operation}} == \"orchestrate\""
-#                      template: orchestrate
-
 
                 - name: instantiate
                   steps:
+                  - - name: instantiate-from-api
+                      when: "{{workflow.parameters.sub_operation}} == \"API\""
+                      template: instantiate-from-api
+
                   - - name: instantiate-invoke-snfvo
-                      when: "{{workflow.parameters.sub_operation}} != \"ORCHESTRATE\""
+                      when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
                       template: instantiate-invoke-snfvo
 
                   - - name: instantiate-orchestrate
                       when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
                       template: orchestrate
 
-                - name: scaleout
+                - name: instantiate-from-api
+                  #
+                  # Load domain's env first, then call into
+                  # INSTANTIATE_SERVICE
+                  #
                   steps:
+                  - - name: get-domain-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-domain-env
+                      arguments:
+                        parameters:
+                        - name: domain
+                          value: "{{workflow.parameters.service_owner}}"
+
+                  - - name: do-instantiate
+                      templateRef:
+                        name: instantiate-scaleout
+                        template: instantiate
+                      arguments:
+                        parameters:
+                        - name: catalogue_url
+                          value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
+                        - name: elma_url
+                          value: "{{steps.get-domain-env.outputs.parameters.elma_url}}"
+                        - name: trmf_url
+                          value: "{{steps.get-domain-env.outputs.parameters.trmf_url}}"
+
+
+
+                - name: scaleout
+                  #
+                  # Load domain's env first, then call into
+                  # SCALEOUT_SERVICE
+                  #
+                  steps:
+                  - - name: scaleout-from-api
+                      when: "{{workflow.parameters.sub_operation}} == \"API\""
+                      template: scaleout-from-api
+
                   - - name: scaleout-invoke-snfvo
-                      when: "{{workflow.parameters.sub_operation}} != \"ORCHESTRATE\""
-                      template: scaleout-invoke-snfvo
+                      when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
+                      template: scaleout
 
                   - - name: scaleout-orchestrate
                       when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
                       template: orchestrate
+
+                - name: scaleout-from-api
+                  steps:
+                  - - name: get-domain-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-domain-env
+                      arguments:
+                        parameters:
+                        - name: domain
+                          value: "{{workflow.parameters.service_owner}}"
+                      
+                  - - name: do-scaleout
+                      templateRef:
+                        name: instantiate-scaleout
+                        template: scaleout
+                      arguments:
+                        parameters:
+                        - name: catalogue_url
+                          value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
+                        - name: elma_url
+                          value: "{{steps.get-domain-env.outputs.parameters.elma_url}}"
+                        - name: trmf_url
+                          value: "{{steps.get-domain-env.outputs.parameters.trmf_url}}"
+
+
+
 
                 - name: orchestrate
                   templateRef:
                     name: orchestrate
                     template: orchestrate
 
+
+                  
 
                 - name: instantiate-invoke-snfvo
                   # 

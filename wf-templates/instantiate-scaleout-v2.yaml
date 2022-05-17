@@ -21,9 +21,6 @@
 # workflow.parameters.place
 # workflow.parameters.order_id
 # workflow.parameters.category
-# workflow.parameters.elma_url
-# workflow.parameters.catalogue_url
-# workflow.parameters.trmf_url
 # workflow.parameters.userdata
 #
 ###############################
@@ -31,10 +28,15 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: scaleout
+  name: instantiate-scaleout
 spec:
   templates:
   - name: scaleout
+    inputs:
+      parameters:
+      - name: catalogue_url
+      - name: elma_url
+      - name: trmf_url
     dag:
       tasks:
       - name: trigger-scaleout
@@ -50,14 +52,44 @@ spec:
           - name: category
             value: "{{workflow.parameters.category}}"
           - name: elma_url
-            value: "{{workflow.parameters.elma_url}}"
+            value: "{{inputs.parameters.elma_url}}"
           - name: catalogue_url
-            value: "{{workflow.parameters.catalogue_url}}"
+            value: "{{inputs.parameters.catalogue_url}}"
           - name: trmf_url
-            value: "{{workflow.parameters.trmf_url}}"
+            value: "{{inputs.parameters.trmf_url}}"
           - name: userdata
             value: "{{workflow.parameters.userdata}}"
           
+
+  - name: instantiate
+    inputs:
+      parameters:
+      - name: catalogue_url
+      - name: elma_url
+      - name: trmf_url
+    dag:
+      tasks:
+      - name: trigger-instantiate
+        template: trigger-instantiate
+        arguments:
+          parameters:
+          - name: service_owner
+            value: "{{workflow.parameters.service_owner}}"
+          - name: place
+            value: "{{workflow.parameters.place}}"
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+          - name: category
+            value: "{{workflow.parameters.category}}"
+          - name: elma_url
+            value: "{{inputs.parameters.elma_url}}"
+          - name: catalogue_url
+            value: "{{inputs.parameters.catalogue_url}}"
+          - name: trmf_url
+            value: "{{inputs.parameters.trmf_url}}"
+          - name: userdata
+            value: "{{workflow.parameters.userdata}}"
+
 
   - name: trigger-scaleout
     inputs:
@@ -88,6 +120,48 @@ spec:
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}",
                   "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                   "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
+                  "place": {{inputs.parameters.place}},
+                  "service_owner": "{{inputs.parameters.service_owner}}",
+                  "order_id": "{{inputs.parameters.order_id}}",
+                  "userdata": {{inputs.parameters.userdata}},
+                  "category": "{{inputs.parameters.category}}",
+                  "elma_url": "{{inputs.parameters.elma_url}}",
+                  "catalogue_url": "{{inputs.parameters.catalogue_url}}",
+                  "trmf_url": "{{inputs.parameters.trmf_url}}"
+                }
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.service_owner}}"
+
+
+  - name: trigger-instantiate
+    inputs:
+      parameters:
+      - name: service_owner
+      - name: place
+      - name: order_id
+      - name: category
+      - name: elma_url
+      - name: catalogue_url
+      - name: trmf_url
+      - name: userdata
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-scaleout
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              # Triggering here a new bussines transaction:
+              # important that event and transaction uuids are the same
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}",
+                  "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "operation": "instantiate", "sub_operation": "INSTANTIATE_SERVICE",
                   "place": {{inputs.parameters.place}},
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "order_id": "{{inputs.parameters.order_id}}",
