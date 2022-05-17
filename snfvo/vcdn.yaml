@@ -13,7 +13,7 @@ spec:
   - name: instantiate-service
     dag:
       tasks:
-      - name: get-slice-order-id
+      - name: snfvo-slice-order-id
         templateRef:
           name: workflow-base
           template: from-key
@@ -25,15 +25,27 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
+      - name: snfvo-userdata
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: userdata
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
       - name: get-slice-order-from-catalog
-        dependencies: [get-slice-order-id]
+        dependencies: [snfvo-slice-order-id]
         templateRef:
           name: workflow-catalog
           template: get-order-from-catalog
         arguments:
           parameters:
           - name: order_id
-            value: "{{tasks.get-slice-order-id.outputs.result}}"
+            value: "{{tasks.snfvo-slice-order-id.outputs.result}}"
 
       - name: get-order-from-catalog
         templateRef:
@@ -44,30 +56,8 @@ spec:
           - name: order_id
             value: "{{workflow.parameters.order_id}}"
 
-      - name: add-user-data-slice
-        dependencies: [get-order-from-catalog, get-slice-order-from-catalog]
-        templateRef:
-          name: workflow-base
-          template: add-to-dict
-        arguments:
-          parameters:
-          - name: dict1
-            # TODO: from where to retrieve?
-            value: |
-              {
-                "sm.ssid": "ssid",
-                "sm.imsi_list": "imsi_list",
-                "sm.apn": "apn"
-              }
-          - name: dict2
-            value: |
-              {
-                "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
-                "transaction_id": "{{workflow.parameters.transaction_uuid}}"
-              }
-
       - name: trigger-orchestration-slice
-        dependencies: [add-user-data-slice]
+        dependencies: [get-order-from-catalog, snfvo-userdata]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -80,19 +70,17 @@ spec:
             value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
 
           - name: product_DID
-            # TODO: what product_id to send for slice orcestration?
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
+            value: ""
 
           - name: sla_DID
-            # TODO: what product_id to send for slice orcestration?
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
+            value: ""
 
           - name: place
             value: "{{workflow.parameters.place}}"
 
           - name: userdata
-            # TODO: what userdata to be used for slice orchestration ?
-            value: "{{tasks.add-user-data-slice.outputs.parameters.dict}}"
+            # slice userdata is at snfvo_data['userdata']
+            value: "{{tasks.snfvo-userdata.outputs.parameters.dict}}"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-slice]
@@ -137,7 +125,7 @@ spec:
               {
                 "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
                 "transaction_id": "{{workflow.parameters.transaction_uuid}}",
-                "edge_id": "{{tasks.get-edge-id.outputs.result}}"
+                "edge_resource_instance": "{{tasks.get-edge-id.outputs.result}}"
               }
 
 
@@ -244,7 +232,7 @@ spec:
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                 "trmf_url": "{{workflow.parameters.trmf_url}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
-                "userdata": {{workflow.parameters.userdata}},
+                "snfvo_data": {{workflow.parameters.snfvo_data}},
                 "category": "{{workflow.parameters.category}}"                
               }
           - name: kafka_topic
@@ -373,8 +361,103 @@ spec:
             # selected Edge resource
             value: "{{tasks.resource-did.outputs.result}}"
 
-      - name: add-user-data
-        dependencies: [acquire]
+
+#===========
+
+
+      - name: snfvo-slice-order-id
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: slice_order_id
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: snfvo-userdata
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: userdata
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: get-slice-order-from-catalog
+        dependencies: [snfvo-slice-order-id]
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.snfvo-slice-order-id.outputs.result}}"
+
+
+      - name: trigger-orchestration-slice
+        dependencies: [get-order-from-catalog, snfvo-userdata]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            value: "{{workflow.parameters.related_party}}"
+
+          - name: vsbName
+            value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
+
+          - name: product_DID
+            # N/A for slice
+            value: ""
+
+          - name: sla_DID
+            # N/A for slice
+            value: ""
+
+          - name: place
+            value: "{{workflow.parameters.place}}"
+
+          - name: userdata
+            # slice userdata is at snfvo_data['userdata']
+            value: "{{tasks.snfvo-userdata.outputs.parameters.dict}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-slice]
+        template: consume
+        arguments:
+          parameters:
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{workflow.parameters.transaction_uuid}}"
+
+      - name: get-edge-id
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            # TODO: use correct key
+            value: edge_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: add-user-data-vcdn
+        dependencies: [get-edge-id]
         templateRef:
           name: workflow-base
           template: add-to-dict
@@ -387,11 +470,12 @@ spec:
             value: |
               {
                 "product_id": "{{inputs.parameters.product_DID}}",
-                "transaction_id": "{{workflow.parameters.transaction_uuid}}"
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}",
+                "edge_resource_instance": "{{tasks.get-edge-id.outputs.result}}"
               }
 
-      - name: trigger-orchestration
-        dependencies: [add-user-data]
+      - name: trigger-orchestration-vcdn-service
+        dependencies: [add-user-data-vcdn]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -400,7 +484,7 @@ spec:
           - name: resource_owner
             value: "{{tasks.process-mno-name.outputs.result}}"
           - name: vsbName
-            value: "{{inputs.parameters.vsbName}}"
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
           - name: product_DID
             value: "{{inputs.parameters.product_DID}}"
           - name: sla_DID
@@ -408,7 +492,11 @@ spec:
           - name: place
             value: "{{tasks.resource-location.outputs.result}}"
           - name: userdata
-            value: "{{tasks.add-user-data.outputs.parameters.dict}}"
+            value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
+
+# ==========
+
+
 
 # TODO: what are the next steps ?
 

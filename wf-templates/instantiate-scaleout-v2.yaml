@@ -21,7 +21,7 @@
 # workflow.parameters.place
 # workflow.parameters.order_id
 # workflow.parameters.category
-# workflow.parameters.userdata
+# workflow.parameters.snfvo_data
 #
 ###############################
 
@@ -121,7 +121,6 @@ spec:
                   "place": {{inputs.parameters.place}},
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "order_id": "{{inputs.parameters.order_id}}",
-                  "userdata": {{inputs.parameters.userdata}},
                   "category": "{{inputs.parameters.category}}",
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
@@ -162,7 +161,6 @@ spec:
                   "place": {{inputs.parameters.place}},
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "order_id": "{{inputs.parameters.order_id}}",
-                  "userdata": {{inputs.parameters.userdata}},
                   "category": "{{inputs.parameters.category}}",
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",

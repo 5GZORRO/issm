@@ -19,10 +19,11 @@
       }
     },
     "snfvo_data": {
+        "slice_order_id": "cab95819-af13-46ad-b249-7a1a43e32757",
         "userdata": {
             "sm.ssid": "ssid",
             "sm.imsi_list": "imsi_list",
-            "sm.apn": "apn",
+            "sm.apn": "apn"
         }
     }
 }
