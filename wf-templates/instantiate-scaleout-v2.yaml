@@ -89,6 +89,8 @@ spec:
             value: "{{inputs.parameters.trmf_url}}"
           - name: snfvo_data
             value: "{{workflow.parameters.snfvo_data}}"
+          - name: related_party
+            value: "{{workflow.parameters.related_party}}"
 
 
   - name: trigger-scaleout
@@ -142,12 +144,13 @@ spec:
       - name: catalogue_url
       - name: trmf_url
       - name: snfvo_data
+      - name: related_party
     steps:
       - - name: event-uuid
           templateRef:
             name: workflow-base
             template: event-uuid
-      - - name: publish-to-scaleout
+      - - name: publish-to-instantiate
           templateRef:
             name: workflow-base
             template: publish-on-kafka
@@ -165,7 +168,8 @@ spec:
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
-                  "snfvo_data": {{inputs.parameters.snfvo_data}}
+                  "snfvo_data": {{inputs.parameters.snfvo_data}},
+                  "related_party": "{{inputs.parameters.related_party}}"
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"

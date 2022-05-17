@@ -57,7 +57,7 @@ spec:
             value: "{{workflow.parameters.order_id}}"
 
       - name: trigger-orchestration-slice
-        dependencies: [get-order-from-catalog, snfvo-userdata]
+        dependencies: [get-slice-order-from-catalog, snfvo-userdata]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -80,7 +80,7 @@ spec:
 
           - name: userdata
             # slice userdata is at snfvo_data['userdata']
-            value: "{{tasks.snfvo-userdata.outputs.parameters.dict}}"
+            value: "{{tasks.snfvo-userdata.outputs.result}}"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-slice]
@@ -111,7 +111,7 @@ spec:
               {{tasks.wait-for-status.outputs.parameters.payload}}
 
       - name: add-user-data-vcdn
-        dependencies: [get-edge-id]
+        dependencies: [get-order-from-catalog, get-edge-id]
         templateRef:
           name: workflow-base
           template: add-to-dict
