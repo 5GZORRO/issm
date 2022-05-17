@@ -274,10 +274,6 @@ spec:
 
 
   - name: acquire
-    # acquire is devided into two sub-tasks:
-    # 1. the acquire operation itself
-    # 2. branch to inspect acquire status and either fail the flow
-    # or proceed as normal with notifying trmf with the acquired offer
     inputs:
       parameters:
       - name: resource_id

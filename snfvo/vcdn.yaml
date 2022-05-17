@@ -386,7 +386,9 @@ spec:
 
       - name: trigger-orchestration
         dependencies: [add-user-data]
-        template: trigger-orchestration
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
         arguments:
           parameters:
           - name: resource_owner
@@ -403,6 +405,38 @@ spec:
             value: "{{tasks.add-user-data.outputs.parameters.dict}}"
 
 # TODO: what are the next steps ?
+
+
+  - name: acquire
+    inputs:
+      parameters:
+      - name: resource_id
+      - name: operator_id_seller
+      - name: operator_id_buyer
+      - name: resource_did
+    steps:
+      - - name: acquire-resource
+          templateRef:
+            name: workflow-catalog
+            template: create-order
+          arguments:
+            parameters:
+            - name: resource_id
+              value: "{{inputs.parameters.resource_id}}"
+            - name: operator_id_seller
+              value: "{{inputs.parameters.operator_id_seller}}"
+            - name: operator_id_buyer
+              value: "{{workflow.parameters.service_owner}}"
+
+      - - name: notify-reputation-manager
+          templateRef:
+            name: workflow-catalog
+            template: notify-trmf
+          arguments:
+            parameters:
+            - name: resource_did
+              value: "{{inputs.parameters.resource_did}}"
+
 
   - name: consume
     # TODO: move to base.yaml
