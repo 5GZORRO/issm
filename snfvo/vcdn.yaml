@@ -254,6 +254,40 @@ spec:
           - name: order_id
             value: "{{workflow.parameters.order_id}}"
 
+      - name: snfvo-slice-order-id
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: slice_order_id
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: snfvo-userdata
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: userdata
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: get-slice-order-from-catalog
+        dependencies: [snfvo-slice-order-id]
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.snfvo-slice-order-id.outputs.result}}"
+
       - name: handle-best-offers
         # pretty print
         templateRef:
@@ -268,13 +302,17 @@ spec:
 
       - name: loop-best-offers-resource
         # loop through 'resource' type offers
-        dependencies: [handle-best-offers, get-order-from-catalog]
+        dependencies: [handle-best-offers, get-slice-order-from-catalog, snfvo-userdata, get-order-from-catalog]
         template: loop-best-offers
         arguments:
           parameters:
           - name: best_offer
             value: "{{item}}"
-          - name: vsbName
+          - name: vsbName_Slice
+            value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
+          - name: userdata_Slice
+            value: "{{tasks.snfvo-userdata.outputs.result}}"
+          - name: vsbName_NS
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
           - name: product_DID
             value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
@@ -286,7 +324,9 @@ spec:
     inputs:
       parameters:
       - name: best_offer
-      - name: vsbName
+      - name: vsbName_Slice
+      - name: userdata_Slice
+      - name: vsbName_NS
       - name: product_DID
       - name: sla_DID
     dag:
@@ -362,56 +402,20 @@ spec:
             value: "{{tasks.resource-did.outputs.result}}"
 
 
-#===========
-
-
-      - name: snfvo-slice-order-id
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: slice_order_id
-          - name: json_str
-            value: |
-              {{workflow.parameters.snfvo_data}}
-
-      - name: snfvo-userdata
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: userdata
-          - name: json_str
-            value: |
-              {{workflow.parameters.snfvo_data}}
-
-      - name: get-slice-order-from-catalog
-        dependencies: [snfvo-slice-order-id]
-        templateRef:
-          name: workflow-catalog
-          template: get-order-from-catalog
-        arguments:
-          parameters:
-          - name: order_id
-            value: "{{tasks.snfvo-slice-order-id.outputs.result}}"
-
+#=========== Scaleout: Slice
 
       - name: trigger-orchestration-slice
-        dependencies: [get-order-from-catalog, snfvo-userdata]
+        dependencies: [acquire]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
         arguments:
           parameters:
           - name: resource_owner
-            value: "{{workflow.parameters.related_party}}"
+            value: "{{tasks.process-mno-name.outputs.result}}"
 
           - name: vsbName
-            value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
+            value: "{{inputs.parameters.vsbName_Slice}}"
 
           - name: product_DID
             # N/A for slice
@@ -422,11 +426,10 @@ spec:
             value: ""
 
           - name: place
-            value: "{{workflow.parameters.place}}"
+            value: "{{tasks.resource-location.outputs.result}}"
 
           - name: userdata
-            # slice userdata is at snfvo_data['userdata']
-            value: "{{tasks.snfvo-userdata.outputs.parameters.dict}}"
+            value: "{{inputs.parameters.userdata_Slice}}"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-slice]
@@ -456,6 +459,8 @@ spec:
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
 
+# ========== Scaleout: Network Service
+
       - name: add-user-data-vcdn
         dependencies: [get-edge-id]
         templateRef:
@@ -484,7 +489,7 @@ spec:
           - name: resource_owner
             value: "{{tasks.process-mno-name.outputs.result}}"
           - name: vsbName
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
+            value: "{{inputs.parameters.vsbName_NS}}"
           - name: product_DID
             value: "{{inputs.parameters.product_DID}}"
           - name: sla_DID
@@ -494,7 +499,7 @@ spec:
           - name: userdata
             value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
 
-# ==========
+
 
 
 
