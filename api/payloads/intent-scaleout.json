@@ -2,12 +2,6 @@
     "operation": "scaleout",
     "category": "Network Service",
     "order_id": "99b3faeb-d06e-4658-a8ce-24b69e223e72",
-    "userdata": {
-        "sm.ssid": "ssid",
-        "sm.imsi_list": "imsi_list",
-        "sm.apn": "apn",
-        "service_instance": 24
-    },
     "place": {
       "city": "Barcelona",
       "country": "Spain",
@@ -23,5 +17,12 @@
           }
         ]
       }
-    }    
+    },
+    "snfvo_data": {
+        "userdata": {
+            "sm.ssid": "ssid",
+            "sm.imsi_list": "imsi_list",
+            "sm.apn": "apn",
+        }
+    }
 }

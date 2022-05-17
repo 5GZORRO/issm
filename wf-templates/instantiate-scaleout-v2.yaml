@@ -57,8 +57,8 @@ spec:
             value: "{{inputs.parameters.catalogue_url}}"
           - name: trmf_url
             value: "{{inputs.parameters.trmf_url}}"
-          - name: userdata
-            value: "{{workflow.parameters.userdata}}"
+          - name: snfvo_data
+            value: "{{workflow.parameters.snfvo_data}}"
           
 
   - name: instantiate
@@ -87,8 +87,8 @@ spec:
             value: "{{inputs.parameters.catalogue_url}}"
           - name: trmf_url
             value: "{{inputs.parameters.trmf_url}}"
-          - name: userdata
-            value: "{{workflow.parameters.userdata}}"
+          - name: snfvo_data
+            value: "{{workflow.parameters.snfvo_data}}"
 
 
   - name: trigger-scaleout
@@ -101,7 +101,7 @@ spec:
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
-      - name: userdata
+      - name: snfvo_data
     steps:
       - - name: event-uuid
           templateRef:
@@ -114,8 +114,6 @@ spec:
           arguments:
             parameters:
             - name: data
-              # Triggering here a new bussines transaction:
-              # important that event and transaction uuids are the same
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}",
                   "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
@@ -127,7 +125,8 @@ spec:
                   "category": "{{inputs.parameters.category}}",
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
-                  "trmf_url": "{{inputs.parameters.trmf_url}}"
+                  "trmf_url": "{{inputs.parameters.trmf_url}}",
+                  "snfvo_data": {{inputs.parameters.snfvo_data}}
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"
@@ -143,7 +142,7 @@ spec:
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
-      - name: userdata
+      - name: snfvo_data
     steps:
       - - name: event-uuid
           templateRef:
@@ -156,8 +155,6 @@ spec:
           arguments:
             parameters:
             - name: data
-              # Triggering here a new bussines transaction:
-              # important that event and transaction uuids are the same
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}",
                   "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
@@ -169,7 +166,8 @@ spec:
                   "category": "{{inputs.parameters.category}}",
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
-                  "trmf_url": "{{inputs.parameters.trmf_url}}"
+                  "trmf_url": "{{inputs.parameters.trmf_url}}",
+                  "snfvo_data": {{inputs.parameters.snfvo_data}}
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"
