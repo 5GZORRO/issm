@@ -244,7 +244,11 @@ spec:
 
                   - - name: scaleout-invoke-snfvo
                       when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
-                      template: scaleout
+                      template: scaleout-invoke-snfvo
+
+                  - - name: scaleout-invoke-snfvo-2
+                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
+                      template: scaleout-invoke-snfvo
 
                   - - name: scaleout-orchestrate
                       when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""

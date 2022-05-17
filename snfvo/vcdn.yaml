@@ -5,6 +5,12 @@ metadata:
 spec:
   templates:
   - name: instantiate
+    steps:
+    - - name: instantiate-service
+        when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
+        template: instantiate-service
+
+  - name: instantiate-service
     dag:
       tasks:
       - name: get-slice-order-id
@@ -159,7 +165,7 @@ spec:
   - name: scaleout
     steps:
     - - name: scaleout-service
-        when: "{{workflow.parameters.sub_operation}} == \"API\""
+        when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
         template: scaleout-service
     - - name: best-offer-selection
         when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""

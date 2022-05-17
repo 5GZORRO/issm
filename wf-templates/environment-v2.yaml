@@ -64,7 +64,7 @@ spec:
             value: "{{tasks.domain-envs.outputs.result}}"
 
       - name: elma-url
-        dependencies: [get-domain-envs]
+        dependencies: [domain-envs]
         templateRef:
           name: workflow-base
           template: from-key
@@ -76,7 +76,7 @@ spec:
             value: "{{tasks.domain-envs.outputs.result}}"
 
       - name: trmf-url
-        dependencies: [get-domain-envs]
+        dependencies: [domain-envs]
         templateRef:
           name: workflow-base
           template: from-key
