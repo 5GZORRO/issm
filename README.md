@@ -184,13 +184,13 @@ kubectl apply -f flows/issm-sensor.yaml -n $MNO_NAMESPACE
 Deploy common libraries according to the orchestration stack the mno supports
 
 ```
-./apply.sh NSSO
+./apply-domain.sh NSSO
 ```
 
 or
 
 ```
-./apply.sh MEC
+./apply-domain.sh MEC
 ```
 
 ## Trigger ISSM business flow
