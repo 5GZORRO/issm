@@ -38,14 +38,23 @@ spec:
   - name: orchestrate
     dag:
       tasks:
+      - name: get-domain-env
+        templateRef:
+          name: workflow-environment
+          template: get-domain-env
+        arguments:
+          parameters:
+          - name: domain
+            # myself
+            value: "{{workflow.parameters.resource_owner}}"
+      
       - name: nsso-create-vsd
+        dependencies: [get-domain-env]
         template: create-descriptor
         arguments:
           parameters:
-          - name: nsso_ip
-            value: "vs"
-          - name: nsso_port
-            value: "8082"
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
           - name: tenant_name
             value: "{{workflow.parameters.service_owner}}"
           - name: vsbName
@@ -61,10 +70,8 @@ spec:
         template: create-instance
         arguments:
           parameters:
-          - name: nsso_ip
-            value: "vs"
-          - name: nsso_port
-            value: "8082"
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
           - name: tenant_name
             value: "{{workflow.parameters.service_owner}}"
           - name: vsd_id
@@ -81,10 +88,8 @@ spec:
           parameters:
           - name: poll
             value: "true"
-          - name: nsso_ip
-            value: "vs"
-          - name: nsso_port
-            value: "8082"
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
           - name: tenant_name
             value: "{{workflow.parameters.service_owner}}"
           - name: vsi_id
@@ -190,8 +195,7 @@ spec:
     # Create a new VSD from the given blueprint name
     #
     # Parameters:
-    # nsso_ip: ipaddress of the vertical slicer service (str)
-    # nsso_port: port of the vertical slicer service (str)    
+    # vs_url: URL to vertical slicer service (str)
     # tenant_name: the name of the vertical tenant (str)
     # vsbName: the name of the blueprint VSD is created from
     # name: VSD name
@@ -201,8 +205,7 @@ spec:
     # vsd_id: vertical descriptor id    
     inputs:
       parameters:
-      - name: nsso_ip
-      - name: nsso_port
+      - name: vs_url
       - name: tenant_name
       - name: vsbName
       - name: parameters
@@ -230,21 +233,21 @@ spec:
         }
 
         echo "Log in admin.."
-        curl -X POST -d username=admin -d password=admin -c /tmp/a_c http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/login
+        curl -X POST -d username=admin -d password=admin -c /tmp/a_c {{inputs.parameters.vs_url}}/login
 
         echo "Retrieve blueprints.."
-        bp_list="$(curl -b /tmp/a_c http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/portal/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
+        bp_list="$(curl -b /tmp/a_c {{inputs.parameters.vs_url}}/portal/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
 
         bp_id="$(echo $bp_list | jq -r '.[] | select(.name=="{{inputs.parameters.vsbName}}") | .vsBlueprintId')"
         echo "Blueprint id [$bp_id] matches vsbName [{{inputs.parameters.vsbName}}]"
 
         echo "Log in {{inputs.parameters.tenant_name}}.."
-        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/login
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
 
         # note: nsso does not accept two descriptors with same name
         echo "Create descriptor.."
         uuid=$(cat /proc/sys/kernel/random/uuid)
-        vsd_id="$(curl -b /tmp/t_c --data "$(generate_post_descriptor_create $uuid $bp_id)" -X POST http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/portal/catalogue/vsdescriptor --header "Content-Type:application/json" 2>/dev/null)"
+        vsd_id="$(curl -b /tmp/t_c --data "$(generate_post_descriptor_create $uuid $bp_id)" -X POST {{inputs.parameters.vs_url}}/portal/catalogue/vsdescriptor --header "Content-Type:application/json" 2>/dev/null)"
         echo $vsd_id > /tmp/id.txt
     outputs:
       parameters:
@@ -257,8 +260,7 @@ spec:
     # Create a new VSI
     #
     # Parameters:
-    # nsso_ip: ipaddress of the vertical slicer service (str)
-    # nsso_port: port of the vertical slicer service (str)
+    # vs_url: URL to vertical slicer service (str)
     # tenant_name: the name of the vertical tenant to create (str)
     # vsd_id: the id of the descriptor this VSI is created from (str)
     #
@@ -266,8 +268,7 @@ spec:
     # vsi_id: vertical service instance id
     inputs:
       parameters:
-      - name: nsso_ip
-      - name: nsso_port
+      - name: vs_url
       - name: tenant_name
       - name: vsd_id
       - name: name
@@ -291,10 +292,10 @@ spec:
         }
 
         echo "Log in {{inputs.parameters.tenant_name}}.."
-        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/login
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
 
         echo "Create instance.."
-        vsi_id="$(curl -b /tmp/t_c --data "$(generate_post_instance_create $vsd_id)" -X POST http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/vs/basic/vslcm/vs --header "Content-Type:application/json" 2>/dev/null)"
+        vsi_id="$(curl -b /tmp/t_c --data "$(generate_post_instance_create $vsd_id)" -X POST {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs --header "Content-Type:application/json" 2>/dev/null)"
         echo $vsi_id > /tmp/id.txt
     outputs:
       parameters:
@@ -309,8 +310,7 @@ spec:
     #
     # Parameters:
     # poll: whether or not to poll (boolean). If false, then skip polling
-    # nsso_ip: ipaddress of the vertical slicer service (str)
-    # nsso_port: port of the vertical slicer service (str)
+    # vs_url: URL to vertical slicer service (str)
     # tenant_name: the name of the vertical tenant (str)
     # vsi_id: VSI id (str)
     # jq_query: VSI attribute to poll/query (str in jq format)
@@ -321,8 +321,7 @@ spec:
     inputs:
       parameters:
       - name: poll
-      - name: nsso_ip
-      - name: nsso_port
+      - name: vs_url
       - name: tenant_name
       - name: vsi_id
       - name: jq_query
@@ -334,11 +333,11 @@ spec:
       command: [sh]
       source: |
         echo "Log in {{inputs.parameters.tenant_name}}.."
-        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/login
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
       
         if [ {{inputs.parameters.poll}} = "true" ]; then
           i=0
-          until [ "$(curl -b /tmp/t_c http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
+          until [ "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
              echo "Poll wait for vsi_id: {{inputs.parameters.vsi_id}}.. (1 sec)"
              sleep 1
              i=$((i+1))
@@ -347,10 +346,10 @@ spec:
             echo "TIMEOUT"
             echo "TIMEOUT" > /tmp/status.txt
           else
-            echo "$(curl -b /tmp/t_c http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+            echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
           fi
         else  
-          echo "$(curl -b /tmp/t_c http://{{inputs.parameters.nsso_ip}}:{{inputs.parameters.nsso_port}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+          echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
         fi
     outputs:
       parameters:
