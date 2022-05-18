@@ -64,6 +64,7 @@ spec:
         arguments:
           parameters:
           - name: resource_owner
+            # domain's orchestrator
             value: "{{workflow.parameters.related_party}}"
 
           - name: vsbName
@@ -137,6 +138,7 @@ spec:
         arguments:
           parameters:
           - name: resource_owner
+            # domain's orchestrator
             value: "{{workflow.parameters.related_party}}"
           - name: vsbName
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
@@ -412,6 +414,7 @@ spec:
         arguments:
           parameters:
           - name: resource_owner
+            # domain's orchestrator
             value: "{{tasks.process-mno-name.outputs.result}}"
 
           - name: vsbName
@@ -487,6 +490,7 @@ spec:
         arguments:
           parameters:
           - name: resource_owner
+            # domain's orchestrator
             value: "{{tasks.process-mno-name.outputs.result}}"
           - name: vsbName
             value: "{{inputs.parameters.vsbName_NS}}"
