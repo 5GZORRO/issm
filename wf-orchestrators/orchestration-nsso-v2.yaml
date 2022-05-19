@@ -99,7 +99,7 @@ spec:
           - name: jq_query_value
             value: "INSTANTIATED"
           - name: timeout
-            value: 30
+            value: 120
 
       - name: poll-timeout
         dependencies: [nsso-poll]
@@ -294,6 +294,7 @@ spec:
 
         echo "Create instance.."
         vsi_id="$(curl -b /tmp/t_c --data "$(generate_post_instance_create $vsd_id)" -X POST {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs --header "Content-Type:application/json" 2>/dev/null)"
+        echo "NSSO instantiate returned $vsi_id"
         echo $vsi_id > /tmp/id.txt
     outputs:
       parameters:
