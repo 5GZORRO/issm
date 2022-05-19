@@ -23,7 +23,7 @@
       "slice_order_id": "cab95819-af13-46ad-b249-7a1a43e32757",
       "userdata": {
         "sm.plmn_id": "00103",
-        "sm.imsi_list": ["001035432100005", "001035432000003"],
+        "sm.imsi_list": "001035432100005,001035432000003",
         "sm.apn": "Zorro_vCDN"
        }
     }
