@@ -97,18 +97,34 @@ spec:
           - name: jq_query_value
             value: "INSTANTIATED"
           - name: timeout
-            value: 120
+            value: 30
 
-      - name: poll-timeout
+      - name: nsso-create-vsi-fail
         dependencies: [nsso-poll]
-        templateRef:
-          name: workflow-base
-          template: fail
+        template: nsso-create-vsi-fail
         when: "{{tasks.nsso-poll.outputs.parameters.status}} == \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
 
-      - name: sla-event
+      - name: nsso-create-vsi-success
         dependencies: [nsso-poll]
+        template: nsso-create-vsi-success
         when: "{{tasks.nsso-poll.outputs.parameters.status}} != \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+
+  - name: nsso-create-vsi-success
+    inputs:
+      parameters:
+      - name: vsi_id
+    dag:
+      tasks:
+      - name: sla-event
+        when: "\"{{workflow.parameters.sla_DID}}\" != \"\""
         templateRef:
           name: workflow-base
           template: produce
@@ -120,7 +136,7 @@ spec:
                 "transactionID": "{{workflow.parameters.transaction_uuid}}",
                 "productID": "{{workflow.parameters.product_DID}}",
                 "SLAID": "{{workflow.parameters.sla_DID}}",
-                "instanceID": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}",
+                "instanceID": "{{inputs.parameters.vsi_id}}",
                 "place": {{workflow.parameters.place}},
                 "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
                 "topic": "isbp-topic-out"
@@ -133,7 +149,6 @@ spec:
             value: "{{workflow.parameters.kafka_dl_port}}"
 
       - name: publish-status
-        dependencies: [nsso-poll]
         templateRef:
           name: workflow-base
           template: produce
@@ -147,13 +162,13 @@ spec:
           - name: data
             value: |
               { "msg_id": "{{workflow.name}}",
-                "vsi_id": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+                "vsi_id": "{{inputs.parameters.vsi_id}}",
+                "status": "SUCCESS"
               }
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
 
       - name: sla-breach-data
-        dependencies: [nsso-poll]
         templateRef:
           name: workflow-base
           template: sla-breach-data
@@ -185,6 +200,70 @@ spec:
           - name: kafka_port
             value: "{{workflow.parameters.kafka_dl_port}}"
 
+
+  - name: nsso-create-vsi-fail
+    inputs:
+      parameters:
+      - name: vsi_id
+    dag:
+      tasks:
+      - name: publish-status
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_port}}"
+
+          - name: data
+            value: |
+              { "msg_id": "{{workflow.name}}",
+                "vsi_id": "{{inputs.parameters.vsi_id}}",
+                "status": "FAIL"
+              }
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+
+      - name: sla-breach-data
+        templateRef:
+          name: workflow-base
+          template: sla-breach-data
+        arguments:
+          parameters:
+          - name: sla_breach
+            value: "{{workflow.parameters.sla_breach}}"
+
+      - name: sla-send-ack
+        # do this only if in SLA violation context
+        dependencies: [sla-breach-data]
+        when: "{{tasks.sla-breach-data.outputs.parameters.applicable}} == true"
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "eventType": "new_SLA_ACK",
+                "transactionID": "{{tasks.sla-breach-data.outputs.parameters.transaction_uuid}}",
+                "productID": "{{tasks.sla-breach-data.outputs.parameters.product_DID}}",
+                "status": "COMPLETED"
+              }
+          - name: kafka_topic
+            value: "isbp-topic"
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_dl_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_dl_port}}"
+
+      - name: fail
+        dependencies: [publish-status, sla-send-ack]
+        templateRef:
+          name: workflow-base
+          template: fail
 
 
   - name: create-descriptor
