@@ -37,6 +37,18 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
+      - name: snfvo-vsd-parameters
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
       - name: get-slice-order-from-catalog
         dependencies: [snfvo-slice-order-id]
         templateRef:
@@ -57,7 +69,7 @@ spec:
             value: "{{workflow.parameters.order_id}}"
 
       - name: trigger-orchestration-slice
-        dependencies: [get-slice-order-from-catalog, snfvo-userdata]
+        dependencies: [get-slice-order-from-catalog, snfvo-userdata, snfvo-vsd-parameters]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -82,6 +94,10 @@ spec:
           - name: userdata
             # slice userdata is at snfvo_data['userdata']
             value: "{{tasks.snfvo-userdata.outputs.result}}"
+
+          - name: vsd_parameters
+            # snfvo_data['vsd_parameters']
+            value: "{{tasks.snfvo-vsd-parameters.outputs.result}}"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-slice]
@@ -151,6 +167,9 @@ spec:
           - name: userdata
             value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
 
+          - name: vsd_parameters
+            # snfvo_data['vsd_parameters']
+            value: "{{tasks.snfvo-vsd-parameters.outputs.result}}"
 
   - name: scaleout
     steps:

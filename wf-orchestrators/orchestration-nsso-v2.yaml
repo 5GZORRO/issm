@@ -60,9 +60,7 @@ spec:
           - name: vsbName
             value: "{{workflow.parameters.vsbName}}"
           - name: parameters
-            value: |
-              {
-              }
+            value: "{{workflow.parameters.vsd_parameters}}"
 
 
       - name: nsso-create-vsi

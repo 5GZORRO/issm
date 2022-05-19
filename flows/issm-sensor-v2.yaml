@@ -167,6 +167,9 @@ spec:
 
                   - name: related_party
                     value: OVERRIDE
+
+                  - name: vsd_parameters
+                    value: OVERRIDE
                   
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # ISSM API service
@@ -341,86 +344,6 @@ spec:
 #                        name: snfvo-automative-flow
 #                        template: scaleout
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#                - name: instantiate
-#                  steps:
-#                  - - name: instantiate-api
-#                      templateRef:
-#                        name: instantiate
-#                        template: instantiate
-#                      when: "{{workflow.parameters.sub_operation}} == \"API\""
-#
-#                  - - name: optimized
-#                      templateRef:
-#                        name: instantiate
-#                        template: best-offer-selection
-#                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
-#
-#                  - - name: orchestrate
-#                      templateRef:
-#                        name: instantiate
-#                        template: orchestrate
-#                      when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
-#
-#                - name: scaleout
-#                  steps:
-#                  - - name: scaleout-api
-#                      when: "{{workflow.parameters.sub_operation}} == \"API\""
-#                      templateRef:
-#                        name: scaleout
-#                        template: scaleout
-#
-#                  - - name: scaleout-service
-#                      when: "{{workflow.parameters.sub_operation}} != \"API\""
-#                      template: scaleout-service
-#
-#                - name: scaleout-service
-#                  steps:
-#                  - - name: scaleout
-#                      when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
-#                      templateRef:
-#                        name: vcdn-service
-#                        template: scaleout
-#
-#                  - - name: scaleout-best-offer-selection
-#                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
-#                      templateRef:
-#                        name: vcdn-service
-#                        template: best-offer-selection
 
           parameters:
             - src:
@@ -601,5 +524,10 @@ spec:
                 value: DEFAULT
               dest: spec.arguments.parameters.30.value
 
-
-
+            - src:
+                dependencyName: test-dep
+                dataKey: body.vsd_parameters
+                value: |
+                  {
+                  }
+              dest: spec.arguments.parameters.31.value

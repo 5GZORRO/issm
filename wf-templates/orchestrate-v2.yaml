@@ -27,6 +27,7 @@ spec:
       - name: sla_DID
       - name: place
       - name: userdata
+      - name: vsd_parameters
     steps:
       - - name: event-uuid
           templateRef:
@@ -49,7 +50,8 @@ spec:
                   "service_owner": "{{workflow.parameters.service_owner}}",
                   "resource_owner": "{{inputs.parameters.resource_owner}}",
                   "sla_breach": {{workflow.parameters.sla_breach}},
-                  "userdata": {{inputs.parameters.userdata}}
+                  "userdata": {{inputs.parameters.userdata}},
+                  "vsd_parameters": {{inputs.parameters.vsd_parameters}}
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"
