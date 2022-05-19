@@ -147,11 +147,9 @@ spec:
             value: "{{workflow.parameters.kafka_port}}"
 
           - name: data
-            # TODO: pass nsso-poll response (that contains additional info
-            # of the service instance)
             value: |
               { "msg_id": "{{workflow.parameters.transaction_uuid}}",
-                "edge_id": 17
+                "edge_id": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
               }
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
