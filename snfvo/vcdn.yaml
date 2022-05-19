@@ -111,7 +111,7 @@ spec:
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
           - name: msg_id
-            value: "{{workflow.parameters.transaction_uuid}}"
+            value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
 
       - name: get-edge-id
         dependencies: [wait-for-status]
@@ -121,8 +121,7 @@ spec:
         arguments:
           parameters:
           - name: key
-            # TODO: use correct key
-            value: edge_id
+            value: vsi_id
           - name: json_str
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
@@ -465,7 +464,7 @@ spec:
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
           - name: msg_id
-            value: "{{workflow.parameters.transaction_uuid}}"
+            value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
 
       - name: get-edge-id
         dependencies: [wait-for-status]
@@ -475,8 +474,7 @@ spec:
         arguments:
           parameters:
           - name: key
-            # TODO: use correct key
-            value: edge_id
+            value: vsi_id
           - name: json_str
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
@@ -561,8 +559,7 @@ spec:
 
 
   - name: consume
-    # TODO: move to base.yaml
-    # Consumes a message from kafka broker
+    # Consumes a message from kafka broker of a matched event_uuid
     #
     # Parameters
     # kafka_topic: the topic to publish the message on (string)

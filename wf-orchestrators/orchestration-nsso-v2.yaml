@@ -146,8 +146,8 @@ spec:
 
           - name: data
             value: |
-              { "msg_id": "{{workflow.parameters.transaction_uuid}}",
-                "edge_id": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+              { "msg_id": "{{workflow.name}}",
+                "vsi_id": "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
               }
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
