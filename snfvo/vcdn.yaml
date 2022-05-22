@@ -298,6 +298,18 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
+      - name: snfvo-vsd-parameters
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
       - name: get-slice-order-from-catalog
         dependencies: [snfvo-slice-order-id]
         templateRef:
@@ -322,7 +334,7 @@ spec:
 
       - name: loop-best-offers-resource
         # loop through 'resource' type offers
-        dependencies: [handle-best-offers, get-slice-order-from-catalog, snfvo-userdata, get-order-from-catalog]
+        dependencies: [get-slice-order-from-catalog, snfvo-userdata, snfvo-vsd-parameters, get-order-from-catalog]
         template: loop-best-offers
         arguments:
           parameters:
@@ -338,6 +350,8 @@ spec:
             value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
           - name: sla_DID
             value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
+          - name: vsd_parameters
+            value: "{{tasks.snfvo-vsd-parameters.outputs.result}}"
         withParam: "{{workflow.parameters.resources}}"
 
   - name: loop-best-offers
@@ -349,6 +363,7 @@ spec:
       - name: vsbName_NS
       - name: product_DID
       - name: sla_DID
+      - name: vsd_parameters
     dag:
       tasks:
       - name: resource-owner
@@ -452,6 +467,10 @@ spec:
           - name: userdata
             value: "{{inputs.parameters.userdata_Slice}}"
 
+          - name: vsd_parameters
+            value: "{{inputs.parameters.vsd_parameters}}"
+
+
       - name: wait-for-status
         dependencies: [trigger-orchestration-slice]
         template: consume
@@ -519,12 +538,8 @@ spec:
             value: "{{tasks.resource-location.outputs.result}}"
           - name: userdata
             value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
-
-
-
-
-
-# TODO: what are the next steps ?
+          - name: vsd_parameters
+            value: "{{inputs.parameters.vsd_parameters}}"
 
 
   - name: acquire

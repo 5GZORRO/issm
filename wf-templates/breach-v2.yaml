@@ -79,6 +79,8 @@ spec:
             value: "{{tasks.transaction-data.outputs.parameters.catalogue_url}}"
           - name: trmf_url
             value: "{{tasks.transaction-data.outputs.parameters.trmf_url}}"
+          - name: snfvo_data
+            value: "{{tasks.transaction-data.outputs.parameters.snfvo_data}}"
 
   - name: trigger-scaleout
     inputs:
@@ -91,6 +93,7 @@ spec:
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
+      - name: snfvo_data
     steps:
       - - name: event-uuid
           templateRef:
@@ -115,6 +118,7 @@ spec:
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
+                  "snfvo_data": {{inputs.parameters.snfvo_data}},
                   "sla_breach": {
                     "applicable": "true",
                     "breachPredictionNotification": {{workflow.parameters.breachPredictionNotification}}
