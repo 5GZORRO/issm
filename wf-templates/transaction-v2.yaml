@@ -61,10 +61,6 @@ spec:
         valueFrom:
           path: /tmp/service_owner.txt
 
-      - name: scenario
-        valueFrom:
-          path: /tmp/scenario.txt
-
       - name: elma_url
         valueFrom:
           path: /tmp/elma_url.txt

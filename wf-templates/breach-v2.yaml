@@ -57,9 +57,20 @@ spec:
           - name: json_str
             value: "{{tasks.get-transaction.outputs.result}}"
 
+      - name: get-domain-env
+        dependencies: [transaction-data]
+        templateRef:
+          name: workflow-environment
+          template: get-domain-env
+        arguments:
+          parameters:
+          - name: domain
+            value: "{{tasks.transaction-data.outputs.parameters.service_owner}}"
+
+
       - name: trigger-scaleout
         template: trigger-scaleout
-        dependencies: [transaction-data]
+        dependencies: [get-domain-env]
         arguments:
           parameters:
           - name: service_owner
@@ -71,14 +82,12 @@ spec:
           - name: instance_id
             # TODO: inside the transaction
             value: "{{workflow.parameters.instance_id}}"
-          - name: scenario
-            value: "{{tasks.transaction-data.outputs.parameters.scenario}}"
           - name: elma_url
-            value: "{{tasks.transaction-data.outputs.parameters.elma_url}}"
+            value: "{{tasks.get-domain-env.outputs.parameters.elma_url}}"
           - name: catalogue_url
-            value: "{{tasks.transaction-data.outputs.parameters.catalogue_url}}"
+            value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
           - name: trmf_url
-            value: "{{tasks.transaction-data.outputs.parameters.trmf_url}}"
+            value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
           - name: snfvo_data
             value: "{{tasks.transaction-data.outputs.parameters.snfvo_data}}"
 
@@ -89,7 +98,6 @@ spec:
       - name: place
       - name: order_id
       - name: instance_id
-      - name: scenario
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
