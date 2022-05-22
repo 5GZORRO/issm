@@ -286,17 +286,17 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
-      - name: snfvo-userdata
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: userdata
-          - name: json_str
-            value: |
-              {{workflow.parameters.snfvo_data}}
+#      - name: snfvo-userdata
+#        templateRef:
+#          name: workflow-base
+#          template: from-key
+#        arguments:
+#          parameters:
+#          - name: key
+#            value: userdata
+#          - name: json_str
+#            value: |
+#              {{workflow.parameters.snfvo_data}}
 
       - name: snfvo-vsd-parameters
         templateRef:
@@ -334,7 +334,7 @@ spec:
 
       - name: loop-best-offers-resource
         # loop through 'resource' type offers
-        dependencies: [get-slice-order-from-catalog, snfvo-userdata, snfvo-vsd-parameters, get-order-from-catalog]
+        dependencies: [get-slice-order-from-catalog, snfvo-vsd-parameters, get-order-from-catalog]
         template: loop-best-offers
         arguments:
           parameters:
@@ -343,7 +343,7 @@ spec:
           - name: vsbName_Slice
             value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
           - name: userdata_Slice
-            value: "{{tasks.snfvo-userdata.outputs.result}}"
+            value: "{ }"
           - name: vsbName_NS
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
           - name: product_DID
