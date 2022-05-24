@@ -97,7 +97,7 @@ spec:
           - name: jq_query_value
             value: "INSTANTIATED"
           - name: timeout
-            value: 30
+            value: 180
 
       - name: nsso-create-vsi-fail
         dependencies: [nsso-poll]
