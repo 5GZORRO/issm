@@ -56,7 +56,6 @@ spec:
       - name: service_ip
       - name: service_port
       - name: intent_query
-      - name: place
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
       imagePullPolicy: IfNotPresent
@@ -68,7 +67,6 @@ spec:
         import urllib
         import urllib.parse
 
-        location = {{inputs.parameters.place}}['city']
         headers = {'Content-Type': 'application/json'}
         intent_query = str("{{inputs.parameters.intent_query}}")
         iq = urllib.parse.quote(intent_query)

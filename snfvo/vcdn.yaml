@@ -231,8 +231,6 @@ spec:
             value: "{{workflow.parameters.discovery_port}}"
           - name: intent_query
             value: "{{tasks.build-intent-query.outputs.result}}"
-          - name: place
-            value: "{{workflow.parameters.place}}"
   
       - name: send-resouces-to-optimizer
         dependencies: [srds-service]
