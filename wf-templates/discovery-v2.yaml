@@ -96,15 +96,15 @@ spec:
         did = ""
 
         # Name
-        name = po['name']
+        name = po['offer_object']['name']
         sys.stdout.write('name: "%s" \n' % name)
 
         # Id
-        po_id = po['best_offer']['id']
-        sys.stdout.write('name: "%s" \n' % name)
+        po_id = po['offer_object']['id']
+        sys.stdout.write('id: "%s" \n' % po_id)
 
         # Place
-        place = po['place'][0]['href']
+        place = po['offer_object']['place'][0]
         sys.stdout.write('place: "%s" \n' % place)
 
         # resource owner
