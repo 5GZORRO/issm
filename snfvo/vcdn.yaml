@@ -69,7 +69,7 @@ spec:
             value: "{{workflow.parameters.order_id}}"
 
       - name: trigger-orchestration-slice
-        dependencies: [get-slice-order-from-catalog, snfvo-userdata, snfvo-vsd-parameters]
+        dependencies: [get-slice-order-from-catalog, snfvo-userdata, snfvo-vsd-parameters, get-order-from-catalog]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -127,7 +127,7 @@ spec:
               {{tasks.wait-for-status.outputs.parameters.payload}}
 
       - name: add-user-data-vcdn
-        dependencies: [get-order-from-catalog, get-edge-id]
+        dependencies: [get-edge-id]
         templateRef:
           name: workflow-base
           template: add-to-dict
@@ -202,6 +202,9 @@ spec:
           template: build-intent-query
         arguments:
           parameters:
+          - name: category
+            value: Edge
+
           - name: place
             value: "{{workflow.parameters.place}}"
           - name: cpu_max
@@ -286,18 +289,6 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
-#      - name: snfvo-userdata
-#        templateRef:
-#          name: workflow-base
-#          template: from-key
-#        arguments:
-#          parameters:
-#          - name: key
-#            value: userdata
-#          - name: json_str
-#            value: |
-#              {{workflow.parameters.snfvo_data}}
-
       - name: snfvo-vsd-parameters
         templateRef:
           name: workflow-base
@@ -320,20 +311,7 @@ spec:
           - name: order_id
             value: "{{tasks.snfvo-slice-order-id.outputs.result}}"
 
-      - name: handle-best-offers
-        # pretty print
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{workflow.parameters.resources}}"
-          - name: jq_query
-            value: '.'
-
-      - name: loop-best-offers-resource
-        # loop through 'resource' type offers
+      - name: loop-edges
         dependencies: [get-slice-order-from-catalog, snfvo-vsd-parameters, get-order-from-catalog]
         template: loop-best-offers
         arguments:
@@ -366,7 +344,7 @@ spec:
       - name: vsd_parameters
     dag:
       tasks:
-      - name: resource-owner
+      - name: print-selected-edge
         templateRef:
           name: workflow-base
           template: jq-script
@@ -375,66 +353,30 @@ spec:
           - name: json_str
             value: "{{inputs.parameters.best_offer}}"
           - name: jq_query
-            value: '.offer_object.productSpecification.relatedParty[0].name'
-
-      - name: process-mno-name
-        dependencies: [resource-owner]
+            value: '.'
+      
+      - name: resource-attributes
         templateRef:
-          name: workflow-base
-          template: correct-mno-name
+          name: workflow-discovery
+          template: resource-attributes
         arguments:
           parameters:
-          - name: mno_name
-            value: "{{tasks.resource-owner.outputs.result}}"
-
-      - name: resource-id
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
+          - name: resource
             value: "{{inputs.parameters.best_offer}}"
-          - name: jq_query
-            value: '.offer_object.id'
-
-      - name: resource-location
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{inputs.parameters.best_offer}}"
-          - name: jq_query
-            value: '.offer_object.place[0]'
-
-      - name: resource-did
-        # for TRMF
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{inputs.parameters.best_offer}}"
-          - name: jq_query
-            value: '.offer_did'
-
+        
       - name: acquire
-        dependencies: [process-mno-name, resource-location, resource-did, resource-id]
+        dependencies: [resource-attributes]
         template: acquire
         arguments:
           parameters:
           - name: resource_id
-            value: "{{tasks.resource-id.outputs.result}}"
+            value: "{{tasks.resource-attributes.outputs.parameters.id}}"
           - name: operator_id_seller
-            value: "{{tasks.resource-owner.outputs.result}}"
+            value: "{{tasks.resource-attributes.outputs.parameters.resource_owner}}"
           - name: operator_id_buyer
             value: "{{workflow.parameters.service_owner}}"
           - name: resource_did
-            # selected Edge resource
-            value: "{{tasks.resource-did.outputs.result}}"
+            value: "{{tasks.resource-attributes.outputs.parameters.did}}"
 
 
 #=========== Scaleout: Slice
@@ -448,7 +390,7 @@ spec:
           parameters:
           - name: resource_owner
             # domain's orchestrator
-            value: "{{tasks.process-mno-name.outputs.result}}"
+            value: "{{tasks.resource-attributes.outputs.parameters.resource_owner}}"
 
           - name: vsbName
             value: "{{inputs.parameters.vsbName_Slice}}"
@@ -462,7 +404,7 @@ spec:
             value: ""
 
           - name: place
-            value: "{{tasks.resource-location.outputs.result}}"
+            value: "{{tasks.resource-attributes.outputs.parameters.place}}"
 
           - name: userdata
             value: "{{inputs.parameters.userdata_Slice}}"
@@ -527,7 +469,7 @@ spec:
           parameters:
           - name: resource_owner
             # domain's orchestrator
-            value: "{{tasks.process-mno-name.outputs.result}}"
+            value: "{{tasks.resource-attributes.outputs.parameters.resource_owner}}"
           - name: vsbName
             value: "{{inputs.parameters.vsbName_NS}}"
           - name: product_DID
@@ -535,7 +477,7 @@ spec:
           - name: sla_DID
             value: "{{inputs.parameters.sla_DID}}"
           - name: place
-            value: "{{tasks.resource-location.outputs.result}}"
+            value: "{{tasks.resource-attributes.outputs.parameters.place}}"
           - name: userdata
             value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
           - name: vsd_parameters
