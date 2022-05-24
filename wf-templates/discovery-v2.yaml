@@ -73,3 +73,81 @@ spec:
         offers = r.json()
 
         print(offers)
+
+
+  - name: resource-attributes
+    inputs:
+      parameters:
+      - name: resource
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import sys
+
+        po = {{inputs.parameters.resource}}
+
+        name = ""
+        po_id = ""
+        place = {}
+        resource_owner = ""
+        did = ""
+
+        # Name
+        name = po['name']
+        sys.stdout.write('name: "%s" \n' % name)
+
+        # Id
+        po_id = po['best_offer']['id']
+        sys.stdout.write('name: "%s" \n' % name)
+
+        # Place
+        place = po['place'][0]['href']
+        sys.stdout.write('place: "%s" \n' % place)
+
+        # resource owner
+        resource_owner = po['offer_object']['productSpecification']['relatedParty'][0]['name']
+        resource_owner = resource_owner.replace('_','-').lower()
+        sys.stdout.write('resource_owner: "%s" \n' % resource_owner)
+
+        # DID
+        did = po['offer_did']
+
+        with open('/tmp/did.txt', 'w') as f:
+            f.write(str(did))
+
+        with open('/tmp/place.txt', 'w') as f:
+            json.dump(place, f)
+
+        with open('/tmp/resource_owner.txt', 'w') as f:
+            f.write(resource_owner)
+
+        with open('/tmp/name.txt', 'w') as f:
+            f.write(name)
+
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(po_id)
+
+    outputs:
+      parameters:
+      - name: place
+        valueFrom:
+          path: /tmp/place.txt
+
+      - name: resource_owner
+        valueFrom:
+          path: /tmp/resource_owner.txt
+
+      - name: did
+        valueFrom:
+          path: /tmp/did.txt
+
+      - name: name
+        valueFrom:
+          path: /tmp/name.txt
+
+      - name: id
+        valueFrom:
+          path: /tmp/id.txt
