@@ -202,6 +202,9 @@ spec:
           template: build-intent-query
         arguments:
           parameters:
+          - name: category
+            value: Edge
+
           - name: place
             value: "{{workflow.parameters.place}}"
           - name: cpu_max
@@ -308,8 +311,7 @@ spec:
           - name: order_id
             value: "{{tasks.snfvo-slice-order-id.outputs.result}}"
 
-      - name: loop-best-offers-resource
-        # loop through 'resource' type offers
+      - name: loop-edge-resources
         dependencies: [get-slice-order-from-catalog, snfvo-vsd-parameters, get-order-from-catalog]
         template: loop-best-offers
         arguments:
