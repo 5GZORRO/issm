@@ -69,7 +69,7 @@ spec:
             value: "{{workflow.parameters.order_id}}"
 
       - name: trigger-orchestration-slice
-        dependencies: [get-slice-order-from-catalog, snfvo-userdata, snfvo-vsd-parameters]
+        dependencies: [get-slice-order-from-catalog, snfvo-userdata, snfvo-vsd-parameters, get-order-from-catalog]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -127,7 +127,7 @@ spec:
               {{tasks.wait-for-status.outputs.parameters.payload}}
 
       - name: add-user-data-vcdn
-        dependencies: [get-order-from-catalog, get-edge-id]
+        dependencies: [get-edge-id]
         templateRef:
           name: workflow-base
           template: add-to-dict
@@ -311,7 +311,7 @@ spec:
           - name: order_id
             value: "{{tasks.snfvo-slice-order-id.outputs.result}}"
 
-      - name: loop-edge-resources
+      - name: loop-edges
         dependencies: [get-slice-order-from-catalog, snfvo-vsd-parameters, get-order-from-catalog]
         template: loop-best-offers
         arguments:
@@ -344,7 +344,7 @@ spec:
       - name: vsd_parameters
     dag:
       tasks:
-      - name: print-selected-offer
+      - name: print-selected-edge
         templateRef:
           name: workflow-base
           template: jq-script
