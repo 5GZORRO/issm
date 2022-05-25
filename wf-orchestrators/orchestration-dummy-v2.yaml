@@ -1,4 +1,4 @@
-# Copyright 2020 - 2021 IBM Corporation
+# Copyright 2020 - 2022 IBM Corporation
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 # Parameters being used:
 #
 # service_owner: stakeholder name
-# resource_owner: this domain
 # vsbName: blue-print name
 # transaction_uuid: transaction uuid
 # product_DID: PO global ID of the service being orchestrated
@@ -49,7 +48,7 @@ spec:
             # myself
             value: "{{workflow.parameters.resource_owner}}"
       
-      - name: nsso-create-vsd
+      - name: dummy-create-vsd
         dependencies: [get-domain-env]
         template: create-descriptor
         arguments:
@@ -64,8 +63,8 @@ spec:
             value: "{{workflow.parameters.vsd_parameters}}"
 
 
-      - name: nsso-create-vsi
-        dependencies: [nsso-create-vsd]
+      - name: dummy-create-vsi
+        dependencies: [dummy-create-vsd]
         template: create-instance
         arguments:
           parameters:
@@ -74,14 +73,14 @@ spec:
           - name: tenant_name
             value: "{{workflow.parameters.service_owner}}"
           - name: vsd_id
-            value: "{{tasks.nsso-create-vsd.outputs.parameters.vsd_id}}"
+            value: "{{tasks.dummy-create-vsd.outputs.parameters.vsd_id}}"
           - name: name
             value: "{{workflow.parameters.vsbName}}"
           - name: userdata
             value: "{{workflow.parameters.userdata}}"
 
-      - name: nsso-poll
-        dependencies: [nsso-create-vsi]
+      - name: dummy-poll
+        dependencies: [dummy-create-vsi]
         template: poll
         arguments:
           parameters:
@@ -92,33 +91,33 @@ spec:
           - name: tenant_name
             value: "{{workflow.parameters.service_owner}}"
           - name: vsi_id
-            value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+            value: "{{tasks.dummy-create-vsi.outputs.parameters.vsi_id}}"
           - name: jq_query
             value: ".status"
           - name: jq_query_value
             value: "INSTANTIATED"
           - name: timeout
-            value: 180
+            value: 10
 
-      - name: nsso-create-vsi-fail
-        dependencies: [nsso-poll]
-        template: nsso-create-vsi-fail
-        when: "{{tasks.nsso-poll.outputs.parameters.status}} == \"TIMEOUT\""
+      - name: dummy-create-vsi-fail
+        dependencies: [dummy-poll]
+        template: dummy-create-vsi-fail
+        when: "{{tasks.dummy-poll.outputs.parameters.status}} == \"TIMEOUT\""
         arguments:
           parameters:
           - name: vsi_id
-            value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+            value: "{{tasks.dummy-create-vsi.outputs.parameters.vsi_id}}"
 
-      - name: nsso-create-vsi-success
-        dependencies: [nsso-poll]
-        template: nsso-create-vsi-success
-        when: "{{tasks.nsso-poll.outputs.parameters.status}} != \"TIMEOUT\""
+      - name: dummy-create-vsi-success
+        dependencies: [dummy-poll]
+        template: dummy-create-vsi-success
+        when: "{{tasks.dummy-poll.outputs.parameters.status}} != \"TIMEOUT\""
         arguments:
           parameters:
           - name: vsi_id
-            value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+            value: "{{tasks.dummy-create-vsi.outputs.parameters.vsi_id}}"
 
-  - name: nsso-create-vsi-success
+  - name: dummy-create-vsi-success
     inputs:
       parameters:
       - name: vsi_id
@@ -202,7 +201,7 @@ spec:
             value: "{{workflow.parameters.kafka_dl_port}}"
 
 
-  - name: nsso-create-vsi-fail
+  - name: dummy-create-vsi-fail
     inputs:
       parameters:
       - name: vsi_id
@@ -286,45 +285,20 @@ spec:
       - name: vsbName
       - name: parameters
     script:
-      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      image: python:alpine3.6
       imagePullPolicy: IfNotPresent
-      command: [sh]
+      command: [python]
       source: |
-        generate_post_descriptor_create()
-        {
-          cat <<EOF
-        {
-          "vsd": {
-            "name": "$1",
-            "version": "0.1",
-            "sst": "EMBB",
-            "managementType": "PROVIDER_MANAGED",
-            "vsBlueprintId": "$2",
-            "qosParameters": {{inputs.parameters.parameters}}
-          },
-          "tenantId": "{{inputs.parameters.tenant_name}}",
-          "isPublic": "true"
-        }
-        EOF
-        }
+        import random
+        import sys
 
-        echo "Log in admin.."
-        curl -X POST -d username=admin -d password=admin -c /tmp/a_c {{inputs.parameters.vs_url}}/login
+        sys.stdout.write('DUMMY Create descriptor..\n')
 
-        echo "Retrieve blueprints.."
-        bp_list="$(curl -b /tmp/a_c {{inputs.parameters.vs_url}}/portal/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
+        vsd_id = str(random.randint(1, 1000))
+        sys.stdout.write('DUMMY instantiate returned: %s \n' % vsd_id)
 
-        bp_id="$(echo $bp_list | jq -r '.[] | select(.name=="{{inputs.parameters.vsbName}}") | .vsBlueprintId')"
-        echo "Blueprint id [$bp_id] matches vsbName [{{inputs.parameters.vsbName}}]"
-
-        echo "Log in {{inputs.parameters.tenant_name}}.."
-        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
-
-        # note: nsso does not accept two descriptors with same name
-        echo "Create descriptor.."
-        uuid=$(cat /proc/sys/kernel/random/uuid)
-        vsd_id="$(curl -b /tmp/t_c --data "$(generate_post_descriptor_create $uuid $bp_id)" -X POST {{inputs.parameters.vs_url}}/portal/catalogue/vsdescriptor --header "Content-Type:application/json" 2>/dev/null)"
-        echo $vsd_id > /tmp/id.txt
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(str(vsd_id))
     outputs:
       parameters:
       - name: vsd_id
@@ -350,30 +324,20 @@ spec:
       - name: name
       - name: userdata
     script:
-      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      image: python:alpine3.6
       imagePullPolicy: IfNotPresent
-      command: [sh]
+      command: [python]
       source: |
-        generate_post_instance_create()
-        {
-          cat <<EOF
-        {
-          "name": "{{inputs.parameters.name}}",
-          "description": "5G Zorro demo slice",
-          "vsdId": "{{inputs.parameters.vsd_id}}",
-          "tenantId": "{{inputs.parameters.tenant_name}}",
-          "userData": {{inputs.parameters.userdata}}
-        }
-        EOF
-        }
+        import random
+        import sys
 
-        echo "Log in {{inputs.parameters.tenant_name}}.."
-        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
+        sys.stdout.write('DUMMY Create instance..\n')
+        vsi_id = str(random.randint(1, 1000))
+        sys.stdout.write('DUMMY instantiate returned: %s \n' % vsi_id)
 
-        echo "Create instance.."
-        vsi_id="$(curl -b /tmp/t_c --data "$(generate_post_instance_create $vsd_id)" -X POST {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs --header "Content-Type:application/json" 2>/dev/null)"
-        echo "NSSO instantiate returned $vsi_id"
-        echo $vsi_id > /tmp/id.txt
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(str(vsi_id))
+
     outputs:
       parameters:
       - name: vsi_id
@@ -405,29 +369,19 @@ spec:
       - name: jq_query_value
       - name: timeout
     script:
-      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      image: python:alpine3.6
       imagePullPolicy: IfNotPresent
-      command: [sh]
+      command: [python]
       source: |
-        echo "Log in {{inputs.parameters.tenant_name}}.."
-        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
-      
-        if [ {{inputs.parameters.poll}} = "true" ]; then
-          i=0
-          until [ "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
-             echo "Poll wait for vsi_id: {{inputs.parameters.vsi_id}}.. (1 sec)"
-             sleep 1
-             i=$((i+1))
-          done
-          if [ $i -gt {{inputs.parameters.timeout}} ]; then
-            echo "TIMEOUT"
-            echo "TIMEOUT" > /tmp/status.txt
-          else
-            echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
-          fi
-        else  
-          echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
-        fi
+        import time
+        import sys
+
+        timeout = "{{inputs.parameters.timeout}}"
+        sys.stdout.write('DUMMY wait: %s \n' % str(timeout))
+        time.sleep(int(timeout))
+        with open('/tmp/status.txt', 'w') as f:
+            f.write("INSTANTIATED")
+
     outputs:
       parameters:
       - name: status

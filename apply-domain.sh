@@ -24,6 +24,8 @@ if [ "$ORCH" = "NSSO" ]; then
     kubectl apply -f $SCRIPT_DIR/wf-orchestrators/orchestration-nsso-v2.yaml -n $MNO_NAMESPACE
 elif [ "$ORCH" = "MEC" ]; then
     kubectl apply -f $SCRIPT_DIR/wf-orchestrators/orchestration-mec-cnmp-v2.yaml -n $MNO_NAMESPACE
+elif [ "$ORCH" = "DUMMY" ]; then
+    kubectl apply -f $SCRIPT_DIR/wf-orchestrators/orchestration-dummy-v2.yaml -n $MNO_NAMESPACE
 else
     echo "Illegal Orchestrator type value: [$1]"
     exit 1
