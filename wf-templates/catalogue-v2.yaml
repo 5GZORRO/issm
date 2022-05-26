@@ -76,7 +76,7 @@ spec:
         storage_max = ""
 
         place = {}
-        resource_owner = ""
+        related_party = ""
 
         # SLA
         sla_did = po.get('serviceLevelAgreement', {}).get('id', "")
@@ -101,9 +101,9 @@ spec:
             r = requests.get(str(href), headers=headers)
             json.dump(r.json(), sys.stdout)
             sys.stdout.write('\n')
-            resource_owner = r.json()['relatedParty'][0]['name']
-            resource_owner = resource_owner.replace('_','-').lower()
-            sys.stdout.write('resource_owner: "%s" \n' % resource_owner)
+            related_party = r.json()['relatedParty'][0]['name']
+            related_party = related_party.replace('_','-').lower()
+            sys.stdout.write('related_party: "%s" \n' % related_party)
 
         if category == 'VNF':
             href = po['productSpecification']['href']
@@ -327,8 +327,8 @@ spec:
         with open('/tmp/place.txt', 'w') as f:
             json.dump(place, f)
 
-        with open('/tmp/resource_owner.txt', 'w') as f:
-            f.write(resource_owner)
+        with open('/tmp/related_party.txt', 'w') as f:
+            f.write(related_party)
 
         with open('/tmp/name.txt', 'w') as f:
             f.write(name)
@@ -376,9 +376,9 @@ spec:
         valueFrom:
           path: /tmp/place.txt
 
-      - name: resource_owner
+      - name: related_party
         valueFrom:
-          path: /tmp/resource_owner.txt
+          path: /tmp/related_party.txt
 
       - name: did
         valueFrom:

@@ -1,0 +1,13 @@
+{
+    "operation": "instantiate",
+    "category": "Network Service",
+    "order_id": "b238504f-f1ea-4e0b-ad9c-44230bde4deb",
+    "related_party": "operator-c",
+    "snfvo_data": {
+      "edge_order_id": "74bafe2d-e26b-4171-9157-fabe0b7d019b",
+      "userdata": {
+       },
+       "vsd_parameters": {
+       }
+    }
+}
