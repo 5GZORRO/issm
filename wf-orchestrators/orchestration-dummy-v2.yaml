@@ -116,11 +116,15 @@ spec:
           parameters:
           - name: vsi_id
             value: "{{tasks.dummy-create-vsi.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.dummy-poll.outputs.parameters.vsi_info}}"
+            
 
   - name: dummy-create-vsi-success
     inputs:
       parameters:
       - name: vsi_id
+      - name: vsi_info
     dag:
       tasks:
       - name: sla-event
@@ -163,7 +167,8 @@ spec:
             value: |
               { "msg_id": "{{workflow.name}}",
                 "vsi_id": "{{inputs.parameters.vsi_id}}",
-                "status": "SUCCESS"
+                "status": "SUCCESS",
+                "vsi_info": {{inputs.parameters.vsi_info}}
               }
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
@@ -389,7 +394,7 @@ spec:
             "vsiId": 17,
             "vsdId": 15,
             "status": "INSTANTIATED",
-            "externalGwAdress": "10.30.6.36",
+            "externalGwAddress": "10.30.6.36",
             "internalVpnSubnets": ["192.168.161.16/28"]
         }
 
@@ -404,5 +409,5 @@ spec:
 
       - name: vsi_info
         valueFrom:
-          path: /tmp/vsi_info.json
+          path: /tmp/vsi_info.txt
           

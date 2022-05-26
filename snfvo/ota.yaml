@@ -141,7 +141,7 @@ spec:
           parameters:
           - name: resource_owner
             # domain's orchestrator
-            value: "{{workflow.get-order-from-catalog.outputs.parameters.related_party}}"
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
 
           - name: vsbName
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
@@ -191,10 +191,12 @@ spec:
 
         payload = {{inputs.parameters.payload}}
 
+        print(payload)
+
         result = {}
-        result['nsmm.remote_gw_address'] = payload['externalGwAddress']
-        result['nsmm.allocated_subnet'] = payload['internalVpnSubnets'][0]
-        result['nsmm.vpn_net'] = payload['internalVpnSubnets'][0]
+        result['nsmm.remote_gw_address'] = payload['vsi_info']['externalGwAddress']
+        result['nsmm.allocated_subnet'] = payload['vsi_info']['internalVpnSubnets'][0]
+        result['nsmm.vpn_net'] = payload['vsi_info']['internalVpnSubnets'][0]
 
         with open('/tmp/dict.txt', 'w') as f:
             json.dump(result, f)
