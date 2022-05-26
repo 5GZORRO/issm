@@ -99,7 +99,7 @@ spec:
             # snfvo_data['vsd_parameters']
             value: "{{tasks.snfvo-vsd-parameters.outputs.result}}"
 
-      - name: wait-for-status
+      - name: wait-for-slice-status
         dependencies: [trigger-orchestration-slice]
         template: consume
         arguments:
@@ -114,7 +114,7 @@ spec:
             value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
 
       - name: get-edge-id
-        dependencies: [wait-for-status]
+        dependencies: [wait-for-slice-status]
         templateRef:
           name: workflow-base
           template: from-key
@@ -124,7 +124,7 @@ spec:
             value: vsi_id
           - name: json_str
             value: |
-              {{tasks.wait-for-status.outputs.parameters.payload}}
+              {{tasks.wait-for-slice-status.outputs.parameters.payload}}
 
       - name: add-user-data-vcdn
         dependencies: [get-edge-id]
@@ -169,6 +169,21 @@ spec:
           - name: vsd_parameters
             # snfvo_data['vsd_parameters']
             value: "{{tasks.snfvo-vsd-parameters.outputs.result}}"
+
+      - name: wait-for-cdn-status
+        dependencies: [trigger-orchestration-vcdn-service]
+        template: consume
+        arguments:
+          parameters:
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-vcdn-service.outputs.parameters.event_uuid}}"
+
 
   - name: scaleout
     steps:
@@ -411,7 +426,7 @@ spec:
             value: "{{inputs.parameters.vsd_parameters}}"
 
 
-      - name: wait-for-status
+      - name: wait-for-slice-status
         dependencies: [trigger-orchestration-slice]
         template: consume
         arguments:
@@ -426,7 +441,7 @@ spec:
             value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
 
       - name: get-edge-id
-        dependencies: [wait-for-status]
+        dependencies: [wait-for-slice-status]
         templateRef:
           name: workflow-base
           template: from-key
@@ -436,7 +451,7 @@ spec:
             value: vsi_id
           - name: json_str
             value: |
-              {{tasks.wait-for-status.outputs.parameters.payload}}
+              {{tasks.wait-for-slice-status.outputs.parameters.payload}}
 
 # ========== Scaleout: Network Service
 
@@ -480,6 +495,20 @@ spec:
             value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
           - name: vsd_parameters
             value: "{{inputs.parameters.vsd_parameters}}"
+
+      - name: wait-for-cdn-status
+        dependencies: [trigger-orchestration-vcdn-service]
+        template: consume
+        arguments:
+          parameters:
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-vcdn-service.outputs.parameters.event_uuid}}"
 
 
   - name: acquire
