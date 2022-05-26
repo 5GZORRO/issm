@@ -25,26 +25,26 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
-      - name: snfvo-userdata
+      - name: snfvo-userdata-edge
         templateRef:
           name: workflow-base
           template: from-key
         arguments:
           parameters:
           - name: key
-            value: userdata
+            value: userdata_edge
           - name: json_str
             value: |
               {{workflow.parameters.snfvo_data}}
 
-      - name: snfvo-vsd-parameters
+      - name: snfvo-userdata-core
         templateRef:
           name: workflow-base
           template: from-key
         arguments:
           parameters:
           - name: key
-            value: vsd_parameters
+            value: userdata_core
           - name: json_str
             value: |
               {{workflow.parameters.snfvo_data}}
@@ -69,7 +69,7 @@ spec:
             value: "{{workflow.parameters.order_id}}"
 
       - name: trigger-orchestration-edge
-        dependencies: [snfvo-userdata, snfvo-vsd-parameters, get-order-from-catalog, get-edge-order-from-catalog]
+        dependencies: [snfvo-userdata-edge, snfvo-userdata-core, get-order-from-catalog, get-edge-order-from-catalog]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -92,13 +92,12 @@ spec:
             value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.place}}"
 
           - name: userdata
-            value: "{{tasks.snfvo-userdata.outputs.result}}"
+            value: "{{tasks.snfvo-userdata-edge.outputs.result}}"
 
           - name: vsd_parameters
-            # snfvo_data['vsd_parameters']
-            value: "{{tasks.snfvo-vsd-parameters.outputs.result}}"
+            value: "{{workflow.parameters.vsd_parameters}}"
 
-      - name: wait-for-status
+      - name: wait-for-edge-status
         dependencies: [trigger-orchestration-edge]
         template: consume
         arguments:
@@ -112,60 +111,28 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-edge.outputs.parameters.event_uuid}}"
 
-      - name: get-status
-        dependencies: [wait-for-status]
-        templateRef:
-          name: workflow-base
-          template: from-key
+      - name: edge-service-attributes
+        dependencies: [wait-for-edge-status]
+        template: edge-service-attributes
         arguments:
           parameters:
-          - name: key
-            value: status
-          - name: json_str
+          - name: payload
             value: |
-              {{tasks.wait-for-status.outputs.parameters.payload}}
-
-      - name: fail
-        dependencies: [get-status]
-        when: "{{tasks.get-status.outputs.result}} == \"FAIL\""
-        templateRef:
-          name: workflow-base
-          template: fail
-
-      - name: get-TODO-id
-        dependencies: [get-status]
-        when: "{{tasks.get-status.outputs.result}} == \"SUCCESS\""
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: vsi_id
-          - name: json_str
-            value: |
-              {{tasks.wait-for-status.outputs.parameters.payload}}
+              {{tasks.wait-for-edge-status.outputs.parameters.payload}}
 
       - name: add-user-data-core
-        dependencies: [get-TODO-id]
+        dependencies: [edge-service-attributes]
         templateRef:
           name: workflow-base
           template: add-to-dict
         arguments:
           parameters:
           - name: dict1
-            value: |
-              { }
+            value: "{{tasks.snfvo-userdata-core.outputs.result}}"
           - name: dict2
-            value: |
-              {
-                "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
-                "transaction_id": "{{workflow.parameters.transaction_uuid}}",
-                "TODO": "{{tasks.get-TODO-id.outputs.result}}"
-              }
+            value: "{{tasks.edge-service-attributes.outputs.parameters.dict}}"
 
-
-      - name: trigger-orchestration-core-service
+      - name: trigger-orchestration-core
         dependencies: [add-user-data-core]
         templateRef:
           name: workflow-orchestrator
@@ -180,10 +147,10 @@ spec:
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
 
           - name: product_DID
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
+            value: ""
 
           - name: sla_DID
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
+            value: ""
 
           - name: place
             value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
@@ -192,9 +159,53 @@ spec:
             value: "{{tasks.add-user-data-core.outputs.parameters.dict}}"
 
           - name: vsd_parameters
-            # snfvo_data['vsd_parameters']
-            value: "{{tasks.snfvo-vsd-parameters.outputs.result}}"
+            value: "{{workflow.parameters.vsd_parameters}}"
 
+      - name: wait-for-core-status
+        dependencies: [trigger-orchestration-core]
+        template: consume
+        arguments:
+          parameters:
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-core.outputs.parameters.event_uuid}}"
+
+
+  - name: edge-service-attributes
+    inputs:
+      parameters:
+      - name: payload
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import os
+        import sys
+
+        payload = {{inputs.parameters.payload}}
+
+        result = {}
+        result['nsmm.remote_gw_address'] = payload['externalGwAddress']
+        result['nsmm.allocated_subnet'] = payload['internalVpnSubnets'][0]
+        result['nsmm.vpn_net'] = payload['internalVpnSubnets'][0]
+
+        with open('/tmp/dict.txt', 'w') as f:
+            json.dump(result, f)
+
+    outputs:
+      parameters:
+      - name: dict
+        valueFrom:
+          path: /tmp/dict.txt
+    
+    
   - name: consume
     # Consumes a message from kafka broker of a matched event_uuid
     #

@@ -373,6 +373,7 @@ spec:
       imagePullPolicy: IfNotPresent
       command: [python]
       source: |
+        import json
         import time
         import sys
 
@@ -382,8 +383,26 @@ spec:
         with open('/tmp/status.txt', 'w') as f:
             f.write("INSTANTIATED")
 
+        vsi_info = {
+            "name": "DUMMY name",
+            "description": "DUMMY description",
+            "vsiId": 17,
+            "vsdId": 15,
+            "status": "INSTANTIATED",
+            "externalGwAdress": "10.30.6.36",
+            "internalVpnSubnets": ["192.168.161.16/28"]
+        }
+
+        with open('/tmp/vsi_info.txt', 'w') as f:
+            json.dump(vsi_info, f)
+
     outputs:
       parameters:
       - name: status
         valueFrom:
           path: /tmp/status.txt
+
+      - name: vsi_info
+        valueFrom:
+          path: /tmp/vsi_info.json
+          

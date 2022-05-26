@@ -117,11 +117,14 @@ spec:
           parameters:
           - name: vsi_id
             value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.nsso-poll.outputs.parameters.vsi_info}}"
 
   - name: nsso-create-vsi-success
     inputs:
       parameters:
       - name: vsi_id
+      - name: vsi_info
     dag:
       tasks:
       - name: sla-event
@@ -164,7 +167,8 @@ spec:
             value: |
               { "msg_id": "{{workflow.name}}",
                 "vsi_id": "{{inputs.parameters.vsi_id}}",
-                "status": "SUCCESS"
+                "status": "SUCCESS",
+                "vsi_info": {{inputs.parameters.vsi_info}}
               }
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
@@ -412,6 +416,7 @@ spec:
         echo "Log in {{inputs.parameters.tenant_name}}.."
         curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
       
+        echo "{}" | jq . > /tmp/vsi_info.json
         if [ {{inputs.parameters.poll}} = "true" ]; then
           i=0
           until [ "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
@@ -424,12 +429,19 @@ spec:
             echo "TIMEOUT" > /tmp/status.txt
           else
             echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+            echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq . " > /tmp/vsi_info.json
           fi
         else  
           echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+          echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq ." > /tmp/vsi_info.json
         fi
     outputs:
       parameters:
       - name: status
         valueFrom:
           path: /tmp/status.txt
+
+      - name: vsi_info
+        valueFrom:
+          path: /tmp/vsi_info.json
+          
