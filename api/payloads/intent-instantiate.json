@@ -3,22 +3,6 @@
     "category": "Network Service",
     "order_id": "99b3faeb-d06e-4658-a8ce-24b69e223e72",
     "related_party": "operator-a",
-    "place": {
-      "city": "Barcelona",
-      "country": "Spain",
-      "locality": "Barcelona",
-      "geographicLocation": {
-        "name": "Barcelona i2CAT Area, Spain ",
-        "geometryType": "string",
-        "geometry": [
-          {
-            "x": "41.3879",
-            "y": "2.1699",
-            "z": "3388.0"
-          }
-        ]
-      }
-    },
     "snfvo_data": {
       "slice_order_id": "cab95819-af13-46ad-b249-7a1a43e32757",
       "userdata": {

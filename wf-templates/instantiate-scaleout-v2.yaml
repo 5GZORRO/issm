@@ -75,8 +75,6 @@ spec:
           parameters:
           - name: service_owner
             value: "{{workflow.parameters.service_owner}}"
-          - name: place
-            value: "{{workflow.parameters.place}}"
           - name: order_id
             value: "{{workflow.parameters.order_id}}"
           - name: category
@@ -137,7 +135,6 @@ spec:
     inputs:
       parameters:
       - name: service_owner
-      - name: place
       - name: order_id
       - name: category
       - name: elma_url
@@ -161,7 +158,6 @@ spec:
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}",
                   "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                   "operation": "instantiate", "sub_operation": "INSTANTIATE_SERVICE",
-                  "place": {{inputs.parameters.place}},
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "order_id": "{{inputs.parameters.order_id}}",
                   "category": "{{inputs.parameters.category}}",

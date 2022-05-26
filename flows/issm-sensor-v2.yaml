@@ -460,7 +460,10 @@ spec:
             - src:
                 dependencyName: test-dep
                 dataKey: body.place
-                value: DEFAULT
+                value: |
+                  {
+                  }
+                
               dest: spec.arguments.parameters.21.value
 
             - src:

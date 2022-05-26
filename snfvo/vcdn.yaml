@@ -89,7 +89,7 @@ spec:
             value: ""
 
           - name: place
-            value: "{{workflow.parameters.place}}"
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
 
           - name: userdata
             # slice userdata is at snfvo_data['userdata']
@@ -162,7 +162,7 @@ spec:
           - name: sla_DID
             value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
           - name: place
-            value: "{{workflow.parameters.place}}"
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
           - name: userdata
             value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
 
