@@ -24,8 +24,6 @@
 # service_owner: stakeholder name
 # vsbName: blue-print name
 # transaction_uuid: transaction uuid
-# product_DID: PO global ID of the service being orchestrated
-# sla_DID: SLA global ID of the SLA of the service
 #
 #
 apiVersion: argoproj.io/v1alpha1
@@ -127,31 +125,6 @@ spec:
       - name: vsi_info
     dag:
       tasks:
-      - name: sla-event
-        when: "\"{{workflow.parameters.sla_DID}}\" != \"\""
-        templateRef:
-          name: workflow-base
-          template: produce
-        arguments:
-          parameters:
-          - name: data
-            value: |
-              { "eventType": "new_SLA",
-                "transactionID": "{{workflow.parameters.transaction_uuid}}",
-                "productID": "{{workflow.parameters.product_DID}}",
-                "SLAID": "{{workflow.parameters.sla_DID}}",
-                "instanceID": "{{inputs.parameters.vsi_id}}",
-                "place": {{workflow.parameters.place}},
-                "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
-                "topic": "isbp-topic-out"
-              }
-          - name: kafka_topic
-            value: "isbp-topic"
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_dl_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_dl_port}}"
-
       - name: publish-status
         templateRef:
           name: workflow-base
@@ -172,38 +145,6 @@ spec:
               }
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
-
-      - name: sla-breach-data
-        templateRef:
-          name: workflow-base
-          template: sla-breach-data
-        arguments:
-          parameters:
-          - name: sla_breach
-            value: "{{workflow.parameters.sla_breach}}"
-
-      - name: sla-send-ack
-        # do this only if in SLA violation context
-        dependencies: [sla-breach-data]
-        when: "{{tasks.sla-breach-data.outputs.parameters.applicable}} == true"
-        templateRef:
-          name: workflow-base
-          template: produce
-        arguments:
-          parameters:
-          - name: data
-            value: |
-              { "eventType": "new_SLA_ACK",
-                "transactionID": "{{tasks.sla-breach-data.outputs.parameters.transaction_uuid}}",
-                "productID": "{{tasks.sla-breach-data.outputs.parameters.product_DID}}",
-                "status": "COMPLETED"
-              }
-          - name: kafka_topic
-            value: "isbp-topic"
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_dl_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_dl_port}}"
 
 
   - name: dummy-create-vsi-fail
@@ -232,40 +173,8 @@ spec:
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
 
-      - name: sla-breach-data
-        templateRef:
-          name: workflow-base
-          template: sla-breach-data
-        arguments:
-          parameters:
-          - name: sla_breach
-            value: "{{workflow.parameters.sla_breach}}"
-
-      - name: sla-send-ack
-        # do this only if in SLA violation context
-        dependencies: [sla-breach-data]
-        when: "{{tasks.sla-breach-data.outputs.parameters.applicable}} == true"
-        templateRef:
-          name: workflow-base
-          template: produce
-        arguments:
-          parameters:
-          - name: data
-            value: |
-              { "eventType": "new_SLA_ACK",
-                "transactionID": "{{tasks.sla-breach-data.outputs.parameters.transaction_uuid}}",
-                "productID": "{{tasks.sla-breach-data.outputs.parameters.product_DID}}",
-                "status": "COMPLETED"
-              }
-          - name: kafka_topic
-            value: "isbp-topic"
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_dl_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_dl_port}}"
-
       - name: fail
-        dependencies: [publish-status, sla-send-ack]
+        dependencies: [publish-status]
         templateRef:
           name: workflow-base
           template: fail

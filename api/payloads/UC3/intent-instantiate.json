@@ -5,7 +5,7 @@
     "related_party": "operator-a",
     "snfvo_data": {
       "slice_order_id": "cab95819-af13-46ad-b249-7a1a43e32757",
-      "userdata": {
+      "userdata_slice": {
         "sm.plmn_id": "00103",
         "sm.imsi_list": "001035432100005,001035432000003",
         "sm.apn": "Zorro_vCDN"
