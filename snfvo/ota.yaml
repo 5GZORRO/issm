@@ -13,7 +13,7 @@ spec:
   - name: instantiate-service
     dag:
       tasks:
-      - name: snfvo-edge-order-id
+      - name: edge-order-id
         templateRef:
           name: workflow-base
           template: from-key
@@ -25,7 +25,7 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
-      - name: snfvo-userdata-edge
+      - name: userdata-edge
         templateRef:
           name: workflow-base
           template: from-key
@@ -37,7 +37,7 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
-      - name: snfvo-userdata-core
+      - name: userdata-core
         templateRef:
           name: workflow-base
           template: from-key
@@ -50,14 +50,14 @@ spec:
               {{workflow.parameters.snfvo_data}}
 
       - name: get-edge-order-from-catalog
-        dependencies: [snfvo-edge-order-id]
+        dependencies: [edge-order-id]
         templateRef:
           name: workflow-catalog
           template: get-order-from-catalog
         arguments:
           parameters:
           - name: order_id
-            value: "{{tasks.snfvo-edge-order-id.outputs.result}}"
+            value: "{{tasks.edge-order-id.outputs.result}}"
 
       - name: get-order-from-catalog
         templateRef:
@@ -69,7 +69,7 @@ spec:
             value: "{{workflow.parameters.order_id}}"
 
       - name: trigger-orchestration-edge
-        dependencies: [snfvo-userdata-edge, snfvo-userdata-core, get-order-from-catalog, get-edge-order-from-catalog]
+        dependencies: [userdata-edge, userdata-core, get-order-from-catalog, get-edge-order-from-catalog]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -92,7 +92,7 @@ spec:
             value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.place}}"
 
           - name: userdata
-            value: "{{tasks.snfvo-userdata-edge.outputs.result}}"
+            value: "{{tasks.userdata-edge.outputs.result}}"
 
           - name: vsd_parameters
             value: "{{workflow.parameters.vsd_parameters}}"
@@ -128,7 +128,7 @@ spec:
         arguments:
           parameters:
           - name: dict1
-            value: "{{tasks.snfvo-userdata-core.outputs.result}}"
+            value: "{{tasks.userdata-core.outputs.result}}"
           - name: dict2
             value: "{{tasks.edge-service-attributes.outputs.parameters.dict}}"
 
