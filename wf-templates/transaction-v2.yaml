@@ -49,29 +49,24 @@ spec:
       command: [sh]
       source: |
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="service_owner").value' > /tmp/service_owner.txt
-        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="elma_url").value' > /tmp/elma_url.txt
-        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="catalogue_url").value' > /tmp/catalogue_url.txt
-        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="trmf_url").value' > /tmp/trmf_url.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="order_id").value' > /tmp/order_id.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="category").value' > /tmp/category.txt
         echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="snfvo_data").value' > /tmp/snfvo_data.txt
+
+        echo "service_owner:"
+        cat /tmp/service_owner.txt
+
+        echo "order_id:"
+        cat /tmp/order_id.txt
+
+        echo "snfvo_data:"
+        cat /tmp/snfvo_data.txt
+
     outputs:
       parameters:
       - name: service_owner
         valueFrom:
           path: /tmp/service_owner.txt
-
-      - name: elma_url
-        valueFrom:
-          path: /tmp/elma_url.txt
-
-      - name: catalogue_url
-        valueFrom:
-          path: /tmp/catalogue_url.txt
-
-      - name: trmf_url
-        valueFrom:
-          path: /tmp/trmf_url.txt
 
       - name: order_id
         valueFrom:
