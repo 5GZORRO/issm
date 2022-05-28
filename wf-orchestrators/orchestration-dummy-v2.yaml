@@ -46,7 +46,7 @@ spec:
             # myself
             value: "{{workflow.parameters.resource_owner}}"
       
-      - name: dummy-create-vsd
+      - name: create-vsd
         dependencies: [get-domain-env]
         template: create-descriptor
         arguments:
@@ -61,8 +61,8 @@ spec:
             value: "{{workflow.parameters.vsd_parameters}}"
 
 
-      - name: dummy-create-vsi
-        dependencies: [dummy-create-vsd]
+      - name: create-vsi
+        dependencies: [create-vsd]
         template: create-instance
         arguments:
           parameters:
@@ -71,14 +71,14 @@ spec:
           - name: tenant_name
             value: "{{workflow.parameters.service_owner}}"
           - name: vsd_id
-            value: "{{tasks.dummy-create-vsd.outputs.parameters.vsd_id}}"
+            value: "{{tasks.create-vsd.outputs.parameters.vsd_id}}"
           - name: name
             value: "{{workflow.parameters.vsbName}}"
           - name: userdata
             value: "{{workflow.parameters.userdata}}"
 
-      - name: dummy-poll
-        dependencies: [dummy-create-vsi]
+      - name: poll
+        dependencies: [create-vsi]
         template: poll
         arguments:
           parameters:
@@ -89,7 +89,7 @@ spec:
           - name: tenant_name
             value: "{{workflow.parameters.service_owner}}"
           - name: vsi_id
-            value: "{{tasks.dummy-create-vsi.outputs.parameters.vsi_id}}"
+            value: "{{tasks.create-vsi.outputs.parameters.vsi_id}}"
           - name: jq_query
             value: ".status"
           - name: jq_query_value
@@ -97,28 +97,28 @@ spec:
           - name: timeout
             value: 10
 
-      - name: dummy-create-vsi-fail
-        dependencies: [dummy-poll]
-        template: dummy-create-vsi-fail
-        when: "{{tasks.dummy-poll.outputs.parameters.status}} == \"TIMEOUT\""
+      - name: create-vsi-fail
+        dependencies: [poll]
+        template: create-vsi-fail
+        when: "{{tasks.poll.outputs.parameters.status}} == \"TIMEOUT\""
         arguments:
           parameters:
           - name: vsi_id
-            value: "{{tasks.dummy-create-vsi.outputs.parameters.vsi_id}}"
+            value: "{{tasks.create-vsi.outputs.parameters.vsi_id}}"
 
-      - name: dummy-create-vsi-success
-        dependencies: [dummy-poll]
-        template: dummy-create-vsi-success
-        when: "{{tasks.dummy-poll.outputs.parameters.status}} != \"TIMEOUT\""
+      - name: create-vsi-success
+        dependencies: [poll]
+        template: create-vsi-success
+        when: "{{tasks.poll.outputs.parameters.status}} != \"TIMEOUT\""
         arguments:
           parameters:
           - name: vsi_id
-            value: "{{tasks.dummy-create-vsi.outputs.parameters.vsi_id}}"
+            value: "{{tasks.create-vsi.outputs.parameters.vsi_id}}"
           - name: vsi_info
-            value: "{{tasks.dummy-poll.outputs.parameters.vsi_info}}"
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
             
 
-  - name: dummy-create-vsi-success
+  - name: create-vsi-success
     inputs:
       parameters:
       - name: vsi_id
@@ -147,7 +147,7 @@ spec:
             value: "issm-in-{{workflow.parameters.service_owner}}"
 
 
-  - name: dummy-create-vsi-fail
+  - name: create-vsi-fail
     inputs:
       parameters:
       - name: vsi_id
@@ -206,10 +206,10 @@ spec:
         import random
         import sys
 
-        sys.stdout.write('DUMMY Create descriptor..\n')
+        sys.stdout.write('Create descriptor..\n')
 
         vsd_id = str(random.randint(1, 1000))
-        sys.stdout.write('DUMMY instantiate returned: %s \n' % vsd_id)
+        sys.stdout.write('Created descriptor with vsd_id: %s \n' % vsd_id)
 
         with open('/tmp/id.txt', 'w') as f:
             f.write(str(vsd_id))
@@ -245,9 +245,9 @@ spec:
         import random
         import sys
 
-        sys.stdout.write('DUMMY Create instance..\n')
+        sys.stdout.write('Create instance..\n')
         vsi_id = str(random.randint(1, 1000))
-        sys.stdout.write('DUMMY instantiate returned: %s \n' % vsi_id)
+        sys.stdout.write('Creating service instance with vsi_id: %s \n' % vsi_id)
 
         with open('/tmp/id.txt', 'w') as f:
             f.write(str(vsi_id))
@@ -292,14 +292,20 @@ spec:
         import sys
 
         timeout = "{{inputs.parameters.timeout}}"
-        sys.stdout.write('DUMMY wait: %s \n' % str(timeout))
+        name = "{{workflow.parameters.vsbName}}"
+        status = "INSTANTIATED"
+
+        sys.stdout.write('Waiting: %s \n' % str(timeout))
         time.sleep(int(timeout))
+
+        sys.stdout.write('Poll completed with status: %s \n' % status)
+
         with open('/tmp/status.txt', 'w') as f:
-            f.write("INSTANTIATED")
+            f.write(status)
 
         vsi_info = {
-            "name": "DUMMY name",
-            "description": "DUMMY description",
+            "name": name,
+            "description": name,
             "vsiId": 17,
             "vsdId": 15,
             "status": "INSTANTIATED",
