@@ -83,25 +83,18 @@ Log into MNO kuberneters master
 
 Assuming MNO is called `operator-a`
 
-export it
+export
 
 ```
 export MNO_NAME=operator-a
+export MNO_NAMESPACE=domain-$MNO_NAME
 ```
-
 
 **Note:** ensure to define namespace with `domain-` prefix
 
 ```
-kubectl create namespace domain-operator-a
+kubectl create namespace $MNO_NAMESPACE
 ```
-
-export it
-
-```
-export MNO_NAMESPACE=domain-operator-a
-```
-
 
 ### Add roles to MNO namespace
 
