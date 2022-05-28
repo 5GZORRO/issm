@@ -37,18 +37,6 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
-      - name: userdata-core
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: userdata_core
-          - name: json_str
-            value: |
-              {{workflow.parameters.snfvo_data}}
-
       - name: get-edge-order-from-catalog
         dependencies: [edge-order-id]
         templateRef:
@@ -59,17 +47,8 @@ spec:
           - name: order_id
             value: "{{tasks.edge-order-id.outputs.result}}"
 
-      - name: get-order-from-catalog
-        templateRef:
-          name: workflow-catalog
-          template: get-order-from-catalog
-        arguments:
-          parameters:
-          - name: order_id
-            value: "{{workflow.parameters.order_id}}"
-
       - name: trigger-orchestration-edge
-        dependencies: [userdata-edge, userdata-core, get-order-from-catalog, get-edge-order-from-catalog]
+        dependencies: [userdata-edge, get-edge-order-from-catalog]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -111,7 +90,7 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-edge.outputs.parameters.event_uuid}}"
 
-      - name: edge-service-attributes
+      - name: status-attributes
         dependencies: [wait-for-edge-status]
         template: edge-service-attributes
         arguments:
@@ -120,8 +99,31 @@ spec:
             value: |
               {{tasks.wait-for-edge-status.outputs.parameters.payload}}
 
+      - name: get-order-from-catalog
+        dependencies: [wait-for-edge-status]
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: userdata-core
+        dependencies: [wait-for-edge-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: userdata_core
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
       - name: add-user-data-core
-        dependencies: [edge-service-attributes]
+        dependencies: [status-attributes, userdata-core]
         templateRef:
           name: workflow-base
           template: add-to-dict
@@ -130,10 +132,10 @@ spec:
           - name: dict1
             value: "{{tasks.userdata-core.outputs.result}}"
           - name: dict2
-            value: "{{tasks.edge-service-attributes.outputs.parameters.dict}}"
+            value: "{{tasks.status-attributes.outputs.parameters.dict}}"
 
       - name: trigger-orchestration-core
-        dependencies: [add-user-data-core]
+        dependencies: [add-user-data-core, get-order-from-catalog]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
