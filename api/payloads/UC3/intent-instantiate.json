@@ -11,7 +11,7 @@
         "sm.apn": "Zorro_vCDN"
        },
        "vsd_parameters": {
-        "users": "10"
+        "users": "1000"
        }
     }
 }
