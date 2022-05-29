@@ -76,7 +76,7 @@ spec:
           - name: vsd_parameters
             value: "{{workflow.parameters.vsd_parameters}}"
 
-      - name: wait-for-edge-status
+      - name: wait-for-status
         dependencies: [trigger-orchestration-edge]
         template: consume
         arguments:
@@ -90,27 +90,49 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-edge.outputs.parameters.event_uuid}}"
 
+      - name: edge-status
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+          
+      - name: edge-status-success
+        dependencies: [edge-status]
+        template: edge-status-success
+        when: "{{tasks.edge-status.outputs.result}} == \"SUCCESS\""
+        arguments:
+          parameters:
+          - name: payload
+            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+
+      - name: edge-status-fail
+        dependencies: [edge-status]
+        template: edge-status-fail
+        when: "{{tasks.edge-status.outputs.result}} == \"FAIL\""
+
+
+  - name: edge-status-success
+    inputs:
+      parameters:
+      - name: payload
+    dag:
+      tasks:
       - name: status-attributes
-        dependencies: [wait-for-edge-status]
         template: edge-service-attributes
         arguments:
           parameters:
           - name: payload
             value: |
-              {{tasks.wait-for-edge-status.outputs.parameters.payload}}
-
-      - name: get-order-from-catalog
-        dependencies: [wait-for-edge-status]
-        templateRef:
-          name: workflow-catalog
-          template: get-order-from-catalog
-        arguments:
-          parameters:
-          - name: order_id
-            value: "{{workflow.parameters.order_id}}"
+              {{inputs.parameters.payload}}
 
       - name: userdata-core
-        dependencies: [wait-for-edge-status]
         templateRef:
           name: workflow-base
           template: from-key
@@ -133,6 +155,15 @@ spec:
             value: "{{tasks.userdata-core.outputs.result}}"
           - name: dict2
             value: "{{tasks.status-attributes.outputs.parameters.dict}}"
+
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
 
       - name: trigger-orchestration-core
         dependencies: [add-user-data-core, get-order-from-catalog]
@@ -163,7 +194,7 @@ spec:
           - name: vsd_parameters
             value: "{{workflow.parameters.vsd_parameters}}"
 
-      - name: wait-for-core-status
+      - name: wait-for-status
         dependencies: [trigger-orchestration-core]
         template: consume
         arguments:
@@ -176,6 +207,33 @@ spec:
             value: "issm-in-{{workflow.parameters.service_owner}}"
           - name: msg_id
             value: "{{tasks.trigger-orchestration-core.outputs.parameters.event_uuid}}"
+
+      - name: core-status
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: core-status-fail
+        dependencies: [core-status]
+        template: status-fail
+        when: "{{tasks.core-status.outputs.result}} == \"FAIL\""
+
+
+  - name: status-fail
+    dag:
+      tasks:
+      - name: fail
+        templateRef:
+          name: workflow-base
+          template: fail
 
 
   - name: edge-service-attributes
