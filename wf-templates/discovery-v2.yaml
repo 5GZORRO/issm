@@ -87,8 +87,10 @@ spec:
       source: |
         import json
         import sys
-
-        po = {{inputs.parameters.resource}}
+        # po is an element received from sensor which is a flattened json
+        # none-pythonic json (null, true, false, ..)
+        po = '{{inputs.parameters.resource}}'
+        po_json = json.loads(po)
 
         name = ""
         po_id = ""
@@ -97,24 +99,24 @@ spec:
         did = ""
 
         # Name
-        name = po['offer_object']['name']
+        name = po_json['offer_object']['name']
         sys.stdout.write('name: "%s" \n' % name)
 
         # Id
-        po_id = po['offer_object']['id']
+        po_id = po_json['offer_object']['id']
         sys.stdout.write('id: "%s" \n' % po_id)
 
         # Place
-        place = po['offer_object']['place'][0]
+        place = po_json['offer_object']['place'][0]
         sys.stdout.write('place: "%s" \n' % place)
 
         # resource owner
-        resource_owner = po['offer_object']['productSpecification']['relatedParty'][0]['name']
+        resource_owner = po_json['offer_object']['productSpecification']['relatedParty'][0]['name']
         resource_owner = resource_owner.replace('_','-').lower()
         sys.stdout.write('resource_owner: "%s" \n' % resource_owner)
 
         # DID
-        did = po['offer_did']
+        did = po_json['offer_did']
 
         with open('/tmp/did.txt', 'w') as f:
             f.write(str(did))
