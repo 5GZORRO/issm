@@ -96,19 +96,29 @@ spec:
           - name: jq_query_value
             value: "INSTANTIATED"
           - name: timeout
-            value: 180
+            value: 10
+
+      - name: prepare-vsi-info
+        dependencies: [nsso-poll]
+        template: prepare-vsi-info
+        arguments:
+          parameters:
+          - name: vsi_info
+            value: "{{tasks.nsso-poll.outputs.parameters.vsi_info}}"
 
       - name: nsso-create-vsi-fail
-        dependencies: [nsso-poll]
+        dependencies: [prepare-vsi-info]
         template: nsso-create-vsi-fail
         when: "{{tasks.nsso-poll.outputs.parameters.status}} == \"TIMEOUT\""
         arguments:
           parameters:
           - name: vsi_id
             value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.prepare-vsi-info.outputs.result}}"
 
       - name: nsso-create-vsi-success
-        dependencies: [nsso-poll]
+        dependencies: [prepare-vsi-info]
         template: nsso-create-vsi-success
         when: "{{tasks.nsso-poll.outputs.parameters.status}} != \"TIMEOUT\""
         arguments:
@@ -116,7 +126,8 @@ spec:
           - name: vsi_id
             value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
           - name: vsi_info
-            value: "{{tasks.nsso-poll.outputs.parameters.vsi_info}}"
+            value: "{{tasks.prepare-vsi-info.outputs.result}}"
+
 
   - name: nsso-create-vsi-success
     inputs:
@@ -151,6 +162,7 @@ spec:
     inputs:
       parameters:
       - name: vsi_id
+      - name: vsi_info      
     dag:
       tasks:
       - name: publish-status
@@ -168,7 +180,8 @@ spec:
             value: |
               { "msg_id": "{{workflow.name}}",
                 "vsi_id": "{{inputs.parameters.vsi_id}}",
-                "status": "FAIL"
+                "status": "FAIL",
+                "vsi_info": {{inputs.parameters.vsi_info}}
               }
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
@@ -322,14 +335,17 @@ spec:
       imagePullPolicy: IfNotPresent
       command: [sh]
       source: |
+      source: |
         echo "Log in {{inputs.parameters.tenant_name}}.."
         curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
-      
-        echo "{}" | jq . > /tmp/vsi_info.json
+
+        echo "{}" > /tmp/vsi_info.txt
         if [ {{inputs.parameters.poll}} = "true" ]; then
           i=0
           until [ "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
+             echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
              echo "Poll wait for vsi_id: {{inputs.parameters.vsi_id}}.. (1 sec)"
+             echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})"
              sleep 1
              i=$((i+1))
           done
@@ -338,11 +354,13 @@ spec:
             echo "TIMEOUT" > /tmp/status.txt
           else
             echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
-            echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq . " > /tmp/vsi_info.json
+            echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
+            echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})"
           fi
-        else  
+        else
           echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
-          echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq ." > /tmp/vsi_info.json
+          echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
+          echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})"
         fi
     outputs:
       parameters:
@@ -352,5 +370,22 @@ spec:
 
       - name: vsi_info
         valueFrom:
-          path: /tmp/vsi_info.json
-          
+          path: /tmp/vsi_info.txt
+
+
+  - name: prepare-vsi-info
+    inputs:
+      parameters:
+      - name: vsi_info
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+
+        vsi_info = '{{inputs.parameters.vsi_info}}'
+        #vsi_info = str("{{inputs.parameters.vsi_info}}")
+        vsi_info_json = json.loads(vsi_info)
+        print(vsi_info_json)
+        #print(vsi_info_json)

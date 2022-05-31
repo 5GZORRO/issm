@@ -344,7 +344,9 @@ spec:
                 break
 
         with open('/tmp/payload.txt', 'w') as f:
-            json.dump(payload, f)
+            # don't dump it - keep its format so that other python steps can parse it
+            f.write(str(payload))
+            #json.dump(payload, f)
 
     outputs:
       parameters:
