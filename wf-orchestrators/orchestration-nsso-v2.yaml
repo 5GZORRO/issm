@@ -79,6 +79,7 @@ spec:
             value: "{{workflow.parameters.userdata}}"
 
       - name: nsso-poll
+        # TODO: re-write this to python so that all steps are aligned with json format
         dependencies: [nsso-create-vsi]
         template: poll
         arguments:
@@ -96,9 +97,12 @@ spec:
           - name: jq_query_value
             value: "INSTANTIATED"
           - name: timeout
-            value: 10
+            # polls every 10s
+            value: 18
 
       - name: prepare-vsi-info
+        # steps to conver a flattened none-pythonic 'json' string (i.e. with null value), into
+        # pythonic json for other python steps to consume
         dependencies: [nsso-poll]
         template: prepare-vsi-info
         arguments:
@@ -335,7 +339,8 @@ spec:
       imagePullPolicy: IfNotPresent
       command: [sh]
       source: |
-      source: |
+        # possible string to be written to /tmp/vsi_info.txt
+        # {"vsiId":"123","name":"firmware_agent","description":"5G Zorro demo slice","vsdId":"122","status":"FAILED","errorMessage":null,"externalInterconnections":[],"externalGwAddress":"10.30.6.8","allocatedVlSubnets":{"vpn_net":"192.168.161.0/28","app_net":"192.168.161.16/28"},"internalVpnSubnets":[],"internalInterconnections":{}}
         echo "Log in {{inputs.parameters.tenant_name}}.."
         curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
 
@@ -344,9 +349,9 @@ spec:
           i=0
           until [ "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
              echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
-             echo "Poll wait for vsi_id: {{inputs.parameters.vsi_id}}.. (1 sec)"
+             echo "Poll wait for vsi_id: {{inputs.parameters.vsi_id}}.. (10 sec)"
              echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})"
-             sleep 1
+             sleep 10
              i=$((i+1))
           done
           if [ $i -gt {{inputs.parameters.timeout}} ]; then
@@ -384,8 +389,8 @@ spec:
       source: |
         import json
 
+        # It is already a 'string' just wrap it with pythonic quotes and "print" it as
+        # json so that null turns into pythonic None (for other pythonic steps to consume)
         vsi_info = '{{inputs.parameters.vsi_info}}'
-        #vsi_info = str("{{inputs.parameters.vsi_info}}")
         vsi_info_json = json.loads(vsi_info)
         print(vsi_info_json)
-        #print(vsi_info_json)
