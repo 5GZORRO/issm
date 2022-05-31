@@ -18,6 +18,9 @@
         "cp_address.core.vpn_net_core.cp_int": "192.168.161.50",
         "cp_address.gw.vpn_net_core.cp_int": "192.168.161.51",
         "cp_address.ueransim.vpn_net_core.cp_int": "192.168.161.52"
+      },
+      "vsd_parameters": {
+        "users": "1000"
       }
     }
 }

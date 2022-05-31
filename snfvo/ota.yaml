@@ -37,6 +37,19 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
+      - name: vsd-parameters
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+
       - name: get-edge-order-from-catalog
         dependencies: [edge-order-id]
         templateRef:
@@ -48,7 +61,7 @@ spec:
             value: "{{tasks.edge-order-id.outputs.result}}"
 
       - name: trigger-orchestration-edge
-        dependencies: [userdata-edge, get-edge-order-from-catalog]
+        dependencies: [userdata-edge, get-edge-order-from-catalog, vsd-parameters]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -74,7 +87,8 @@ spec:
             value: "{{tasks.userdata-edge.outputs.result}}"
 
           - name: vsd_parameters
-            value: "{{workflow.parameters.vsd_parameters}}"
+            # snfvo_data['vsd_parameters']
+            value: "{{tasks.vsd-parameters.outputs.result}}"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-edge]
@@ -144,6 +158,19 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
+      - name: vsd-parameters
+        dependencies: [add-user-data-vcdn]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
       - name: add-user-data-core
         dependencies: [status-attributes, userdata-core]
         templateRef:
@@ -166,7 +193,7 @@ spec:
             value: "{{workflow.parameters.order_id}}"
 
       - name: trigger-orchestration-core
-        dependencies: [add-user-data-core, get-order-from-catalog]
+        dependencies: [add-user-data-core, get-order-from-catalog, vsd-parameters]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -192,7 +219,8 @@ spec:
             value: "{{tasks.add-user-data-core.outputs.parameters.dict}}"
 
           - name: vsd_parameters
-            value: "{{workflow.parameters.vsd_parameters}}"
+            # snfvo_data['vsd_parameters']
+            value: "{{tasks.vsd-parameters.outputs.result}}"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-core]
