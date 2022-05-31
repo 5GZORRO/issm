@@ -38,13 +38,13 @@ spec:
                   "catalogue_url": "http://172.28.3.15:31080",
                   "elma_url": "http://172.28.3.15:30880",
                   "trmf_url": "http://172.28.3.15:31113",
-                  "vs_url": "http://172.28.3.15:31082"
+                  "vs_url": "http://10.0.4.34:8083"
                 },
                 "operator-b": {
                   "catalogue_url": "http://172.28.3.15:32080",
                   "elma_url": "http://172.28.3.15:31880",
                   "trmf_url": "http://172.28.3.15:31114",
-                  "vs_url": "http://172.28.3.15:32082"
+                  "vs_url": "http://10.0.4.34:8082"
                 },
                 "operator-c": {
                   "catalogue_url": "http://172.28.3.15:32180",
