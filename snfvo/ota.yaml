@@ -159,7 +159,6 @@ spec:
               {{workflow.parameters.snfvo_data}}
 
       - name: vsd-parameters
-        dependencies: [add-user-data-vcdn]
         templateRef:
           name: workflow-base
           template: from-key
