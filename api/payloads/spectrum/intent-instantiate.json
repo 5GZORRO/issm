@@ -6,7 +6,7 @@
         "userdata_slice": {
             "sm.plmn_id": "00103",  
             "sm.apn": "5Gzorro.uc2",  
-            "sm.imsi_list": ["001035432100005", "001035432000003"]
+            "sm.imsi_list": "001035432100005,001035432000003"
         },
         "vsd_parameters": {
             "users": "1000"
