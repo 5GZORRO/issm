@@ -34,8 +34,20 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
+      - name: vsd-parameters
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
       - name: trigger-orchestration-slice
-        dependencies: [get-order-from-catalog, userdata-slice]
+        dependencies: [get-order-from-catalog, userdata-slice, vsd-parameters]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -62,9 +74,7 @@ spec:
 
           - name: vsd_parameters
             # snfvo_data['vsd_parameters']
-            value: |
-              { }
-
+            value: "{{tasks.vsd-parameters.outputs.result}}"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-slice]
