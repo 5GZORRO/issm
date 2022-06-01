@@ -1,0 +1,167 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: snfvo-spectrum-flow
+spec:
+  templates:
+  - name: instantiate
+    steps:
+    - - name: instantiate-service
+        when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
+        template: instantiate-service
+
+  - name: instantiate-service
+    dag:
+      tasks:
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: userdata-slice
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: userdata_slice
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: trigger-orchestration-slice
+        dependencies: [get-order-from-catalog, userdata-slice]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
+
+          - name: vsbName
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
+
+          - name: product_DID
+            value: ""
+
+          - name: sla_DID
+            value: ""
+
+          - name: place
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
+
+          - name: userdata
+            value: "{{tasks.userdata-slice.outputs.result}}"
+
+          - name: vsd_parameters
+            # snfvo_data['vsd_parameters']
+            value: |
+              { }
+
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-slice]
+        template: consume
+        arguments:
+          parameters:
+          - name: kafka_ip
+            value: "{{workflow.parameters.kafka_ip}}"
+          - name: kafka_port
+            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
+
+      - name: slice-status
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+          
+      - name: slice-status-fail
+        dependencies: [slice-status]
+        template: status-fail
+        when: "{{tasks.slice-status.outputs.result}} == \"FAIL\""
+
+  - name: status-fail
+    dag:
+      tasks:
+      - name: fail
+        templateRef:
+          name: workflow-base
+          template: fail
+
+   
+  - name: consume
+    # Consumes a message from kafka broker of a matched event_uuid
+    #
+    # Parameters
+    # kafka_topic: the topic to publish the message on (string)
+    # kafka_ip: ipaddress of the kafka broker (string)
+    # kafka_port: kafka broker port (number)
+    # msg_id: the id of the message to look for (str)
+    inputs:
+      parameters:
+      - name: kafka_topic
+      - name: kafka_ip
+      - name: kafka_port
+      - name: msg_id
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import os
+        import sys
+
+        from kafka import KafkaConsumer
+        from kafka.errors import KafkaError
+
+        KAFKA_TOPIC = '{{inputs.parameters.kafka_topic}}'
+        KAFKA_TIMEOUT = 10
+        KAFKA_API_VERSION = (1, 1, 0)
+
+        MSG_ID = "{{inputs.parameters.msg_id}}"
+        payload = {}
+
+        KAFKA_SERVER = "{}:{}".format("{{inputs.parameters.kafka_ip}}", "{{inputs.parameters.kafka_port}}")
+        consumer = KafkaConsumer(bootstrap_servers=KAFKA_SERVER,
+                                 client_id="aaa",
+                                 enable_auto_commit=True,
+                                 api_version=KAFKA_API_VERSION, group_id=MSG_ID)
+        consumer.subscribe(pattern=KAFKA_TOPIC)
+
+        for msg in consumer:
+            # TODO: drain topic messages first so we do not consume stale messages
+            payload = json.loads(msg.value.decode('utf-8', 'ignore'))
+            sys.stdout.write('Received payload: %s \n' % payload)
+            if payload.get('msg_id', '') == MSG_ID:
+                sys.stdout.write('It is my message: %s \n' % payload)
+                break
+
+        with open('/tmp/payload.txt', 'w') as f:
+            # don't dump it - keep its format so that other python steps can parse it
+            f.write(str(payload))
+            #json.dump(payload, f)
+
+    outputs:
+      parameters:
+      - name: payload
+        valueFrom:
+          path: /tmp/payload.txt

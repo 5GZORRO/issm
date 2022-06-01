@@ -312,6 +312,12 @@ spec:
                         name: snfvo-vcdn-flow
                         template: instantiate
 
+                  - - name: snfvo-spectrum
+                      when: "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"Slice Offer UC2\""
+                      templateRef:
+                        name: snfvo-spectrum-flow
+                        template: instantiate
+
                   - - name: snfvo-ota
                       when: "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"OTA demo eucnc core\""
                       templateRef:

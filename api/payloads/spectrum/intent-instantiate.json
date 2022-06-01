@@ -1,0 +1,12 @@
+{
+    "operation": "instantiate",
+    "category": "Slice",
+    "order_id": "99b3faeb-d06e-4658-a8ce-24b69e223e72",
+    "snfvo_data": {
+        "userdata_slice": {
+            "sm.plmn_id": "00103",  
+            "sm.apn": "5Gzorro.uc2",  
+            "sm.imsi_list": ["001035432100005", "001035432000003"]
+        }
+    }
+}
