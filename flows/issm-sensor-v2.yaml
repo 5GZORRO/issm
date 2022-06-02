@@ -339,7 +339,7 @@ spec:
                           value: "{{workflow.parameters.order_id}}"
 
                   - - name: snfvo-vcdn
-                      when: "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"Offer vCDN\""
+                      when: "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"CDN Network Service (CDN+SAS)\""
                       templateRef:
                         name: snfvo-vcdn-flow
                         template: scaleout
