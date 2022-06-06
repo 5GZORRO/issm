@@ -16,7 +16,7 @@ For each mobile network operator (MNO), install either [NSSO](https://github.com
 
 ISSM is comprised of a centralized component and a local instance running at the MNO premises
 
-![Testbed](images/issm-distributed.png)
+![Testbed](images/issm-distributed-0.5.png)
 
 
 ## Deploy ISSM centralized components
