@@ -21,8 +21,7 @@ spec:
   - name: issm-api-get-transaction
     inputs:
       parameters:
-      - name: service_ip
-      - name: service_port
+      - name: issm_api_url
       - name: transaction_uuid
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
@@ -35,7 +34,7 @@ spec:
 
         headers = {'Content-Type': 'application/json'}
 
-        r = requests.get("http://{{inputs.parameters.service_ip}}:{{inputs.parameters.service_port}}/workflows/{{inputs.parameters.transaction_uuid}}",
+        r = requests.get("{{inputs.parameters.issm_api_url}}/workflows/{{inputs.parameters.transaction_uuid}}",
             headers=headers)
         json.dump(r.json(), sys.stdout)
 

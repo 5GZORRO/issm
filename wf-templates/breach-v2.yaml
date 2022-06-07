@@ -32,7 +32,7 @@ spec:
   - name: breach
     dag:
       tasks:
-      - name: transaction
+      - name: transaction-uuid
         templateRef:
           name: workflow-base
           template: py-split
@@ -44,23 +44,41 @@ spec:
           - name: idx
             value: 1
 
+      - name: service-owner
+        templateRef:
+          name: workflow-base
+          template: py-split
+        arguments:
+          parameters:
+          - name: str
+            # important: transaction_uuid=<domain>:<tansaction uuid>
+            value: "{{workflow.parameters.transaction_uuid}}"
+          - name: idx
+            value: 0
+
+      - name: get-domain-env
+        dependencies: [service-owner]
+        templateRef:
+          name: workflow-environment
+          template: get-domain-env
+        arguments:
+          parameters:
+          - name: domain
+            value: "{{tasks.service-owner.outputs.result}}"
+
       - name: get-transaction
-        dependencies: [transaction]
+        dependencies: [transaction-uuid, get-domain-env]
         templateRef:
           name: workflow-transaction
           template: issm-api-get-transaction
         arguments:
           parameters:
-          - name: service_ip
-            value: "{{workflow.parameters.service_ip}}"
-          - name: service_port
-            value: "{{workflow.parameters.service_port}}"
+          - name: issm_api_url
+            value: "{{tasks.get-domain-env.outputs.parameters.issm_api_url}}"
           - name: transaction_uuid
-            value: "{{tasks.transaction.outputs.result}}"
+            value: "{{tasks.transaction-uuid.outputs.result}}"
 
       - name: transaction-data
-        # Retrieve 'service_owner' (stakeholder), access
-        # infos
         dependencies: [get-transaction]
         templateRef:
           name: workflow-transaction
@@ -70,20 +88,9 @@ spec:
           - name: json_str
             value: "{{tasks.get-transaction.outputs.result}}"
 
-      - name: get-domain-env
-        dependencies: [transaction-data]
-        templateRef:
-          name: workflow-environment
-          template: get-domain-env
-        arguments:
-          parameters:
-          - name: domain
-            value: "{{tasks.transaction-data.outputs.parameters.service_owner}}"
-
-
       - name: trigger-scaleout
         template: trigger-scaleout
-        dependencies: [get-domain-env]
+        dependencies: [transaction-data]
         arguments:
           parameters:
           - name: service_owner

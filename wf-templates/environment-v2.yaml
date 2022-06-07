@@ -39,21 +39,21 @@ spec:
                   "elma_url": "http://172.28.3.15:30880",
                   "trmf_url": "http://172.28.3.15:31113",
                   "vs_url": "http://10.0.4.10:8083",
-                  "issm_api": "http://172.28.3.15:30080"
+                  "issm_api_url": "http://172.28.3.15:30080"
                 },
                 "operator-b": {
                   "catalogue_url": "http://172.28.3.15:32080",
                   "elma_url": "http://172.28.3.15:31880",
                   "trmf_url": "http://172.28.3.15:31114",
                   "vs_url": "http://10.0.4.10:8082",
-                  "issm_api": "http://172.28.3.15:30080"
+                  "issm_api_url": "http://172.28.3.15:30080"
                 },
                 "operator-c": {
                   "catalogue_url": "http://172.28.3.15:32180",
                   "elma_url": "http://172.28.3.15:32880",
                   "trmf_url": "http://172.28.3.15:31115",
                   "vs_url": "http://172.28.3.15:33082",
-                  "issm_api": "http://172.28.3.15:30080"
+                  "issm_api_url": "http://172.28.3.15:30080"
                 }
               }
 
@@ -105,6 +105,18 @@ spec:
           - name: json_str
             value: "{{tasks.domain-envs.outputs.result}}"
 
+      - name: issm-api-url
+        dependencies: [domain-envs]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: issm_api_url
+          - name: json_str
+            value: "{{tasks.domain-envs.outputs.result}}"
+
     outputs:
       parameters:
       - name: catalogue_url
@@ -119,3 +131,6 @@ spec:
       - name: vs_url
         valueFrom:
           parameter: "{{tasks.vs-url.outputs.result}}"
+      - name: issm_api_url
+        valueFrom:
+          parameter: "{{tasks.issm-api-url.outputs.result}}"

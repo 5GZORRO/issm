@@ -125,9 +125,7 @@ Update kafka ip and port accordingly
 ```
 export KAFKA_HOST=172.28.3.196
 export KAFKA_PORT=9092
-```
 
-```
 export ISSM_DOMAIN_TOPIC=issm-in-$MNO_NAME
 envsubst < deploy/kafka-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
 

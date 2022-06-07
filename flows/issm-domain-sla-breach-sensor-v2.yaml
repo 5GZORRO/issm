@@ -67,14 +67,6 @@ spec:
                   - name: kafka_port
                     value: 9092
 
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # ISSM API service
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: service_ip
-                    value: 172.28.3.15
-                  - name: service_port
-                    value: 30080
-
                   - name: breachPredictionNotification
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Pre-parsed json from breach payload keys:
@@ -100,24 +92,24 @@ spec:
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification
-              dest: spec.arguments.parameters.4.value
+              dest: spec.arguments.parameters.2.value
 
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.transactionID
-              dest: spec.arguments.parameters.5.value
+              dest: spec.arguments.parameters.3.value
 
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.place
-              dest: spec.arguments.parameters.6.value
+              dest: spec.arguments.parameters.4.value
 
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.instanceID
-              dest: spec.arguments.parameters.7.value
+              dest: spec.arguments.parameters.5.value
 
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.productID
-              dest: spec.arguments.parameters.8.value
+              dest: spec.arguments.parameters.6.value
