@@ -82,15 +82,11 @@ Log into `operator-a` kuberneters master
 ```
 export MNO_NAME=operator-a
 export MNO_NAMESPACE=domain-$MNO_NAME
-```
 
-**Note:** for this current version ensure to define namespace with `domain-` prefix
-
-```
 kubectl create namespace $MNO_NAMESPACE
 ```
 
-### Add roles to MNO namespace
+### Add Argo roles to MNO namespace
 
 Run the below to add additional roles to `default` service account of the MNO namespace. These roles are used by the argo workflow controller
 
@@ -98,21 +94,21 @@ Run the below to add additional roles to `default` service account of the MNO na
 kubectl apply -f deploy/role.yaml -n $MNO_NAMESPACE
 ```
 
-### Add argo-event roles to MNO namespace
+### Add Argo-event roles to MNO namespace
 
 ```
 envsubst < deploy/install-v1.1.0-operator.yaml.template | kubectl apply -f -
 ```
 
-### Add Eventbus in MNO namespace
+### Add Eventbus to MNO namespace
 
 ```
 kubectl apply -n $MNO_NAMESPACE -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
 ```
 
-### Add kafka event sources in MNO namespace
+### Add kafka event source to MNO namespace
 
-Register event sources with platform communication fabric
+Register event source with platform communication fabric
 
 Update kafka ip and port accordingly
 
@@ -127,38 +123,6 @@ export SLA_BREACH_DOMAIN_TOPIC=issm-breach-$MNO_NAME
 envsubst < deploy/kafka-domain-sla-breach-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
 ```
 
-Kafka topics are automatically created during the creation of the event sources
-
-
-### Onboard orchestration workflow
-
-First, customize the workflow with access information to the 5G Zorro services
-
-Open `sensors/issm-domain-sensor-v2.yaml`
-
-Update access info for:
-
-* ISSM kafka bus
-* Datalake kafka bus
-* Smart resource and service discovery
-
-```
-                arguments:
-                  parameters:
-                  - name: kafka_ip
-                    value: 172.28.3.196
-                  - name: kafka_port
-                    value: 9092
-                  - name: kafka_dl_ip
-                    value: 172.28.3.196
-                  - name: kafka_dl_port
-                    value: 9092
-                  - name: discovery_ip
-                    value: 172.28.3.15
-                  - name: discovery_port
-                    value: 32068
-```
-
 ### Deploy sensor and templates
 
 ```
@@ -170,9 +134,11 @@ export MNO_NAMESPACE=domain-$MNO_NAME
 
 `ORCHESTRATOR` denotes the orchestration being supported by the MNO
 
-* NSSO - refer to Network Slice and Service Orchestrator (see: https://github.com/5GZORRO/nsso/blob/main/README.md)
-* MEC - refers to ISSM-MEC-CNMP (see: https://github.com/5GZORRO/issm-mec-cnmp/blob/master/README.md)
-* DUMMY - simulator driver for testing ISSM
+Valid values
+
+* `NSSO` - refer to Network Slice and Service Orchestrator (see: https://github.com/5GZORRO/nsso/blob/main/README.md)
+* `MEC` - refers to ISSM-MEC-CNMP (see: https://github.com/5GZORRO/issm-mec-cnmp/blob/master/README.md)
+* `DUMMY` - simulator driver for testing ISSM
 
 ## Trigger ISSM business flow
 
