@@ -136,9 +136,9 @@ export MNO_NAMESPACE=domain-$MNO_NAME
 
 Valid values
 
-* `NSSO` - refer to Network Slice and Service Orchestrator (see: https://github.com/5GZORRO/nsso/blob/main/README.md)
-* `MEC` - refers to ISSM-MEC-CNMP (see: https://github.com/5GZORRO/issm-mec-cnmp/blob/master/README.md)
-* `DUMMY` - simulator driver for testing ISSM
+* `NSSO`  - refers to Network Slice and Service Orchestrator (see: https://github.com/5GZORRO/nsso/blob/main/README.md)
+* `MEC`   - refers to ISSM-MEC-CNMP (see: https://github.com/5GZORRO/issm-mec-cnmp/blob/master/README.md)
+* `DUMMY` - refers to simulator driver; used to test ISSM
 
 ## Trigger ISSM business flow
 

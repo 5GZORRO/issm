@@ -70,7 +70,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -X POST -d "@payloads/scenario-1-scaleout.json" http://172.28.3.15:30080/transactions/operator-a/scaleout
+    curl -H "Content-type: application/json" -X POST -d "@payloads/vcdn/intent-instantiate.json" http://172.28.3.15:30080/transactions/operator-a/instantiate
 
     {
         "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
