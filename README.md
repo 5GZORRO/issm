@@ -40,7 +40,7 @@ kubectl apply -n issm -f https://raw.githubusercontent.com/argoproj/argo-events/
 
 ### Create eventsource
 
-Register an event source on platform issm kafka bus
+Register an event source with platform communication fabric
 
 Update kafka ip and port accordingly
 
@@ -61,36 +61,30 @@ Grant proper roles for issm sensor
 kubectl apply -f deploy/install-v1.1.0.yaml
 ```
 
-### Onboard SLA breach workflow
+### Onboard SLA breach sensor
 
-Create the sensor and flows
+Create the sensor and templates
 
 ```
 ./apply-sla.sh
 ```
 
-### ISSM-API service
-
-Follow the guidelines [here](api/README.md) to install ISSM api service
-
 ## Deploy ISSM local instance
 
-Follow the instructions in this order to deploy it in a given MNO. Repeat for every MNO you manage
+Follow these instructions to install a local ISSM agent (sensor and flow templates) in the participating 5GZorro operators. Repeat this process for every operator (i.e. `operator-a`, `operator-b` and `operator-c`)
 
-Log into MNO kuberneters master
+The below procedure applies to MNO (mobile network operator) `operator-a`
+
+Log into `operator-a` kuberneters master
 
 ### Create MNO namespace
-
-Assuming MNO is called `operator-a`
-
-export
 
 ```
 export MNO_NAME=operator-a
 export MNO_NAMESPACE=domain-$MNO_NAME
 ```
 
-**Note:** ensure to define namespace with `domain-` prefix
+**Note:** for this current version ensure to define namespace with `domain-` prefix
 
 ```
 kubectl create namespace $MNO_NAMESPACE
@@ -98,7 +92,7 @@ kubectl create namespace $MNO_NAMESPACE
 
 ### Add roles to MNO namespace
 
-Run the below to add additional roles to `default` service account of the MNO namespace. These roles are used by argo workflow controller
+Run the below to add additional roles to `default` service account of the MNO namespace. These roles are used by the argo workflow controller
 
 ```
 kubectl apply -f deploy/role.yaml -n $MNO_NAMESPACE
@@ -110,15 +104,15 @@ kubectl apply -f deploy/role.yaml -n $MNO_NAMESPACE
 envsubst < deploy/install-v1.1.0-operator.yaml.template | kubectl apply -f -
 ```
 
-### Create Eventbus in MNO namespace
+### Add Eventbus in MNO namespace
 
 ```
 kubectl apply -n $MNO_NAMESPACE -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
 ```
 
-### Create MNO kafka event sources for ISSM
+### Add kafka event sources in MNO namespace
 
-Register an event source on platform issm kafka bus
+Register event sources with platform communication fabric
 
 Update kafka ip and port accordingly
 
@@ -140,7 +134,7 @@ Kafka topics are automatically created during the creation of the event sources
 
 First, customize the workflow with access information to the 5G Zorro services
 
-Open `flows/issm-sensor.yaml`
+Open `sensors/issm-domain-sensor-v2.yaml`
 
 Update access info for:
 
@@ -162,28 +156,23 @@ Update access info for:
                   - name: discovery_ip
                     value: 172.28.3.15
                   - name: discovery_port
-                    value: 32000
+                    value: 32068
 ```
 
-then, onboard the flow
+### Deploy sensor and templates
 
 ```
-kubectl apply -f flows/issm-domain-sensor-v2.yaml -n $MNO_NAMESPACE
+export MNO_NAME=operator-a
+export MNO_NAMESPACE=domain-$MNO_NAME
+
+./apply-domain.sh <ORCHESTRATOR>
 ```
 
-### Deploy common templates
+`ORCHESTRATOR` denotes the orchestration being supported by the MNO
 
-Deploy common libraries according to the orchestration stack the mno supports
-
-```
-./apply-domain.sh NSSO
-```
-
-or
-
-```
-./apply-domain.sh MEC
-```
+* NSSO - refer to Network Slice and Service Orchestrator (see: https://github.com/5GZORRO/nsso/blob/main/README.md)
+* MEC - refers to ISSM-MEC-CNMP (see: https://github.com/5GZORRO/issm-mec-cnmp/blob/master/README.md)
+* DUMMY - simulator driver for testing ISSM
 
 ## Trigger ISSM business flow
 
