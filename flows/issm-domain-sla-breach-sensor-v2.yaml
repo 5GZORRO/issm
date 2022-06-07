@@ -18,7 +18,7 @@
 #{
 #"breachPredictionNotification" : {
 #  "slaID" : "678",
-#  "transactionID" : "operator-a:7777",
+#  "transactionID" : "7777",
 #  "productID" : "8888",
 #  "resourceID" : "3333",
 #  "instanceID" : "2",
@@ -67,6 +67,14 @@ spec:
                   - name: kafka_port
                     value: 9092
 
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # ISSM API service
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: service_ip
+                    value: 172.28.3.15
+                  - name: service_port
+                    value: 30080
+
                   - name: breachPredictionNotification
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Pre-parsed json from breach payload keys:
@@ -76,48 +84,40 @@ spec:
                   # location
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: transaction_uuid
+                  - name: place
+                  - name: instance_id
+                  - name: product_DID
 
                 templates:
                 - name: handlerequest
                   steps:
-                  - - name: domain
+                  - - name: breach
                       templateRef:
-                        name: workflow-base
-                        template: py-split
-                      arguments:
-                        parameters:
-                        - name: str
-                          # important: transaction_uuid=<domain>:<tansaction uuid>
-                          value: "{{workflow.parameters.transaction_uuid}}"
-                        - name: idx
-                          value: 0
-
-                  - - name: send-sla-breach
-                      templateRef:
-                        name: workflow-base
-                        template: produce
-                      arguments:
-                        parameters:
-                        - name: data
-                          value: |
-                            {
-                              "breachPredictionNotification": {{workflow.parameters.breachPredictionNotification}}
-                            }
-                        - name: kafka_topic
-                          value: "issm-breach-{{steps.domain.outputs.result}}"
-                        - name: kafka_ip
-                          value: "{{workflow.parameters.kafka_ip}}"
-                        - name: kafka_port
-                          value: "{{workflow.parameters.kafka_port}}"
-
+                        name: breach
+                        template: breach
 
           parameters:
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification
-              dest: spec.arguments.parameters.2.value
+              dest: spec.arguments.parameters.4.value
 
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.transactionID
-              dest: spec.arguments.parameters.3.value
+              dest: spec.arguments.parameters.5.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification.place
+              dest: spec.arguments.parameters.6.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification.instanceID
+              dest: spec.arguments.parameters.7.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification.productID
+              dest: spec.arguments.parameters.8.value

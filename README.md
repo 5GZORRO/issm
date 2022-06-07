@@ -116,7 +116,7 @@ envsubst < deploy/install-v1.1.0-operator.yaml.template | kubectl apply -f -
 kubectl apply -n $MNO_NAMESPACE -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
 ```
 
-### Create MNO kafka event source for ISSM bus
+### Create MNO kafka event sources for ISSM
 
 Register an event source on platform issm kafka bus
 
@@ -127,11 +127,12 @@ export KAFKA_HOST=172.28.3.196
 export KAFKA_PORT=9092
 ```
 
-**Note:** ensure to define topic with `issm-` prefix
-
 ```
 export ISSM_DOMAIN_TOPIC=issm-in-$MNO_NAME
 envsubst < deploy/kafka-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
+
+export SLA_BREACH_DOMAIN_TOPIC=issm-breach-$MNO_NAME
+envsubst < deploy/kafka-domain-sla-breach-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
 ```
 
 Kafka topics are automatically created during the creation of the event sources

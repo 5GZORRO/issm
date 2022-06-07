@@ -71,7 +71,6 @@ spec:
   - name: handle
     steps:
     - - name: send-sla-breach
-        # publish discovered resources for the optimizer to consume
         templateRef:
           name: workflow-base
           template: produce
@@ -84,7 +83,7 @@ spec:
                   "metric": "{{workflow.parameters.metric}}",
                   "datatimeViolation": "{{workflow.parameters.datatime_violation}}",
                   "datatimePrediction": "{{workflow.parameters.datatime_prediction}}",
-                  "transactionID": "{{workflow.parameters.transaction_id}}",
+                  "transactionID": "operator-a:{{workflow.parameters.transaction_id}}",
                   "productID": "{{workflow.parameters.product_DID}}",
                   "instanceID": "{{workflow.parameters.instance_id}}",
                   "place": {{workflow.parameters.place}}

@@ -160,6 +160,22 @@ spec:
         import uuid
         print(str(uuid.uuid4()).replace('-',''))
 
+  - name: py-split
+    inputs:
+      parameters:
+      - name: str
+      - name: idx
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        # integer
+        idx = {{inputs.parameters.idx}}
+        # string
+        str_in = "{{inputs.parameters.str}}"
+        print (str_in.split(':')[idx])
+
   - name: add-to-dict
     inputs:
       parameters:

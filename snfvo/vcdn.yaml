@@ -304,7 +304,7 @@ spec:
           - name: data
             value: |
               { "eventType": "new_SLA",
-                "transactionID": "{{workflow.parameters.transaction_uuid}}",
+                "transactionID": "{{workflow.parameters.service_owner}}:{{workflow.parameters.transaction_uuid}}",
                 "productID": "{{inputs.parameters.product_DID}}",
                 "SLAID": "{{inputs.parameters.sla_DID}}",
                 "instanceID": "{{tasks.get-vcdn-instance-id.outputs.result}}",
@@ -765,7 +765,7 @@ spec:
           - name: data
             value: |
               { "eventType": "new_SLA",
-                "transactionID": "{{workflow.parameters.transaction_uuid}}",
+                "transactionID": "{{workflow.parameters.service_owner}}:{{workflow.parameters.transaction_uuid}}",
                 "productID": "{{inputs.parameters.product_DID}}",
                 "SLAID": "{{inputs.parameters.sla_DID}}",
                 "instanceID": "{{tasks.get-vcdn-instance-id.outputs.result}}",
