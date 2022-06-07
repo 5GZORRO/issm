@@ -15,8 +15,8 @@ echo "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-"
 kubectl  delete  workflowtemplate --all -n  $MNO_NAMESPACE
 kubectl  delete  sensor --all -n  $MNO_NAMESPACE
 
-kubectl apply -f $SCRIPT_DIR/flows/issm-sensor-v2.yaml -n $MNO_NAMESPACE
-kubectl apply -f $SCRIPT_DIR/flows/issm-domain-sla-breach-sensor-v2.yaml -n $MNO_NAMESPACE
+kubectl apply -f $SCRIPT_DIR/sensors/issm-domain-sensor-v2.yaml -n $MNO_NAMESPACE
+kubectl apply -f $SCRIPT_DIR/sensors/issm-domain-sla-breach-sensor-v2.yaml -n $MNO_NAMESPACE
 
 kubectl apply -f $SCRIPT_DIR/wf-templates/ -n $MNO_NAMESPACE
 

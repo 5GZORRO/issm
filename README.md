@@ -168,7 +168,7 @@ Update access info for:
 then, onboard the flow
 
 ```
-kubectl apply -f flows/issm-sensor.yaml -n $MNO_NAMESPACE
+kubectl apply -f flows/issm-domain-sensor-v2.yaml -n $MNO_NAMESPACE
 ```
 
 ### Deploy common templates
