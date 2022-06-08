@@ -66,6 +66,11 @@ if not LB_ARGO_SERVER:
 TRANSACTION_TYPES = ['instantiate', 'scaleout']
 
 
+def find(l, predicate):
+    results = [x for x in l if predicate(x)]
+    return results[0] if len(results) > 0 else None
+
+
 def parse_isotime(timestr):
     """Parse time from ISO 8601 format."""
     try:
@@ -291,6 +296,70 @@ class Proxy:
             }
 
         return res
+    
+    def getSensor(self, service_owner, name):
+        sys.stdout.write('Requesting getSensor for name '+name+'\n')
+
+        sensor = self.api.get_namespaced_custom_object(
+            group="argoproj.io",
+            version="v1alpha1",
+            namespace="domain-%s" % service_owner,
+            plural="sensors",
+            name=name)
+        sys.stdout.write(str(sensor)+'\n')
+        return sensor
+
+
+    def update_sensor(self, service_owner, snfvo_name, criteria_name, sensor_json):
+        sys.stdout.write('Updating sensor..\n')
+        sys.stdout.write(str(sensor_json))
+        sys.stdout.write('\n')
+
+        templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
+            ['resource']['spec']['arguments']['templates']
+
+        template_inst = find (templates, lambda t: t['name'] == 'instantiate-invoke-snfvo')
+        steps = template_inst['steps']
+
+#       {
+#         "name": "snfvo-vcdn",
+#         "templateRef": {
+#           "name": "snfvo-vcdn-flow",
+#           "template": "instantiate"
+#         },
+#         "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"CDN Network Service (CDN+SAS)\""
+#       }
+#     ],
+        snfvo_step = {
+            "name": "snfvo-%s" % snfvo_name,
+            "templateRef": {
+                "name": "snfvo-%s-flow" % snfvo_name,
+                "template": "instantiate"
+            },
+            "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % criteria_name
+        }
+        steps.append(snfvo_step)
+
+        template_sa = find (templates, lambda t: t['name'] == 'scaleout-invoke-snfvo')
+        steps = template_sa['steps']
+
+        snfvo_step = {
+            "name": "snfvo-%s" % snfvo_name,
+            "templateRef": {
+                "name": "snfvo-%s-flow" % snfvo_name,
+                "template": "scaleout"
+            },
+            "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % criteria_name
+        }
+        steps.append(snfvo_step)
+
+        self.api.replace_namespaced_custom_object(
+            group="argoproj.io",
+            version="v1alpha1",
+            plural="sensors",
+            namespace="domain-%s" % service_owner,
+            body=value
+        )
 
 
 proxy = flask.Flask(__name__)
@@ -453,6 +522,41 @@ def workflows_get(transaction_uuid):
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
         return response
+
+
+DOMAIN_SENSOR_NAME='issm-branch'
+@proxy.route("/snfvo/<service_owner>",  methods=['POST'])
+def snfvo_create(service_owner):
+    sys.stdout.write('Received snfvo request for '
+                     '[service_owner=%s] \n' % service_owner)
+    try:
+        value = getMessagePayload()
+        snfvo_name=value['snfvo_name']
+        criteria_name=value['criteria_name']
+
+        sensor_json = proxy_server.getSensor(
+            service_owner=service_owner, name=DOMAIN_SENSOR_NAME)
+        if not sensor_json:
+            response = flask.jsonify({'error': 'Sensor not found'})
+            response.status_code = 404
+            return response
+
+        response = flask.jsonify(
+            proxy_server.update_sensor(
+                service_owner=service_owner, snfvo_name=snfvo_name,
+                criteria_name=criteria_name, sensor_json=sensor_json)
+            )
+
+        response.status_code = 200
+        return response
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /snfvo %s\n' % str(response))
+    return response
+
 
 
 def main():
