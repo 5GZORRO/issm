@@ -1,6 +1,6 @@
 # issm-api
 
-Component responsible for providing management API endpoint service for ISSM.
+ISSM-API provides management API endpoints for create, delete and list transactions.
 
 ## Pre-requisites
 
@@ -11,7 +11,7 @@ issm-api calls into argo-server REST endpoints.
 
 ## Deploy the service
 
-Log into 5GZorro platform kuberneters master (where ISSM platform is installed)
+Log into kuberneters master
 
 Invoke the below in this order
 
@@ -40,7 +40,38 @@ kubectl apply -f deploy/service.yaml -n issm
 
 ## API
 
-### Submit transaction (slice intent)
+### Get transaction types
+
+Returns a list of supported transaction types
+
+```
+curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/transactions_types
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+```
+
+Return:
+
+```
+    status - 200
+    list of transaction types (list of str)
+```
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -GET http://172.28.3.15:30080/transactions_types
+    [
+      "instantiate",
+      "scaleout"
+    ]
+```
+
+### Submit transaction
 
 Submit a transaction for the given service owner
 
@@ -56,9 +87,9 @@ REST path:
     transaction_type    - the type of the transaction to submit (e.g. instantiate, scaleout)
 ```
 
-Data payload:
+Data intent:
 
-refer [here](payloads/intent.md) for current supported format
+refer [here](intents/README.md) for more information
 
 Return:
 
@@ -70,7 +101,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -X POST -d "@payloads/vcdn/intent-instantiate.json" http://172.28.3.15:30080/transactions/operator-a/instantiate
+    curl -H "Content-type: application/json" -X POST -d "@intents/vcdn/intent-instantiate.json" http://172.28.3.15:30080/transactions/operator-a/instantiate
 
     {
         "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
@@ -199,38 +230,6 @@ Return:
 
 ```
     status - 200
-```
-
-
-### Get transaction types
-
-Returns a list of supported transaction types
-
-```
-curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/transactions_types
-```
-
-REST path:
-
-```
-    issm_api_ip_address - ipaddress ISSM API service.
-```
-
-Return:
-
-```
-    status - 200
-    list of transaction types (list of str)
-```
-
-Invocation example:
-
-```
-    curl -H "Content-type: application/json" -GET http://172.28.3.15:30080/transactions_types
-    [
-      "instantiate",
-      "scaleout"
-    ]
 ```
 
 
