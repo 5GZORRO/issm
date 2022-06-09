@@ -19,6 +19,7 @@ import os
 import requests
 import sys
 import uuid
+import re
 
 from gevent.wsgi import WSGIServer
 from werkzeug.exceptions import HTTPException
@@ -64,7 +65,9 @@ if not LB_ARGO_SERVER:
 
 
 TRANSACTION_TYPES = ['instantiate', 'scaleout']
+
 DOMAIN_SENSOR_NAME='issm-branch'
+SNFVO_REGEX = re.compile('snfvo-(.+?)-flow')
 
 
 def find(l, predicate):
@@ -320,7 +323,8 @@ class Proxy:
             body=sensor_json
         )
 
-    def snfvo_add(self, service_owner, snfvo_name, criteria_name, sensor_json):
+    def snfvo_add(self, service_owner, snfvo_name, criteria_name, sensor_json,
+                  snfvo_json=None):
         sys.stdout.write('snfvo_add..\n')
         sys.stdout.write(str(sensor_json))
         sys.stdout.write('\n')
@@ -370,7 +374,41 @@ class Proxy:
 
         if update:
             self._update_sensor(service_owner, sensor_json)
-    
+
+        if snfvo_json:
+            try:
+                self.api.create_namespaced_custom_object(
+                    group="argoproj.io",
+                    version="v1alpha1",
+                    plural="workflowtemplates",
+                    name="snfvo-%s-flow" % snfvo_name,
+                    namespace="domain-%s" % service_owner,
+                    body=snfvo_json
+                )
+            except Exception as e:
+                sys.stdout.write ('Failed to create snfvo template: %s \n' % str(e))
+
+
+    def snfvo_get(self, service_owner):
+        """
+        """
+
+        res = []
+        wfList = self.api.list_namespaced_custom_object(
+            group="argoproj.io",
+            version="v1alpha1",
+            plural="workflowtemplates",
+            namespace="domain-%s" % service_owner
+        )
+        print (wfList)
+        if wfList and len(wfList['items']) > 0:
+            for wf in wfList['items']:
+                if not SNFVO_REGEX.match(wf['metadata']['name']):
+                    continue
+                else:
+                    res.append(SNFVO_REGEX.match(wf['metadata']['name']).group(1))
+        return res
+
     def snfvo_delete(self, service_owner, snfvo_name, sensor_json):
         sys.stdout.write('snfvo_delete..\n')
         sys.stdout.write(str(sensor_json))
@@ -407,6 +445,18 @@ class Proxy:
 
         if update:
             self._update_sensor(service_owner, sensor_json)
+
+        try:
+            self.api.delete_namespaced_custom_object(
+                group="argoproj.io",
+                version="v1alpha1",
+                namespace="domain-%s" % service_owner,
+                plural="workflowtemplates",
+                name="snfvo-%s-flow" % snfvo_name,
+                body=kubernetes.client.V1DeleteOptions()
+            )
+        except Exception as e:
+            sys.stdout.write ('Failed to delete snfvo template: %s \n' % str(e))
 
 
 proxy = flask.Flask(__name__)
@@ -588,14 +638,12 @@ def snfvo_create(service_owner):
             response.status_code = 404
             return response
 
-        flask.jsonify(
-            proxy_server.snfvo_add(
-                service_owner=service_owner, snfvo_name=snfvo_name,
-                criteria_name=criteria_name, sensor_json=sensor_json)
-            )
+        proxy_server.snfvo_add(
+            service_owner=service_owner, snfvo_name=snfvo_name,
+            criteria_name=criteria_name, sensor_json=sensor_json)
+
         response = flask.jsonify({'OK': 200})
         response.status_code = 200
-        return response
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
@@ -604,6 +652,23 @@ def snfvo_create(service_owner):
     sys.stdout.write('Exit /snfvo %s\n' % str(response))
     return response
 
+
+@proxy.route("/snfvo/<service_owner>",  methods=['GET'])
+def snfvo_list(service_owner):
+    sys.stdout.write('Received snfvo list request for '
+                     '[service_owner=%s] \n' % service_owner)
+
+    try:
+        response = flask.jsonify(proxy_server.snfvo_get(service_owner=service_owner))
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit list /snfvo %s\n' % str(response))
+    return response
+        
 
 @proxy.route("/snfvo/<service_owner>/<snfvo_name>",  methods=['DELETE'])
 def snfvo_delete(service_owner, snfvo_name):
@@ -619,21 +684,18 @@ def snfvo_delete(service_owner, snfvo_name):
             response.status_code = 404
             return response
 
-        flask.jsonify(
-            proxy_server.snfvo_delete(
-                service_owner=service_owner, snfvo_name=snfvo_name,
-                sensor_json=sensor_json)
-            )
+        proxy_server.snfvo_delete(
+            service_owner=service_owner, snfvo_name=snfvo_name,
+            sensor_json=sensor_json)
 
         response = flask.jsonify({'OK': 200})
         response.status_code = 200
-        return response
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
 
-    sys.stdout.write('Exit [DELETE] /snfvo %s\n' % str(response))
+    sys.stdout.write('Exit delete /snfvo %s\n' % str(response))
     return response
 
 
