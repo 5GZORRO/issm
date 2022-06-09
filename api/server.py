@@ -310,51 +310,8 @@ class Proxy:
         sys.stdout.write(str(sensor)+'\n')
         return sensor
 
-
-    def update_sensor(self, service_owner, snfvo_name, criteria_name, sensor_json):
-        sys.stdout.write('Updating sensor..\n')
-        sys.stdout.write(str(sensor_json))
-        sys.stdout.write('\n')
-
-        templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
-            ['resource']['spec']['templates']
-
-        template_inst = find (templates, lambda t: t['name'] == 'instantiate-invoke-snfvo')
-        steps = template_inst['steps']
-
-#       {
-#         "name": "snfvo-vcdn",
-#         "templateRef": {
-#           "name": "snfvo-vcdn-flow",
-#           "template": "instantiate"
-#         },
-#         "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"CDN Network Service (CDN+SAS)\""
-#       }
-#     ],
-        snfvo_step = {
-            "name": "snfvo-%s" % snfvo_name,
-            "templateRef": {
-                "name": "snfvo-%s-flow" % snfvo_name,
-                "template": "instantiate"
-            },
-            "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % criteria_name
-        }
-        steps.append(snfvo_step)
-
-        template_sa = find (templates, lambda t: t['name'] == 'scaleout-invoke-snfvo')
-        steps = template_sa['steps']
-
-        snfvo_step = {
-            "name": "snfvo-%s" % snfvo_name,
-            "templateRef": {
-                "name": "snfvo-%s-flow" % snfvo_name,
-                "template": "scaleout"
-            },
-            "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % criteria_name
-        }
-        steps.append(snfvo_step)
-
-        self.api.replace_namespaced_custom_object(
+    def _update_sensor(self, service_owner, sensor_json):
+        return self.api.replace_namespaced_custom_object(
             group="argoproj.io",
             version="v1alpha1",
             plural="sensors",
@@ -362,6 +319,92 @@ class Proxy:
             namespace="domain-%s" % service_owner,
             body=sensor_json
         )
+
+    def snfvo_add(self, service_owner, snfvo_name, criteria_name, sensor_json):
+        sys.stdout.write('snfvo_add..\n')
+        sys.stdout.write(str(sensor_json))
+        sys.stdout.write('\n')
+
+        templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
+            ['resource']['spec']['templates']
+
+        update = False
+        # instantiate
+        template_inst = find (templates, lambda t: t['name'] == 'instantiate-invoke-snfvo')
+        steps = template_inst['steps']
+
+        # NOTE: steps is nested list
+        snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % snfvo_name)
+        if snfvo_step:
+            sys.stdout.write('snfvo [%s] already exists for instantiate\n' % snfvo_name)
+        else:
+            snfvo_step = {
+                "name": "snfvo-%s" % snfvo_name,
+                "templateRef": {
+                    "name": "snfvo-%s-flow" % snfvo_name,
+                    "template": "instantiate"
+                },
+                "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % criteria_name
+            }
+            steps.append([snfvo_step])
+            update = True
+
+        # scaleout
+        template_sa = find (templates, lambda t: t['name'] == 'scaleout-invoke-snfvo')
+        steps = template_sa['steps']
+        # NOTE: steps is nested list
+        snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % snfvo_name)
+        if snfvo_step:
+            sys.stdout.write('snfvo [%s] already exists for scaleout\n' % snfvo_name)
+        else:
+            snfvo_step = {
+                "name": "snfvo-%s" % snfvo_name,
+                "templateRef": {
+                    "name": "snfvo-%s-flow" % snfvo_name,
+                    "template": "scaleout"
+                },
+                "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % criteria_name
+            }
+            steps.append([snfvo_step])
+            update = True
+
+        if update:
+            self._update_sensor(service_owner, sensor_json)
+    
+    def snfvo_delete(self, service_owner, snfvo_name, criteria_name, sensor_json):
+        sys.stdout.write('snfvo_delete..\n')
+        sys.stdout.write(str(sensor_json))
+        sys.stdout.write('\n')
+
+        templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
+            ['resource']['spec']['templates']
+
+        update = False
+
+        # instantiate
+        template_inst = find (templates, lambda t: t['name'] == 'instantiate-invoke-snfvo')
+        steps = template_inst['steps']
+
+        snfvo_step = find (steps, lambda s: s['name'] == 'snfvo-%s' % snfvo_name)
+        if not snfvo_step:
+            sys.stdout.write('snfvo [%s] was not found for instantiate\n' % snfvo_name)
+        else:
+            steps.remove(snfvo_step)
+            update = True
+
+        # scaleout
+        template_sa = find (templates, lambda t: t['name'] == 'scaleout-invoke-snfvo')
+        steps = template_sa['steps']
+
+        snfvo_step = find (steps, lambda s: s['name'] == 'snfvo-%s' % snfvo_name)
+        if not snfvo_step:
+            sys.stdout.write('snfvo [%s] was not found for scaleout\n' % snfvo_name)
+        else:
+            steps.remove(snfvo_step)
+            update = True
+
+        if update:
+            self._update_sensor(service_owner, sensor_json)
 
 
 proxy = flask.Flask(__name__)
@@ -538,12 +581,13 @@ def snfvo_create(service_owner):
         sensor_json = proxy_server.getSensor(
             service_owner=service_owner, name=DOMAIN_SENSOR_NAME)
         if not sensor_json:
-            response = flask.jsonify({'error': 'Sensor not found'})
+            response = flask.jsonify({'error': 'Sensor [%s] not found' %
+                                      DOMAIN_SENSOR_NAME})
             response.status_code = 404
             return response
 
         response = flask.jsonify(
-            proxy_server.update_sensor(
+            proxy_server.snfvo_add(
                 service_owner=service_owner, snfvo_name=snfvo_name,
                 criteria_name=criteria_name, sensor_json=sensor_json)
             )
@@ -556,6 +600,38 @@ def snfvo_create(service_owner):
         response.status_code = 500
 
     sys.stdout.write('Exit /snfvo %s\n' % str(response))
+    return response
+
+
+@proxy.route("/snfvo/<service_owner>/<snfo_name>",  methods=['DELETE'])
+def snfvo_delete(service_owner, snfo_name):
+    sys.stdout.write('Received snfvo delete request for '
+                     '[service_owner=%s, snfo_name=%s] \n' %
+                     (service_owner, snfo_name))
+    try:
+        sensor_json = proxy_server.getSensor(
+            service_owner=service_owner, name=DOMAIN_SENSOR_NAME)
+        if not sensor_json:
+            response = flask.jsonify({'error': 'Sensor [%s] not found' %
+                                      DOMAIN_SENSOR_NAME})
+            response.status_code = 404
+            return response
+
+        flask.jsonify(
+            proxy_server.snfvo_delete(
+                service_owner=service_owner, snfvo_name=snfvo_name,
+                sensor_json=sensor_json)
+            )
+
+        response.status_code = 200
+        response = flask.jsonify({'OK': 200})        
+        return response
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit [DELETE] /snfvo %s\n' % str(response))
     return response
 
 
