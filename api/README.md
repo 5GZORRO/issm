@@ -34,6 +34,7 @@ export LB_ARGO_SERVER=172.28.3.15:30753
 Deploy
 
 ```
+kubectl apply -f deploy/role.yaml -n issm
 envsubst < deploy/deployment.yaml.template | kubectl apply -n issm -f -
 kubectl apply -f deploy/service.yaml -n issm
 ```
