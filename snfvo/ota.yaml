@@ -277,6 +277,15 @@ spec:
           template: fail
 
 
+  - name: scaleout
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
+  
+
   - name: edge-service-attributes
     inputs:
       parameters:

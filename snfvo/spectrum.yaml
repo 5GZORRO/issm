@@ -122,6 +122,16 @@ spec:
         template: status-fail
         when: "{{tasks.slice-status.outputs.result}} == \"FAIL\""
 
+
+  - name: scaleout
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
+
+
   - name: status-fail
     dag:
       tasks:

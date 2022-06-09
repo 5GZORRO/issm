@@ -151,6 +151,14 @@ spec:
       source: |
         exit 123
 
+  - name: success
+    script:
+      image: debian:9.4
+      imagePullPolicy: IfNotPresent
+      command: [bash]
+      source: |
+        exit 0
+
   - name: event-uuid
     script:
       image: python:alpine3.6

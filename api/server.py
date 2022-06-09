@@ -377,11 +377,12 @@ class Proxy:
 
         if snfvo_json:
             try:
+                snfvo_json['metadata']['name'] = "snfvo-%s-flow" % snfvo_name
                 self.api.create_namespaced_custom_object(
                     group="argoproj.io",
                     version="v1alpha1",
                     plural="workflowtemplates",
-                    name="snfvo-%s-flow" % snfvo_name,
+                    #name="snfvo-%s-flow" % snfvo_name,
                     namespace="domain-%s" % service_owner,
                     body=snfvo_json
                 )
@@ -627,8 +628,9 @@ def snfvo_create(service_owner):
                      '[service_owner=%s] \n' % service_owner)
     try:
         value = getMessagePayload()
-        snfvo_name=value['snfvo_name']
-        criteria_name=value['criteria_name']
+        snfvo_name = value['snfvo_name']
+        criteria_name = value['criteria_name']
+        snfvo_json = value['snfvo_json']
 
         sensor_json = proxy_server.getSensor(
             service_owner=service_owner, name=DOMAIN_SENSOR_NAME)
@@ -640,7 +642,8 @@ def snfvo_create(service_owner):
 
         proxy_server.snfvo_add(
             service_owner=service_owner, snfvo_name=snfvo_name,
-            criteria_name=criteria_name, sensor_json=sensor_json)
+            criteria_name=criteria_name, sensor_json=sensor_json,
+            snfvo_json=snfvo_json)
 
         response = flask.jsonify({'OK': 200})
         response.status_code = 200
@@ -697,7 +700,6 @@ def snfvo_delete(service_owner, snfvo_name):
 
     sys.stdout.write('Exit delete /snfvo %s\n' % str(response))
     return response
-
 
 
 def main():
