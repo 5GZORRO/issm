@@ -64,6 +64,7 @@ if not LB_ARGO_SERVER:
 
 
 TRANSACTION_TYPES = ['instantiate', 'scaleout']
+DOMAIN_SENSOR_NAME='issm-branch'
 
 
 def find(l, predicate):
@@ -357,8 +358,9 @@ class Proxy:
             group="argoproj.io",
             version="v1alpha1",
             plural="sensors",
+            name=DOMAIN_SENSOR_NAME,
             namespace="domain-%s" % service_owner,
-            body=value
+            body=sensor_json
         )
 
 
@@ -524,7 +526,6 @@ def workflows_get(transaction_uuid):
         return response
 
 
-DOMAIN_SENSOR_NAME='issm-branch'
 @proxy.route("/snfvo/<service_owner>",  methods=['POST'])
 def snfvo_create(service_owner):
     sys.stdout.write('Received snfvo request for '
