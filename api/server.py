@@ -316,7 +316,7 @@ class Proxy:
         sys.stdout.write('\n')
 
         templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
-            ['resource']['spec']['arguments']['templates']
+            ['resource']['spec']['templates']
 
         template_inst = find (templates, lambda t: t['name'] == 'instantiate-invoke-snfvo')
         steps = template_inst['steps']
