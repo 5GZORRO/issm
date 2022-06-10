@@ -66,8 +66,13 @@ if not LB_ARGO_SERVER:
 
 TRANSACTION_TYPES = ['instantiate', 'scaleout']
 
+
+"""
+SNFVO
+"""
 DOMAIN_SENSOR_NAME='issm-branch'
-SNFVO_REGEX = re.compile('snfvo-(.+?)-flow')
+REGEX_SNFVO_NAME = re.compile('snfvo-(.+?)-flow')
+REGEX_CRITERIA_NAME = re.compile('.*==.*\"(.+?)\"')
 
 
 def find(l, predicate):
@@ -113,6 +118,45 @@ def publish_intent(kafka_ip, kafka_port, topic, payload):
         raise ke
     finally:
         producer.close()
+
+
+def _to_snfvo_template_name(snfvo_name):
+    # MUST BE ALIGNED WITH REGEX_SNFVO_NAME
+    return "snfvo-%s-flow" % snfvo_name
+
+
+def _snfvo_get(snfvo_name, sensor_json):
+    """
+    Helper method to retrieve snfvo attributes out from the sensor
+
+    :param snfvo_name: snfvo name
+    :type snfvo_name: ``str``
+
+    :param sensor_json: the sensor object
+    :type sensor_json: ``dict``
+
+    """
+    templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
+        ['resource']['spec']['templates']
+
+    # instantiate
+    template_inst = find (templates, lambda t: t['name'] == 'instantiate-invoke-snfvo')
+    steps = template_inst['steps']
+    # NOTE: steps is nested list
+    snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % snfvo_name)
+    if not snfvo_step:
+        raise Exception('snfvo [%s] does not exist in sensor \n' % snfvo_name)
+
+    when_statement = snfvo_step[0]['when']
+    try:
+        criteria_name = REGEX_CRITERIA_NAME.match(when_statement)[1]
+        return {
+            'criteria_name': criteria_name,
+            'snfvo_name': snfvo_name
+        }
+    except:
+        raise
+
 
 
 class Proxy:
@@ -314,6 +358,9 @@ class Proxy:
         return sensor
 
     def _update_sensor(self, service_owner, sensor_json):
+        """
+        Helper method to update a sensor of the given owner
+        """
         return self.api.replace_namespaced_custom_object(
             group="argoproj.io",
             version="v1alpha1",
@@ -325,6 +372,26 @@ class Proxy:
 
     def snfvo_add(self, service_owner, snfvo_name, criteria_name, sensor_json,
                   snfvo_json=None):
+        """
+        Create snfvo
+
+        :param service_owner: the owner of the snfvo
+        :type service_owner: ``str``
+
+        :param snfvo_name: the name of the snfvo
+        :type snfvo_name: ``str``
+
+        :param criteria_name: the criteria to call into the snfvo during LCM
+        :type criteria_name: ``str``
+
+        :param sensor_json: the sensor object to update the snfvo with
+        :type sensor_json: ``dict``
+
+        :param snfvo_json: the snfvo that defines the management logic flow
+                           defined as WorkflowTemplate object (Optional)
+        :type snfvo_json: ``dict``
+
+        """
         sys.stdout.write('snfvo_add..\n')
         sys.stdout.write(str(sensor_json))
         sys.stdout.write('\n')
@@ -345,7 +412,7 @@ class Proxy:
             snfvo_step = {
                 "name": "snfvo-%s" % snfvo_name,
                 "templateRef": {
-                    "name": "snfvo-%s-flow" % snfvo_name,
+                    "name": _to_snfvo_template_name(snfvo_name),
                     "template": "instantiate"
                 },
                 "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % criteria_name
@@ -364,7 +431,7 @@ class Proxy:
             snfvo_step = {
                 "name": "snfvo-%s" % snfvo_name,
                 "templateRef": {
-                    "name": "snfvo-%s-flow" % snfvo_name,
+                    "name": _to_snfvo_template_name(snfvo_name),
                     "template": "scaleout"
                 },
                 "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % criteria_name
@@ -377,7 +444,7 @@ class Proxy:
 
         if snfvo_json:
             try:
-                snfvo_json['metadata']['name'] = "snfvo-%s-flow" % snfvo_name
+                snfvo_json['metadata']['name'] = _to_snfvo_template_name(snfvo_name)
                 self.api.create_namespaced_custom_object(
                     group="argoproj.io",
                     version="v1alpha1",
@@ -389,11 +456,17 @@ class Proxy:
             except Exception as e:
                 sys.stdout.write ('Failed to create snfvo template: %s \n' % str(e))
 
-
-    def snfvo_get(self, service_owner):
+    def snfvo_list(self, service_owner, sensor_json):
         """
-        """
+        Return the snfvos for the given owner using the sensor to retrieve
+        additional attributes
 
+        :param service_owner: snfvos owner
+        :type service_owner: ``str``
+
+        :param sensor_json: the sensor object
+        :type sensor_json: ``dict``
+        """
         res = []
         wfList = self.api.list_namespaced_custom_object(
             group="argoproj.io",
@@ -404,13 +477,28 @@ class Proxy:
         print (wfList)
         if wfList and len(wfList['items']) > 0:
             for wf in wfList['items']:
-                if not SNFVO_REGEX.match(wf['metadata']['name']):
+                if not REGEX_SNFVO_NAME.match(wf['metadata']['name']):
                     continue
                 else:
-                    res.append(SNFVO_REGEX.match(wf['metadata']['name']).group(1))
+                    snfvo_name = REGEX_SNFVO_NAME.match(wf['metadata']['name']).group(1)
+                    res.append(_snfvo_get(snfvo_name, sensor_json))
+
         return res
 
     def snfvo_delete(self, service_owner, snfvo_name, sensor_json):
+        """
+        Delete snfvo of the given owner from the sensor
+
+        :param service_owner: the owner of the snfvo
+        :type service_owner: ``str``
+
+        :param snfvo_name: the name of the snfvo
+        :type snfvo_name: ``str``
+
+        :param sensor_json: the sensor object
+        :type sensor_json: ``dict``
+
+        """
         sys.stdout.write('snfvo_delete..\n')
         sys.stdout.write(str(sensor_json))
         sys.stdout.write('\n')
@@ -453,7 +541,7 @@ class Proxy:
                 version="v1alpha1",
                 namespace="domain-%s" % service_owner,
                 plural="workflowtemplates",
-                name="snfvo-%s-flow" % snfvo_name,
+                name=_to_snfvo_template_name(snfvo_name),
                 body=kubernetes.client.V1DeleteOptions()
             )
         except Exception as e:
@@ -662,7 +750,16 @@ def snfvo_list(service_owner):
                      '[service_owner=%s] \n' % service_owner)
 
     try:
-        response = flask.jsonify(proxy_server.snfvo_get(service_owner=service_owner))
+        sensor_json = proxy_server.getSensor(
+            service_owner=service_owner, name=DOMAIN_SENSOR_NAME)
+        if not sensor_json:
+            response = flask.jsonify({'error': 'Sensor [%s] not found' %
+                                      DOMAIN_SENSOR_NAME})
+            response.status_code = 404
+            return response
+
+        response = flask.jsonify(proxy_server.snfvo_list(
+            service_owner=service_owner, sensor_json=sensor_json))
         response.status_code = 200
 
     except Exception as e:
