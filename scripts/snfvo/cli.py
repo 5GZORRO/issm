@@ -8,12 +8,13 @@ python3 ./cli.py --file ../../snfvo/ota.yaml --service_owner operator-c --issm_a
 '''
 
 def main():
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--service_owner', help='')
-    parser.add_argument('--issm_api_url', help='')
-    parser.add_argument('--file', help='')
-    parser.add_argument('--snfvo_name', help='')
-    parser.add_argument('--snfvo_criteria', help='')
+    parser = argparse.ArgumentParser(description='A cli to load snfvo plugin into ISSM')
+    parser.add_argument('--issm_api_url', help='URL to ISSM API service (e.g. http://172.28.3.15:30080)')
+    parser.add_argument('--service_owner', help='The owner of this snfvo (e.g. operator-a)')
+    parser.add_argument('--file', help='Path to snfvo yaml file (e.g. ./vcdn.yaml)')
+    parser.add_argument('--snfvo_name', help='snfvo name (e.g. vcdn)')
+    # TODO: consider renaming snfvo_criteria to product_offer_name
+    parser.add_argument('--snfvo_criteria', help='Runtime definition to load this snfvo')
 
     args = parser.parse_args()
 
