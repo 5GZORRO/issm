@@ -21,7 +21,6 @@ spec:
   - name: instantiate
     steps:
     - - name: print-hello
-        when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
         templateRef:
           name: workflow-base
           template: whalesay
@@ -33,7 +32,6 @@ spec:
   - name: scaleout
     steps:
     - - name: print-hello
-        when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
         templateRef:
           name: workflow-base
           template: whalesay
