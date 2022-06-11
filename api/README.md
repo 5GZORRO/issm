@@ -39,14 +39,14 @@ envsubst < deploy/deployment.yaml.template | kubectl apply -n issm -f -
 kubectl apply -f deploy/service.yaml -n issm
 ```
 
-## API
+## API (transaction)
 
 ### Get transaction types
 
 Returns a list of supported transaction types
 
 ```
-curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/transactions_types
+curl -H "Content-type: application/json" -X GET http://issm_api_ip_address:30080/transactions_types
 ```
 
 REST path:
@@ -65,7 +65,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -GET http://172.28.3.15:30080/transactions_types
+    curl -H "Content-type: application/json" -X GET http://172.28.3.15:30080/transactions_types
     [
       "instantiate",
       "scaleout"
@@ -77,7 +77,7 @@ Invocation example:
 Submit a transaction for the given service owner
 
 ```
-curl -H "Content-type: application/json" -POST -d "@/path/to/intent/json" http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_type>
+curl -H "Content-type: application/json" -X POST -d "@/path/to/intent/json" http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_type>
 ```
 
 REST path:
@@ -114,7 +114,7 @@ Invocation example:
 Returns all transactions of the service owner
 
 ```
-curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/transactions/<service_owner>
+curl -H "Content-type: application/json" -X GET http://issm_api_ip_address:30080/transactions/<service_owner>
 ```
 
 REST path:
@@ -137,7 +137,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -GET http://172.28.3.15:30080/transactions/operator-a
+    curl -H "Content-type: application/json" -X GET http://172.28.3.15:30080/transactions/operator-a
 [
   {
     "ref": "http://172.28.3.15:32026/workflows/domain-operator-a?label=transaction_uuid=b81c8c6cade04317b8c9240bb137715a",
@@ -168,7 +168,7 @@ Invocation example:
 Returns transactions of a given type of the service owner
 
 ```
-curl -H "Content-type: application/json" -GET http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_type>
+curl -H "Content-type: application/json" -X GET http://issm_api_ip_address:30080/transactions/<service_owner>/<transaction_type>
 ```
 
 REST path:
@@ -192,7 +192,7 @@ Return:
 Invocation example:
 
 ```
-    curl -H "Content-type: application/json" -GET http://172.28.3.15:30080/transactions/operator-a/scaleout
+    curl -H "Content-type: application/json" -X GET http://172.28.3.15:30080/transactions/operator-a/scaleout
     [
       {
         "ref": "http://172.28.3.15:32026/workflows/domain-operator-a?label=transaction_uuid=c5df607af95f469ca058919989968a33",
@@ -233,6 +233,114 @@ Return:
     status - 200
 ```
 
+## API (snfvo)
+
+
+### Create snfvo
+
+Create snfvo with the given name, the product offer it manages, and the management flow logic defined as an Argo WorkflowTemplate CR
+
+```
+curl -H "Content-type: application/json" -X POST -d '{"snfvo_name": "<string>", "product_offer_name": "<string>", "snfvo_json": "<json>"}' http://issm_api_ip_address:30080/snfvo/<service_owner>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the service owner (str)
+```
+
+Data payload:
+
+```
+    snfvo_name         - the name of the snfvo (str)
+    product_offer_name - the name of the product offer for this snfvo (str)
+    snfvo_json         - the snfvo WorkflowTemplate CR that defines the management logic flow (WorkflowTemplate json)
+```
+
+Return:
+
+```
+    status - 200
+```
+
+Invocation example:
+
+A sample python cli had been implemented to simplify the creation of an snfvo. Refer [here](../scripts/snfvo/cli.py) for more details
+
+
+### List snfvo
+
+Returns all snfvos of the service owner
+
+```
+curl -H "Content-type: application/json" -X GET http://issm_api_ip_address:30080/snfvo/<service_owner>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the service owner (str)
+```
+
+Return:
+
+```
+    status - 200
+    list of dictionaries (json):
+        snfvo_name - snfvo name
+        product_offer_name - the name of the product offer for this snfvo
+```
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -X GET  http://172.28.3.15:30080/snfvo/operator-a
+[
+  {
+    "snfvo_name": "ota",
+    "product_offer_name": "OTA demo eucnc core"
+  },
+  {
+    "snfvo_name": "spectrum",
+    "product_offer_name": "Slice Offer UC2"
+  },
+  {
+    "snfvo_name": "vcdn",
+    "product_offer_name": "CDN Network Service (CDN+SAS)"
+  }
+]
+```
+
+### Delete snfvo
+
+Delete snfvo with the given name, and owner
+
+```
+curl -H "Content-type: application/json" -X DELETE http://issm_api_ip_address:30080/snfvo/<service_owner>/<snfvo_name>
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the service owner (str)
+    snfvo_name          - the name of the snfvo (str)
+```
+
+Return:
+
+```
+    status - 200
+```
+
+Invocation example:
+
+```
+ curl -H "Content-type: application/json" -X DELETE http://172.28.3.15:30080/snfvo/operator-c/spectrum
+```
 
 ## Build (**relevant for developers only**)
 

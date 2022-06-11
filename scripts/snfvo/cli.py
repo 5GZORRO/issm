@@ -4,7 +4,7 @@ import requests
 import yaml
 
 '''
-python3 ./cli.py --file ../../snfvo/ota.yaml --service_owner operator-c --issm_api_url http://172.28.3.15:30080 --snfvo_name ota --snfvo_criteria "OTA demo eucnc core"
+python3 ./cli.py --file ../../snfvo/ota.yaml --service_owner operator-c --issm_api_url http://172.28.3.15:30080 --snfvo_name ota --product_offer_name "OTA demo eucnc core"
 '''
 
 def main():
@@ -13,8 +13,7 @@ def main():
     parser.add_argument('--service_owner', help='The owner of this snfvo (e.g. operator-a)')
     parser.add_argument('--file', help='Path to snfvo yaml file (e.g. ./vcdn.yaml)')
     parser.add_argument('--snfvo_name', help='snfvo name (e.g. vcdn)')
-    # TODO: consider renaming snfvo_criteria to product_offer_name
-    parser.add_argument('--snfvo_criteria', help='Runtime definition to load this snfvo')
+    parser.add_argument('--product_offer_name', help='The name of the product offer for this snfvo')
 
     args = parser.parse_args()
 
@@ -26,7 +25,7 @@ def main():
 
     payload = {
         "snfvo_name": args.snfvo_name,
-        "criteria_name": args.snfvo_criteria,
+        "product_offer_name": args.product_offer_name,
         "snfvo_json": _yaml
     }
 

@@ -72,7 +72,7 @@ SNFVO
 """
 DOMAIN_SENSOR_NAME='issm-branch'
 REGEX_SNFVO_NAME = re.compile('snfvo-(.+?)-flow')
-REGEX_CRITERIA_NAME = re.compile('.*==.*\"(.+?)\"')
+REGEX_WHEN_VALUE = re.compile('.*==.*\"(.+?)\"')
 
 
 def find(l, predicate):
@@ -149,9 +149,9 @@ def _snfvo_get(snfvo_name, sensor_json):
 
     when_statement = snfvo_step[0]['when']
     try:
-        criteria_name = REGEX_CRITERIA_NAME.match(when_statement)[1]
+        product_offer_name = REGEX_WHEN_VALUE.match(when_statement)[1]
         return {
-            'criteria_name': criteria_name,
+            'product_offer_name': product_offer_name,
             'snfvo_name': snfvo_name
         }
     except:
@@ -370,10 +370,12 @@ class Proxy:
             body=sensor_json
         )
 
-    def snfvo_add(self, service_owner, snfvo_name, criteria_name, sensor_json,
+    def snfvo_add(self, service_owner, snfvo_name, product_offer_name, sensor_json,
                   snfvo_json=None):
         """
-        Create snfvo
+        Create snfvo. Update the sensor with a 'when' condition step to call into
+        snfvo entry point. The 'when' condition is based on the product offer name
+        so that the snfvo is being used for that offer.
 
         :param service_owner: the owner of the snfvo
         :type service_owner: ``str``
@@ -381,15 +383,15 @@ class Proxy:
         :param snfvo_name: the name of the snfvo
         :type snfvo_name: ``str``
 
-        :param criteria_name: the criteria to call into the snfvo during LCM
-        :type criteria_name: ``str``
+        :param product_offer_name: the name of the product offer for this snfvo
+        :type product_offer_name: ``str``
 
         :param sensor_json: the sensor object to update the snfvo with
         :type sensor_json: ``dict``
 
-        :param snfvo_json: the snfvo that defines the management logic flow
-                           defined as WorkflowTemplate object (Optional)
-        :type snfvo_json: ``dict``
+        :param snfvo_json: the snfvo WorkflowTemplate CR that defines the management
+                           logic flow (Optional)
+        :type snfvo_json: ``WorkflowTemplate dict``
 
         """
         sys.stdout.write('snfvo_add..\n')
@@ -400,11 +402,11 @@ class Proxy:
             ['resource']['spec']['templates']
 
         update = False
+
         # instantiate
         template_inst = find (templates, lambda t: t['name'] == 'instantiate-invoke-snfvo')
         steps = template_inst['steps']
 
-        # NOTE: steps is nested list
         snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % snfvo_name)
         if snfvo_step:
             sys.stdout.write('snfvo [%s] already exists for instantiate\n' % snfvo_name)
@@ -415,7 +417,7 @@ class Proxy:
                     "name": _to_snfvo_template_name(snfvo_name),
                     "template": "instantiate"
                 },
-                "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % criteria_name
+                "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % product_offer_name
             }
             steps.append([snfvo_step])
             update = True
@@ -423,7 +425,7 @@ class Proxy:
         # scaleout
         template_sa = find (templates, lambda t: t['name'] == 'scaleout-invoke-snfvo')
         steps = template_sa['steps']
-        # NOTE: steps is nested list
+
         snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % snfvo_name)
         if snfvo_step:
             sys.stdout.write('snfvo [%s] already exists for scaleout\n' % snfvo_name)
@@ -434,7 +436,7 @@ class Proxy:
                     "name": _to_snfvo_template_name(snfvo_name),
                     "template": "scaleout"
                 },
-                "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % criteria_name
+                "when": "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"%s\"" % product_offer_name
             }
             steps.append([snfvo_step])
             update = True
@@ -449,7 +451,6 @@ class Proxy:
                     group="argoproj.io",
                     version="v1alpha1",
                     plural="workflowtemplates",
-                    #name="snfvo-%s-flow" % snfvo_name,
                     namespace="domain-%s" % service_owner,
                     body=snfvo_json
                 )
@@ -717,7 +718,7 @@ def snfvo_create(service_owner):
     try:
         value = getMessagePayload()
         snfvo_name = value['snfvo_name']
-        criteria_name = value['criteria_name']
+        product_offer_name = value['product_offer_name']
         snfvo_json = value['snfvo_json']
 
         sensor_json = proxy_server.getSensor(
@@ -730,7 +731,7 @@ def snfvo_create(service_owner):
 
         proxy_server.snfvo_add(
             service_owner=service_owner, snfvo_name=snfvo_name,
-            criteria_name=criteria_name, sensor_json=sensor_json,
+            product_offer_name=product_offer_name, sensor_json=sensor_json,
             snfvo_json=snfvo_json)
 
         response = flask.jsonify({'OK': 200})
