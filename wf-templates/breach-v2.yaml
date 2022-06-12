@@ -56,6 +56,11 @@ spec:
           - name: idx
             value: 0
 
+      - name: get-platform-env
+        templateRef:
+          name: workflow-environment
+          template: get-platform-env
+
       - name: get-domain-env
         dependencies: [service-owner]
         templateRef:
@@ -90,7 +95,7 @@ spec:
 
       - name: trigger-scaleout
         template: trigger-scaleout
-        dependencies: [transaction-data]
+        dependencies: [transaction-data, get-platform-env]
         arguments:
           parameters:
           - name: service_owner
@@ -108,12 +113,20 @@ spec:
             value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
           - name: trmf_url
             value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
+
+          - name: srsd_url
+            value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
+
+          - name: kafka_dl
+            value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
+
           - name: snfvo_data
             value: "{{tasks.transaction-data.outputs.parameters.snfvo_data}}"
 
   - name: trigger-scaleout
     inputs:
       parameters:
+      - name: kafka_dl
       - name: service_owner
       - name: place
       - name: order_id
@@ -121,6 +134,7 @@ spec:
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
+      - name: srsd_url
       - name: snfvo_data
     steps:
       - - name: event-uuid
@@ -139,6 +153,7 @@ spec:
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
                   "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
+                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
                   "place": {{inputs.parameters.place}},
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "order_id": "{{inputs.parameters.order_id}}",
@@ -146,6 +161,7 @@ spec:
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
+                  "srsd_url": "{{inputs.parameters.srsd_url}}",
                   "snfvo_data": {{inputs.parameters.snfvo_data}},
                   "sla_breach": {
                     "applicable": "true",

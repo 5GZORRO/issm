@@ -109,10 +109,8 @@ spec:
         template: consume
         arguments:
           parameters:
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
           - name: msg_id
@@ -235,10 +233,8 @@ spec:
         template: consume
         arguments:
           parameters:
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
           - name: msg_id
@@ -323,15 +319,13 @@ spec:
                 "SLAID": "{{inputs.parameters.sla_DID}}",
                 "instanceID": "{{tasks.get-vcdn-instance-id.outputs.result}}",
                 "place": {{inputs.parameters.place}},
-                "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
+                "kafka": "{{workflow.parameters.kafka}}",
                 "topic": "isbp-topic-out"
               }
           - name: kafka_topic
             value: "isbp-topic"
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_dl_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_dl_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka_dl}}"
 
 
   - name: vcdn-status-fail
@@ -401,10 +395,8 @@ spec:
         dependencies: [build-discovery-query]
         arguments:
           parameters:
-          - name: service_ip
-            value: "{{workflow.parameters.discovery_ip}}"
-          - name: service_port
-            value: "{{workflow.parameters.discovery_port}}"
+          - name: srsd_url
+            value: "{{workflow.parameters.srsd_url}}"
           - name: intent_query
             value: "{{tasks.build-discovery-query.outputs.result}}"
   
@@ -428,9 +420,12 @@ spec:
                 "order_id": "{{workflow.parameters.order_id}}",
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                 "trmf_url": "{{workflow.parameters.trmf_url}}",
+                "srsd_url": "{{workflow.parameters.srsd_url}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
-                "category": "{{workflow.parameters.category}}"                
+                "category": "{{workflow.parameters.category}}",
+                "kafka": "{{workflow.parameters.kafka}}",
+                "kafka_dl": "{{workflow.parameters.kafka_dl}}"
               }
           - name: kafka_topic
             value: issm-optimizer
@@ -566,10 +561,8 @@ spec:
         template: consume
         arguments:
           parameters:
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
           - name: msg_id
@@ -705,10 +698,8 @@ spec:
         template: consume
         arguments:
           parameters:
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
           - name: msg_id
@@ -784,15 +775,13 @@ spec:
                 "SLAID": "{{inputs.parameters.sla_DID}}",
                 "instanceID": "{{tasks.get-vcdn-instance-id.outputs.result}}",
                 "place": {{inputs.parameters.place}},
-                "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
+                "kafka": "{{workflow.parameters.kafka}}",
                 "topic": "isbp-topic-out"
               }
           - name: kafka_topic
             value: "isbp-topic"
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_dl_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_dl_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka_dl}}"
 
 
   - name: vcdn-status-fail
@@ -849,14 +838,12 @@ spec:
     #
     # Parameters
     # kafka_topic: the topic to publish the message on (string)
-    # kafka_ip: ipaddress of the kafka broker (string)
-    # kafka_port: kafka broker port (number)
+    # kafka: ipaddress:port of the kafka broker (string)
     # msg_id: the id of the message to look for (str)
     inputs:
       parameters:
       - name: kafka_topic
-      - name: kafka_ip
-      - name: kafka_port
+      - name: kafka
       - name: msg_id
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
@@ -877,7 +864,7 @@ spec:
         MSG_ID = "{{inputs.parameters.msg_id}}"
         payload = {}
 
-        KAFKA_SERVER = "{}:{}".format("{{inputs.parameters.kafka_ip}}", "{{inputs.parameters.kafka_port}}")
+        KAFKA_SERVER = "{}".format("{{inputs.parameters.kafka}}")
         consumer = KafkaConsumer(bootstrap_servers=KAFKA_SERVER,
                                  client_id="aaa",
                                  enable_auto_commit=True,

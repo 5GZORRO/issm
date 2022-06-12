@@ -51,7 +51,8 @@ spec:
                   "resource_owner": "{{inputs.parameters.resource_owner}}",
                   "sla_breach": {{workflow.parameters.sla_breach}},
                   "userdata": {{inputs.parameters.userdata}},
-                  "vsd_parameters": {{inputs.parameters.vsd_parameters}}
+                  "vsd_parameters": {{inputs.parameters.vsd_parameters}},
+                  "kafka_dl": "{{workflow.parameters.kafka_dl}}"
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"

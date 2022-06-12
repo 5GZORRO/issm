@@ -37,6 +37,8 @@ spec:
       - name: catalogue_url
       - name: elma_url
       - name: trmf_url
+      - name: srsd_url
+      - name: kafka_dl
     dag:
       tasks:
       - name: trigger-scaleout
@@ -57,6 +59,12 @@ spec:
             value: "{{inputs.parameters.catalogue_url}}"
           - name: trmf_url
             value: "{{inputs.parameters.trmf_url}}"
+          - name: srsd_url
+            value: "{{inputs.parameters.srsd_url}}"
+
+          - name: kafka_dl
+            value: "{{inputs.parameters.kafka_dl}}"
+
           - name: snfvo_data
             value: "{{workflow.parameters.snfvo_data}}"
           
@@ -67,6 +75,9 @@ spec:
       - name: catalogue_url
       - name: elma_url
       - name: trmf_url
+      - name: srsd_url
+      - name: kafka_dl
+
     dag:
       tasks:
       - name: trigger-instantiate
@@ -85,6 +96,12 @@ spec:
             value: "{{inputs.parameters.catalogue_url}}"
           - name: trmf_url
             value: "{{inputs.parameters.trmf_url}}"
+          - name: srsd_url
+            value: "{{inputs.parameters.srsd_url}}"
+
+          - name: kafka_dl
+            value: "{{inputs.parameters.kafka_dl}}"
+
           - name: snfvo_data
             value: "{{workflow.parameters.snfvo_data}}"
           - name: related_party
@@ -94,6 +111,7 @@ spec:
   - name: trigger-scaleout
     inputs:
       parameters:
+      - name: kafka_dl
       - name: service_owner
       - name: place
       - name: order_id
@@ -101,6 +119,7 @@ spec:
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
+      - name: srsd_url
       - name: snfvo_data
     steps:
       - - name: event-uuid
@@ -124,7 +143,9 @@ spec:
                   "category": "{{inputs.parameters.category}}",
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
+                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
+                  "srsd_url": "{{inputs.parameters.srsd_url}}",
                   "snfvo_data": {{inputs.parameters.snfvo_data}}
                 }
             - name: kafka_topic
@@ -134,12 +155,14 @@ spec:
   - name: trigger-instantiate
     inputs:
       parameters:
+      - name: kafka_dl
       - name: service_owner
       - name: order_id
       - name: category
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
+      - name: srsd_url
       - name: snfvo_data
       - name: related_party
     steps:
@@ -158,12 +181,14 @@ spec:
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}",
                   "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                   "operation": "instantiate", "sub_operation": "INSTANTIATE_SERVICE",
+                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
                   "service_owner": "{{inputs.parameters.service_owner}}",
                   "order_id": "{{inputs.parameters.order_id}}",
                   "category": "{{inputs.parameters.category}}",
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
+                  "srsd_url": "{{inputs.parameters.srsd_url}}",                  
                   "snfvo_data": {{inputs.parameters.snfvo_data}},
                   "related_party": "{{inputs.parameters.related_party}}"
                 }

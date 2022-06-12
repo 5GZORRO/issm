@@ -28,10 +28,8 @@ spec:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # DL kafka bus to publish sla event
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    - name: kafka_dl_ip
-      value: 172.28.3.196
-    - name: kafka_dl_port
-      value: 9092
+    - name: kafka_dl
+      value: 172.28.3.196:9092
     - name: kafka_dl_topic
       value: isbp-topic
 
@@ -105,7 +103,5 @@ spec:
               }
           - name: kafka_topic
             value: "{{workflow.parameters.kafka_dl_topic}}"
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_dl_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_dl_port}}"
+          - name: kafka_dl
+            value: "{{workflow.parameters.kafka_dl}}"

@@ -27,10 +27,8 @@ spec:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ISSM kafka
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    - name: kafka_ip
-      value: 172.28.3.196
-    - name: kafka_port
-      value: 9092
+    - name: kafka
+      value: 172.28.3.196:9092
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # payload attributes
@@ -91,7 +89,5 @@ spec:
               }
           - name: kafka_topic
             value: isbp-topic-out
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"

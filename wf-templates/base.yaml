@@ -49,10 +49,8 @@ spec:
           parameters:
           - name: kafka_topic
             value: "{{steps.kafka-topic-from-callback.outputs.result}}"
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
           - name: data
             value: "{{inputs.parameters.data}}"
 
@@ -68,10 +66,8 @@ spec:
             parameters:
             - name: kafka_topic
               value: "{{inputs.parameters.kafka_topic}}"
-            - name: kafka_ip
-              value: "{{workflow.parameters.kafka_ip}}"
-            - name: kafka_port
-              value: "{{workflow.parameters.kafka_port}}"
+            - name: kafka
+              value: "{{workflow.parameters.kafka}}"
             - name: data
               value: "{{inputs.parameters.data}}"
 
@@ -80,14 +76,12 @@ spec:
     #
     # Parameters
     # kafka_topic: the topic to publish the message on (string)
-    # kafka_ip: ipaddress of the kafka broker (string)
-    # kafka_port: kafka broker port (number)
+    # kafka: ipaddress:port of the kafka broker (string)
     # data: the payload to publish (json)
     inputs:
       parameters:
       - name: kafka_topic
-      - name: kafka_ip
-      - name: kafka_port
+      - name: kafka
       - name: data
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
@@ -104,7 +98,7 @@ spec:
         KAFKA_TIMEOUT = 10
         KAFKA_API_VERSION = (1, 1, 0)
 
-        KAFKA_SERVER = "{}:{}".format("{{inputs.parameters.kafka_ip}}", "{{inputs.parameters.kafka_port}}")
+        KAFKA_SERVER = "{}".format("{{inputs.parameters.kafka}}")
         producer = KafkaProducer(bootstrap_servers=KAFKA_SERVER,
                                  api_version=KAFKA_API_VERSION,
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
