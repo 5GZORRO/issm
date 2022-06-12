@@ -267,7 +267,7 @@ Return:
 
 Invocation example:
 
-A sample python cli had been implemented to simplify the creation of an snfvo. Refer [here](../scripts/snfvo/cli.py) for more details
+A sample python cli had been implemented to simplify the creation of an snfvo. Refer [here](../snfvo/cli.py) for more details
 
 
 ### List snfvo
