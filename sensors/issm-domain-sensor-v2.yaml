@@ -63,10 +63,11 @@ spec:
                 arguments:
                   parameters:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # ISSM kafka bus
+                  # Platform kafka bus
+                  # (the only hard coded attribute)
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: kafka
-                    value: OVERRIDE
+                    value: 172.28.3.196:9092
 
                   - name: kafka_dl
                     value: OVERRIDE
@@ -228,8 +229,6 @@ spec:
                         - name: srsd_url
                           value: "{{steps.get-platform-env.outputs.parameters.srsd_url}}"
 
-                        - name: kafka
-                          value: "{{steps.get-platform-env.outputs.parameters.kafka}}"
                         - name: kafka_dl
                           value: "{{steps.get-platform-env.outputs.parameters.kafka_dl}}"
 
@@ -287,8 +286,6 @@ spec:
                         - name: srsd_url
                           value: "{{steps.get-platform-env.outputs.parameters.srsd_url}}"
 
-                        - name: kafka
-                          value: "{{steps.get-platform-env.outputs.parameters.kafka}}"
                         - name: kafka_dl
                           value: "{{steps.get-platform-env.outputs.parameters.kafka_dl}}"
 
@@ -362,11 +359,6 @@ spec:
                 dependencyName: test-dep
                 dataKey: body.event_uuid
               dest: metadata.name
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.kafka
-              dest: spec.arguments.parameters.0.value
 
             - src:
                 dependencyName: test-dep
@@ -474,7 +466,7 @@ spec:
                 dependencyName: test-dep
                 dataKey: body.trmf_url
                 value: DEFAULT
-              dest: spec.arguments.parameters.26.value
+              dest: spec.arguments.parameters.16.value
 
             - src:
                 dependencyName: test-dep

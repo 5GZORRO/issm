@@ -319,15 +319,13 @@ spec:
                 "SLAID": "{{inputs.parameters.sla_DID}}",
                 "instanceID": "{{tasks.get-vcdn-instance-id.outputs.result}}",
                 "place": {{inputs.parameters.place}},
-                "kafka_ip": "{{workflow.parameters.kafka_ip}}", "kafka_port": "{{workflow.parameters.kafka_port}}",
+                "kafka": "{{workflow.parameters.kafka}}",
                 "topic": "isbp-topic-out"
               }
           - name: kafka_topic
             value: "isbp-topic"
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_dl_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_dl_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka_dl}}"
 
 
   - name: vcdn-status-fail

@@ -62,10 +62,8 @@ spec:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # ISSM kafka bus
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: kafka_ip
-                    value: 172.28.3.196
-                  - name: kafka_port
-                    value: 9092
+                  - name: kafka
+                    value: 172.28.3.196:9092
 
                   - name: breachPredictionNotification
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -105,19 +103,17 @@ spec:
                             }
                         - name: kafka_topic
                           value: "issm-breach-{{steps.domain.outputs.result}}"
-                        - name: kafka_ip
-                          value: "{{workflow.parameters.kafka_ip}}"
-                        - name: kafka_port
-                          value: "{{workflow.parameters.kafka_port}}"
+                        - name: kafka
+                          value: "{{workflow.parameters.kafka}}"
 
 
           parameters:
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification
-              dest: spec.arguments.parameters.2.value
+              dest: spec.arguments.parameters.1.value
 
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.transactionID
-              dest: spec.arguments.parameters.3.value
+              dest: spec.arguments.parameters.2.value

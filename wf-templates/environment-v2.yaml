@@ -33,7 +33,6 @@ spec:
               {
                 "platform": {
                   "srsd_url": "http://172.28.3.15:32068",
-                  "kafka": "172.28.3.196:9092",
                   "kafka_dl": "172.28.3.196:9092"
                 }
               }
@@ -47,18 +46,6 @@ spec:
           parameters:
           - name: key
             value: srsd_url
-          - name: json_str
-            value: "{{tasks.platform-env.outputs.result}}"
-
-      - name: kafka
-        dependencies: [platform-env]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: kafka
           - name: json_str
             value: "{{tasks.platform-env.outputs.result}}"
 
@@ -80,9 +67,7 @@ spec:
       - name: srsd_url
         valueFrom:
           parameter: "{{tasks.srsd-url.outputs.result}}"
-      - name: kafka
-        valueFrom:
-          parameter: "{{tasks.kafka.outputs.result}}"
+
       - name: kafka_dl
         valueFrom:
           parameter: "{{tasks.kafka-dl.outputs.result}}"

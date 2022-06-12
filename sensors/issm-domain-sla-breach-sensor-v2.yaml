@@ -62,10 +62,8 @@ spec:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # ISSM kafka bus
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: kafka_ip
-                    value: 172.28.3.196
-                  - name: kafka_port
-                    value: 9092
+                  - name: kafka
+                    value: 172.28.3.196:9092
 
                   - name: breachPredictionNotification
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -92,24 +90,24 @@ spec:
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification
-              dest: spec.arguments.parameters.2.value
+              dest: spec.arguments.parameters.1.value
 
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.transactionID
-              dest: spec.arguments.parameters.3.value
+              dest: spec.arguments.parameters.2.value
 
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.place
-              dest: spec.arguments.parameters.4.value
+              dest: spec.arguments.parameters.3.value
 
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.instanceID
-              dest: spec.arguments.parameters.5.value
+              dest: spec.arguments.parameters.4.value
 
             - src:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.productID
-              dest: spec.arguments.parameters.6.value
+              dest: spec.arguments.parameters.5.value

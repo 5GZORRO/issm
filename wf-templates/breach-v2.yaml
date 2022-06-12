@@ -95,7 +95,7 @@ spec:
 
       - name: trigger-scaleout
         template: trigger-scaleout
-        dependencies: [transaction-data]
+        dependencies: [transaction-data, get-platform-env]
         arguments:
           parameters:
           - name: service_owner
@@ -117,8 +117,6 @@ spec:
           - name: srsd_url
             value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
 
-          - name: kafka
-            value: "{{tasks.get-platform-env.outputs.parameters.kafka}}"
           - name: kafka_dl
             value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
 
@@ -128,7 +126,6 @@ spec:
   - name: trigger-scaleout
     inputs:
       parameters:
-      - name: kafka
       - name: kafka_dl
       - name: service_owner
       - name: place
@@ -156,7 +153,6 @@ spec:
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
                   "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
-                  "kafka": "{{inputs.parameters.kafka}}",
                   "kafka_dl": "{{inputs.parameters.kafka_dl}}",
                   "place": {{inputs.parameters.place}},
                   "service_owner": "{{inputs.parameters.service_owner}}",

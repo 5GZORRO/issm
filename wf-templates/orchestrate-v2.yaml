@@ -52,7 +52,6 @@ spec:
                   "sla_breach": {{workflow.parameters.sla_breach}},
                   "userdata": {{inputs.parameters.userdata}},
                   "vsd_parameters": {{inputs.parameters.vsd_parameters}},
-                  "kafka": "{{workflow.parameters.kafka}}",
                   "kafka_dl": "{{workflow.parameters.kafka_dl}}"
                 }
             - name: kafka_topic
