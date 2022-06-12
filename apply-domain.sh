@@ -20,7 +20,9 @@ kubectl apply -f $SCRIPT_DIR/sensors/issm-domain-sla-breach-sensor-v2.yaml -n $M
 
 kubectl apply -f $SCRIPT_DIR/wf-templates/ -n $MNO_NAMESPACE
 
-kubectl apply -f $SCRIPT_DIR/snfvo/ -n $MNO_NAMESPACE
+kubectl apply -f $SCRIPT_DIR/snfvo/ota.yaml -n $MNO_NAMESPACE
+kubectl apply -f $SCRIPT_DIR/snfvo/spectrum.yaml -n $MNO_NAMESPACE
+kubectl apply -f $SCRIPT_DIR/snfvo/vcdn.yaml -n $MNO_NAMESPACE
 
 if [ "$ORCH" = "NSSO" ]; then
     kubectl apply -f $SCRIPT_DIR/wf-orchestrators/orchestration-nsso-v2.yaml -n $MNO_NAMESPACE
