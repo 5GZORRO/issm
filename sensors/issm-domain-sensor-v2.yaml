@@ -90,33 +90,17 @@ spec:
                   # Mandatory to exist
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   - name: transaction_uuid
-                  - name: scenario
-                  # stakeholder
-                  - name: service_owner
 
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Below are scenario specific
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: service_owner
 
                   # 'instantiate', 'scaleout'
                   - name: operation
                     value: OVERRIDE
 
-                  # the context within the scenario 
                   - name: sub_operation
                     value: OVERRIDE
 
-
-                  # High level intent query for smart offer search
-                  - name: intent_query
-                    value: OVERRIDE
-
-                  # SW offer related
-                  - name: product_id
-                    value: OVERRIDE
                   - name: vsbName
-                    value: OVERRIDE
-                  - name: sla_id
                     value: OVERRIDE
 
                   # Id of existing instance (for scaleout)
@@ -153,9 +137,6 @@ spec:
                   - name: order_id
                     value: OVERRIDE
 
-                  - name: edge_order_id
-                    value: OVERRIDE
-
                   - name: userdata
                     value: OVERRIDE
 
@@ -171,14 +152,6 @@ spec:
                   - name: vsd_parameters
                     value: OVERRIDE
                   
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # ISSM API service
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: service_ip
-                    value: 172.28.3.15
-                  - name: service_port
-                    value: 30080
-
                 templates:
                 - name: handlerequest
                   steps:
@@ -371,20 +344,14 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.scenario
+                dataKey: body.service_owner
                 value: DEFAULT
               dest: spec.arguments.parameters.7.value
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.service_owner
-                value: DEFAULT
-              dest: spec.arguments.parameters.8.value
-
-            - src:
-                dependencyName: test-dep
                 dataKey: body.operation
-              dest: spec.arguments.parameters.9.value
+              dest: spec.arguments.parameters.8.value
 
             - src:
                 dependencyName: test-dep
@@ -395,67 +362,49 @@ spec:
                 dependencyName: test-dep
                 dataKey: body.sub_operation
                 value: instantiate
-              dest: spec.arguments.parameters.10.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.intent_query
-                value: DEFAULT
-              dest: spec.arguments.parameters.11.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.product_id
-                value: DEFAULT
-              dest: spec.arguments.parameters.12.value
+              dest: spec.arguments.parameters.9.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.vsbName
                 value: DEFAULT
-              dest: spec.arguments.parameters.13.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.sla_id
-                value: DEFAULT
-              dest: spec.arguments.parameters.14.value
+              dest: spec.arguments.parameters.10.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.instance_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.15.value
+              dest: spec.arguments.parameters.11.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resources
                 value: DEFAULT
-              dest: spec.arguments.parameters.16.value
+              dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resource_owner
                 value: DEFAULT
-              dest: spec.arguments.parameters.17.value
+              dest: spec.arguments.parameters.13.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.elma_url
                 value: DEFAULT
-              dest: spec.arguments.parameters.18.value
+              dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.catalogue_url
                 value: DEFAULT
-              dest: spec.arguments.parameters.19.value
+              dest: spec.arguments.parameters.15.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.trmf_url
                 value: DEFAULT
-              dest: spec.arguments.parameters.20.value
+              dest: spec.arguments.parameters.16.value
 
             - src:
                 dependencyName: test-dep
@@ -464,7 +413,7 @@ spec:
                   {
                   }
                 
-              dest: spec.arguments.parameters.21.value
+              dest: spec.arguments.parameters.17.value
 
             - src:
                 dependencyName: test-dep
@@ -473,31 +422,25 @@ spec:
                   {
                     "applicable": "false"
                   }
-              dest: spec.arguments.parameters.22.value
+              dest: spec.arguments.parameters.18.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.product_DID
                 value: DEFAULT
-              dest: spec.arguments.parameters.23.value
+              dest: spec.arguments.parameters.19.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.sla_DID
                 value: DEFAULT
-              dest: spec.arguments.parameters.24.value
+              dest: spec.arguments.parameters.20.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.order_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.25.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.edge_order_id
-                value: DEFAULT
-              dest: spec.arguments.parameters.26.value
+              dest: spec.arguments.parameters.21.value
 
             - src:
                 dependencyName: test-dep
@@ -505,13 +448,13 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.27.value
+              dest: spec.arguments.parameters.22.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.category
                 value: DEFAULT
-              dest: spec.arguments.parameters.28.value
+              dest: spec.arguments.parameters.23.value
 
             - src:
                 dependencyName: test-dep
@@ -519,13 +462,13 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.29.value
+              dest: spec.arguments.parameters.24.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.related_party
                 value: DEFAULT
-              dest: spec.arguments.parameters.30.value
+              dest: spec.arguments.parameters.25.value
 
             - src:
                 dependencyName: test-dep
@@ -533,4 +476,4 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.31.value
+              dest: spec.arguments.parameters.26.value
