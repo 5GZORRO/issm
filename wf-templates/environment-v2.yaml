@@ -17,6 +17,77 @@ metadata:
   name: workflow-environment
 spec:
   templates:
+  - name: get-platform-env
+    dag:
+      tasks:
+      - name: platform-env
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: platform
+          - name: json_str
+            value: |
+              {
+                "platform": {
+                  "srsd_url": "http://172.28.3.15:32068",
+                  "kafka": "172.28.3.196:9092",
+                  "kafka_dl": "172.28.3.196:9092"
+                }
+              }
+
+      - name: srsd-url
+        dependencies: [platform-env]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: srsd_url
+          - name: json_str
+            value: "{{tasks.platform-env.outputs.result}}"
+
+      - name: kafka
+        dependencies: [platform-env]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: kafka
+          - name: json_str
+            value: "{{tasks.platform-env.outputs.result}}"
+
+      - name: kafka-dl
+        dependencies: [platform-env]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: kafka_dl
+          - name: json_str
+            value: "{{tasks.platform-env.outputs.result}}"
+
+
+    outputs:
+      parameters:
+      - name: srsd_url
+        valueFrom:
+          parameter: "{{tasks.srsd-url.outputs.result}}"
+      - name: kafka
+        valueFrom:
+          parameter: "{{tasks.kafka.outputs.result}}"
+      - name: kafka_dl
+        valueFrom:
+          parameter: "{{tasks.kafka-dl.outputs.result}}"
+
+
   - name: get-domain-env
     inputs:
       parameters:

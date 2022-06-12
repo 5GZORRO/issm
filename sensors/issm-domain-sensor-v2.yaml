@@ -65,26 +65,11 @@ spec:
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # ISSM kafka bus
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: kafka_ip
-                    value: 172.28.3.196
-                  - name: kafka_port
-                    value: 9092
+                  - name: kafka
+                    value: OVERRIDE
 
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # DL kafka bus
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: kafka_dl_ip
-                    value: 172.28.3.196
-                  - name: kafka_dl_port
-                    value: 9092
-
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  # Discovery service
-                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  - name: discovery_ip
-                    value: 172.28.3.15
-                  - name: discovery_port
-                    value: 32068
+                  - name: kafka_dl
+                    value: OVERRIDE
 
                   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   # Mandatory to exist
@@ -137,6 +122,9 @@ spec:
                     value: OVERRIDE
 
                   - name: trmf_url
+                    value: OVERRIDE
+
+                  - name: srsd_url
                     value: OVERRIDE
 
                   - name: place
@@ -220,6 +208,11 @@ spec:
                         - name: domain
                           value: "{{workflow.parameters.service_owner}}"
 
+                  - - name: get-platform-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-platform-env
+
                   - - name: do-instantiate
                       templateRef:
                         name: instantiate-scaleout
@@ -232,7 +225,13 @@ spec:
                           value: "{{steps.get-domain-env.outputs.parameters.elma_url}}"
                         - name: trmf_url
                           value: "{{steps.get-domain-env.outputs.parameters.trmf_url}}"
+                        - name: srsd_url
+                          value: "{{steps.get-platform-env.outputs.parameters.srsd_url}}"
 
+                        - name: kafka
+                          value: "{{steps.get-platform-env.outputs.parameters.kafka}}"
+                        - name: kafka_dl
+                          value: "{{steps.get-platform-env.outputs.parameters.kafka_dl}}"
 
 
                 - name: scaleout
@@ -267,6 +266,11 @@ spec:
                         parameters:
                         - name: domain
                           value: "{{workflow.parameters.service_owner}}"
+
+                  - - name: get-platform-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-platform-env
                       
                   - - name: do-scaleout
                       templateRef:
@@ -280,8 +284,13 @@ spec:
                           value: "{{steps.get-domain-env.outputs.parameters.elma_url}}"
                         - name: trmf_url
                           value: "{{steps.get-domain-env.outputs.parameters.trmf_url}}"
+                        - name: srsd_url
+                          value: "{{steps.get-platform-env.outputs.parameters.srsd_url}}"
 
-
+                        - name: kafka
+                          value: "{{steps.get-platform-env.outputs.parameters.kafka}}"
+                        - name: kafka_dl
+                          value: "{{steps.get-platform-env.outputs.parameters.kafka_dl}}"
 
 
                 - name: orchestrate
@@ -355,6 +364,16 @@ spec:
               dest: metadata.name
 
             - src:
+                dependencyName: test-dep
+                dataKey: body.kafka
+              dest: spec.arguments.parameters.0.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.kafka_dl
+              dest: spec.arguments.parameters.1.value
+
+            - src:
                 #
                 # transaction_uuid is treated as the whole business transaction
                 # that can contain several flows (i.e. several event_uuids)
@@ -367,24 +386,24 @@ spec:
                 dependencyName: test-dep
                 dataKey: body.transaction_uuid
                 value: notapplicable
-              dest: spec.arguments.parameters.6.value
+              dest: spec.arguments.parameters.2.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.scenario
                 value: DEFAULT
-              dest: spec.arguments.parameters.7.value
+              dest: spec.arguments.parameters.3.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.service_owner
                 value: DEFAULT
-              dest: spec.arguments.parameters.8.value
+              dest: spec.arguments.parameters.4.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.operation
-              dest: spec.arguments.parameters.9.value
+              dest: spec.arguments.parameters.5.value
 
             - src:
                 dependencyName: test-dep
@@ -395,67 +414,73 @@ spec:
                 dependencyName: test-dep
                 dataKey: body.sub_operation
                 value: instantiate
-              dest: spec.arguments.parameters.10.value
+              dest: spec.arguments.parameters.6.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.intent_query
                 value: DEFAULT
-              dest: spec.arguments.parameters.11.value
+              dest: spec.arguments.parameters.7.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.product_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.12.value
+              dest: spec.arguments.parameters.8.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.vsbName
                 value: DEFAULT
-              dest: spec.arguments.parameters.13.value
+              dest: spec.arguments.parameters.9.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.sla_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.14.value
+              dest: spec.arguments.parameters.10.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.instance_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.15.value
+              dest: spec.arguments.parameters.11.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resources
                 value: DEFAULT
-              dest: spec.arguments.parameters.16.value
+              dest: spec.arguments.parameters.12.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.resource_owner
                 value: DEFAULT
-              dest: spec.arguments.parameters.17.value
+              dest: spec.arguments.parameters.13.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.elma_url
                 value: DEFAULT
-              dest: spec.arguments.parameters.18.value
+              dest: spec.arguments.parameters.14.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.catalogue_url
                 value: DEFAULT
-              dest: spec.arguments.parameters.19.value
+              dest: spec.arguments.parameters.15.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.trmf_url
                 value: DEFAULT
-              dest: spec.arguments.parameters.20.value
+              dest: spec.arguments.parameters.26.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.srsd_url
+                value: DEFAULT
+              dest: spec.arguments.parameters.17.value
 
             - src:
                 dependencyName: test-dep
@@ -464,7 +489,7 @@ spec:
                   {
                   }
                 
-              dest: spec.arguments.parameters.21.value
+              dest: spec.arguments.parameters.18.value
 
             - src:
                 dependencyName: test-dep
@@ -473,31 +498,31 @@ spec:
                   {
                     "applicable": "false"
                   }
-              dest: spec.arguments.parameters.22.value
+              dest: spec.arguments.parameters.19.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.product_DID
                 value: DEFAULT
-              dest: spec.arguments.parameters.23.value
+              dest: spec.arguments.parameters.20.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.sla_DID
                 value: DEFAULT
-              dest: spec.arguments.parameters.24.value
+              dest: spec.arguments.parameters.21.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.order_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.25.value
+              dest: spec.arguments.parameters.22.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.edge_order_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.26.value
+              dest: spec.arguments.parameters.23.value
 
             - src:
                 dependencyName: test-dep
@@ -505,13 +530,13 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.27.value
+              dest: spec.arguments.parameters.24.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.category
                 value: DEFAULT
-              dest: spec.arguments.parameters.28.value
+              dest: spec.arguments.parameters.25.value
 
             - src:
                 dependencyName: test-dep
@@ -519,13 +544,13 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.29.value
+              dest: spec.arguments.parameters.26.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.related_party
                 value: DEFAULT
-              dest: spec.arguments.parameters.30.value
+              dest: spec.arguments.parameters.27.value
 
             - src:
                 dependencyName: test-dep
@@ -533,4 +558,4 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.31.value
+              dest: spec.arguments.parameters.28.value

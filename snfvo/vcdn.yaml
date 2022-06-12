@@ -401,10 +401,8 @@ spec:
         dependencies: [build-discovery-query]
         arguments:
           parameters:
-          - name: service_ip
-            value: "{{workflow.parameters.discovery_ip}}"
-          - name: service_port
-            value: "{{workflow.parameters.discovery_port}}"
+          - name: srsd_url
+            value: "{{workflow.parameters.srsd_url}}"
           - name: intent_query
             value: "{{tasks.build-discovery-query.outputs.result}}"
   
@@ -428,9 +426,12 @@ spec:
                 "order_id": "{{workflow.parameters.order_id}}",
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                 "trmf_url": "{{workflow.parameters.trmf_url}}",
+                "srsd_url": "{{workflow.parameters.srsd_url}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
-                "category": "{{workflow.parameters.category}}"                
+                "category": "{{workflow.parameters.category}}",
+                "kafka": "{{workflow.parameters.kafka}}",
+                "kafka_dl": "{{workflow.parameters.kafka_dl}}"
               }
           - name: kafka_topic
             value: issm-optimizer
