@@ -72,5 +72,29 @@ ISSM input parameters are defines as intents. Refer [here](../api/intents/README
 
 ```
 curl -H "Content-type: application/json" -X POST -d "@./hello-instantiate.json" http://172.28.3.15:30080/transactions/operator-b/instantiate
+
+{
+  "transaction_uuid": "dba63a5ce9e645f1986fc94501ad3cc4"
+}
 ```
 
+### Track progress
+
+Select the transaction
+
+![IU3](images/hello-snvfo-ui-3.png)
+
+It can be seen that `snfvo-hello` properly called
+
+![Flow4](images/hello-snvfo-flow-4.png)
+
+### Remove hello snfvo
+
+```
+curl -H "Content-type: application/json" -X DELETE http://172.28.3.15:30080/snfvo/operator-b/hello
+
+{
+  "OK": 200
+}
+
+```
