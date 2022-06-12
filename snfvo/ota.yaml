@@ -109,10 +109,8 @@ spec:
         template: consume
         arguments:
           parameters:
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
           - name: msg_id
@@ -240,10 +238,8 @@ spec:
         template: consume
         arguments:
           parameters:
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
           - name: kafka_topic
             value: "issm-in-{{workflow.parameters.service_owner}}"
           - name: msg_id
@@ -323,14 +319,12 @@ spec:
     #
     # Parameters
     # kafka_topic: the topic to publish the message on (string)
-    # kafka_ip: ipaddress of the kafka broker (string)
-    # kafka_port: kafka broker port (number)
+    # kafka: ipaddress:port of the kafka broker (string)
     # msg_id: the id of the message to look for (str)
     inputs:
       parameters:
       - name: kafka_topic
-      - name: kafka_ip
-      - name: kafka_port
+      - name: kafka
       - name: msg_id
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
@@ -351,7 +345,7 @@ spec:
         MSG_ID = "{{inputs.parameters.msg_id}}"
         payload = {}
 
-        KAFKA_SERVER = "{}:{}".format("{{inputs.parameters.kafka_ip}}", "{{inputs.parameters.kafka_port}}")
+        KAFKA_SERVER = "{}".format("{{inputs.parameters.kafka}}")
         consumer = KafkaConsumer(bootstrap_servers=KAFKA_SERVER,
                                  client_id="aaa",
                                  enable_auto_commit=True,

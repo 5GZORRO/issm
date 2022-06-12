@@ -146,10 +146,8 @@ spec:
           template: produce
         arguments:
           parameters:
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
 
           - name: data
             value: |
@@ -175,10 +173,8 @@ spec:
           template: produce
         arguments:
           parameters:
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
 
           - name: data
             value: |
