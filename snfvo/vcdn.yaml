@@ -538,7 +538,7 @@ spec:
           parameters:
           - name: resource_owner
             # domain's orchestrator
-            value: "{{tasks.edge-attributes.outputs.parameters.resource_owner}}"
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
 
           - name: vsbName
             value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
