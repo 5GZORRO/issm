@@ -94,7 +94,7 @@ spec:
         name = ""
         po_id = ""
         place = {}
-        resource_owner = ""
+        related_party = ""
         did = ""
 
         # Name
@@ -109,10 +109,10 @@ spec:
         place = po_json['offer_object']['place'][0]
         sys.stdout.write('place: "%s" \n' % place)
 
-        # resource owner
-        resource_owner = po_json['offer_object']['productSpecification']['relatedParty'][0]['name']
-        resource_owner = resource_owner.replace('_','-').lower()
-        sys.stdout.write('resource_owner: "%s" \n' % resource_owner)
+        # relatedParty
+        related_party = po_json['offer_object']['productSpecification']['relatedParty'][0]['name']
+        related_party = related_party.replace('_','-').lower()
+        sys.stdout.write('related_party: "%s" \n' % related_party)
 
         # DID
         did = po_json['offer_did']
@@ -123,8 +123,8 @@ spec:
         with open('/tmp/place.txt', 'w') as f:
             json.dump(place, f)
 
-        with open('/tmp/resource_owner.txt', 'w') as f:
-            f.write(resource_owner)
+        with open('/tmp/related_party.txt', 'w') as f:
+            f.write(related_party)
 
         with open('/tmp/name.txt', 'w') as f:
             f.write(name)
@@ -138,9 +138,9 @@ spec:
         valueFrom:
           path: /tmp/place.txt
 
-      - name: resource_owner
+      - name: related_party
         valueFrom:
-          path: /tmp/resource_owner.txt
+          path: /tmp/related_party.txt
 
       - name: did
         valueFrom:

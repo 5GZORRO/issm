@@ -106,7 +106,9 @@ spec:
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-slice]
-        template: consume
+        templateRef:
+          name: workflow-base
+          template: consume
         arguments:
           parameters:
           - name: kafka
@@ -230,7 +232,9 @@ spec:
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-vcdn-service]
-        template: consume
+        templateRef:
+          name: workflow-base
+          template: consume
         arguments:
           parameters:
           - name: kafka
@@ -479,7 +483,7 @@ spec:
           - name: resource_id
             value: "{{tasks.edge-attributes.outputs.parameters.id}}"
           - name: operator_id_seller
-            value: "{{tasks.edge-attributes.outputs.parameters.resource_owner}}"
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
           - name: operator_id_buyer
             value: "{{workflow.parameters.service_owner}}"
           - name: resource_did
@@ -558,7 +562,9 @@ spec:
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-slice]
-        template: consume
+        templateRef:
+          name: workflow-base
+          template: consume
         arguments:
           parameters:
           - name: kafka
@@ -677,7 +683,7 @@ spec:
           parameters:
           - name: resource_owner
             # domain's orchestrator
-            value: "{{tasks.edge-attributes.outputs.parameters.resource_owner}}"
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
           - name: vsbName
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
           - name: product_DID
@@ -695,7 +701,9 @@ spec:
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-vcdn-service]
-        template: consume
+        templateRef:
+          name: workflow-base
+          template: consume
         arguments:
           parameters:
           - name: kafka
@@ -831,59 +839,3 @@ spec:
             parameters:
             - name: resource_did
               value: "{{inputs.parameters.resource_did}}"
-
-
-  - name: consume
-    # Consumes a message from kafka broker of a matched event_uuid
-    #
-    # Parameters
-    # kafka_topic: the topic to publish the message on (string)
-    # kafka: ipaddress:port of the kafka broker (string)
-    # msg_id: the id of the message to look for (str)
-    inputs:
-      parameters:
-      - name: kafka_topic
-      - name: kafka
-      - name: msg_id
-    script:
-      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
-      imagePullPolicy: IfNotPresent
-      command: [python]
-      source: |
-        import json
-        import os
-        import sys
-
-        from kafka import KafkaConsumer
-        from kafka.errors import KafkaError
-
-        KAFKA_TOPIC = '{{inputs.parameters.kafka_topic}}'
-        KAFKA_TIMEOUT = 10
-        KAFKA_API_VERSION = (1, 1, 0)
-
-        MSG_ID = "{{inputs.parameters.msg_id}}"
-        payload = {}
-
-        KAFKA_SERVER = "{}".format("{{inputs.parameters.kafka}}")
-        consumer = KafkaConsumer(bootstrap_servers=KAFKA_SERVER,
-                                 client_id="aaa",
-                                 enable_auto_commit=True,
-                                 api_version=KAFKA_API_VERSION, group_id=MSG_ID)
-        consumer.subscribe(pattern=KAFKA_TOPIC)
-
-        for msg in consumer:
-            # TODO: drain topic messages first so we do not consume stale messages
-            payload = json.loads(msg.value.decode('utf-8', 'ignore'))
-            sys.stdout.write('Received payload: %s \n' % payload)
-            if payload.get('msg_id', '') == MSG_ID:
-                sys.stdout.write('It is my message: %s \n' % payload)
-                break
-
-        with open('/tmp/payload.txt', 'w') as f:
-            json.dump(payload, f)
-
-    outputs:
-      parameters:
-      - name: payload
-        valueFrom:
-          path: /tmp/payload.txt
