@@ -39,12 +39,19 @@ spec:
         category = "{{inputs.parameters.category}}"
         snfvo_data = {{inputs.parameters.snfvo_data}}
 
+        sys.stdout.write('order_ids: %s\ncategory: "%s"\nsnfvo_data: %s\n' %
+                          (order_ids, category, snfvo_data))
+
         order_id = ""
         category_sub_order = {}
 
-        for o_id in order_id:
-            headers = {'Content-Type': 'application/json'}
-            r = requests.get("{{workflow.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/productOrder/o_id",
+        categories = ["VNF", "Edge", "Slice", "Network Service"]
+
+        found = False
+        headers = {'Content-Type': 'application/json'}
+        for o_id in order_ids:
+            sys.stdout.write('Retrieve Order ID: %s\n' % o_id)
+            r = requests.get("{{inputs.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/productOrder/%s" % o_id,
                 headers=headers)
             json.dump(r.json(), sys.stdout)
             sys.stdout.write('\n\n')
@@ -61,11 +68,13 @@ spec:
             po_c = r.json()['category'][0]['name']
             if po_c not in categories:
                 raise Exception('*** Illegal PO category "%s" must be: %s ***' % (po_c, categories))
-            if po_c == category:
-                sys.stdout.write('Main order_id: [%s]\n' % o_id)
+            if po_c == category and not found:
+                # mark the first one as MAIN
+                found = True
+                sys.stdout.write('Main order_id: %s\n' % o_id)
                 order_id = o_id
             else:
-                o_ids = category_sub_order.setdefault(po_c, [])
+                o_ids = category_sub_order.setdefault(po_c.lower().replace(" ", ""), [])
                 o_ids.append(o_id)
 
         sys.stdout.write('caterogy to orders: %s\n' % category_sub_order)
