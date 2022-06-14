@@ -169,11 +169,12 @@ spec:
 
                 - name: instantiate-from-api
                   #
-                  # Load domain's env first, then call into
+                  # Load domain's env first and parse order array, then call into
                   # INSTANTIATE_SERVICE
                   #
-                  steps:
-                  - - name: get-domain-env
+                  dag:
+                    tasks:
+                    - name: get-domain-env
                       templateRef:
                         name: workflow-environment
                         template: get-domain-env
@@ -182,14 +183,20 @@ spec:
                         - name: domain
                           value: "{{workflow.parameters.service_owner}}"
 
+                    - name: get-platform-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-platform-env
+
                     - name: prepare-orders
+                      dependencies: [get-domain-env]
                       templateRef:
                         name: workflow-catalog
                         template: prepare-orders-from-catalog
                       arguments:
                         parameters:
                         - name: catalogue_url
-                          value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
+                          value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
                         - name: order_id
                           # NOTE: here it is an ARRAY
                           value: "{{workflow.parameters.order_id}}"
@@ -198,38 +205,34 @@ spec:
                         - name: snfvo_data
                           value: "{{workflow.parameters.snfvo_data}}"
 
-                    - name: get-platform-env
-                      templateRef:
-                        name: workflow-environment
-                        template: get-platform-env
-
-                  - - name: do-instantiate
+                    - name: do-instantiate
+                      dependencies: [prepare-orders, get-platform-env]
                       templateRef:
                         name: instantiate-scaleout
                         template: instantiate
                       arguments:
                         parameters:
                         - name: catalogue_url
-                          value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
+                          value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
                         - name: elma_url
-                          value: "{{steps.get-domain-env.outputs.parameters.elma_url}}"
+                          value: "{{tasks.get-domain-env.outputs.parameters.elma_url}}"
                         - name: trmf_url
-                          value: "{{steps.get-domain-env.outputs.parameters.trmf_url}}"
+                          value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
                         - name: srsd_url
-                          value: "{{steps.get-platform-env.outputs.parameters.srsd_url}}"
+                          value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
 
                         - name: kafka_dl
-                          value: "{{steps.get-platform-env.outputs.parameters.kafka_dl}}"
+                          value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
 
                         - name: order_id
-                          value: "{{steps.prepare-orders.outputs.parameters.order_id}}"
+                          value: "{{tasks.prepare-orders.outputs.parameters.order_id}}"
                         - name: snfvo_data
-                          value: "{{steps.prepare-orders.outputs.parameters.snfvo_data}}"
+                          value: "{{tasks.prepare-orders.outputs.parameters.snfvo_data}}"
 
 
                 - name: scaleout
                   #
-                  # Load domain's env first, then call into
+                  # Load domain's env first and parse order array, then call into
                   # SCALEOUT_SERVICE
                   #
                   steps:
@@ -250,8 +253,9 @@ spec:
                       template: orchestrate
 
                 - name: scaleout-from-api
-                  steps:
-                  - - name: get-domain-env
+                  dag:
+                    tasks:
+                    - name: get-domain-env
                       templateRef:
                         name: workflow-environment
                         template: get-domain-env
@@ -259,15 +263,21 @@ spec:
                         parameters:
                         - name: domain
                           value: "{{workflow.parameters.service_owner}}"
-
+  
+                    - name: get-platform-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-platform-env
+  
                     - name: prepare-orders
+                      dependencies: [get-domain-env]
                       templateRef:
                         name: workflow-catalog
                         template: prepare-orders-from-catalog
                       arguments:
                         parameters:
                         - name: catalogue_url
-                          value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
+                          value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
                         - name: order_id
                           # NOTE: here it is an ARRAY
                           value: "{{workflow.parameters.order_id}}"
@@ -275,34 +285,30 @@ spec:
                           value: "{{workflow.parameters.category}}"
                         - name: snfvo_data
                           value: "{{workflow.parameters.snfvo_data}}"
-
-                    - name: get-platform-env
-                      templateRef:
-                        name: workflow-environment
-                        template: get-platform-env
   
-                  - - name: do-scaleout
+                    - name: do-scaleout
+                      dependencies: [prepare-orders, get-platform-env]
                       templateRef:
                         name: instantiate-scaleout
                         template: scaleout
                       arguments:
                         parameters:
                         - name: catalogue_url
-                          value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
+                          value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
                         - name: elma_url
-                          value: "{{steps.get-domain-env.outputs.parameters.elma_url}}"
+                          value: "{{tasks.get-domain-env.outputs.parameters.elma_url}}"
                         - name: trmf_url
-                          value: "{{steps.get-domain-env.outputs.parameters.trmf_url}}"
+                          value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
                         - name: srsd_url
-                          value: "{{steps.get-platform-env.outputs.parameters.srsd_url}}"
+                          value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
 
                         - name: kafka_dl
-                          value: "{{steps.get-platform-env.outputs.parameters.kafka_dl}}"
+                          value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
 
                         - name: order_id
-                          value: "{{steps.prepare-orders.outputs.parameters.order_id}}"
+                          value: "{{tasks.prepare-orders.outputs.parameters.order_id}}"
                         - name: snfvo_data
-                          value: "{{steps.prepare-orders.outputs.parameters.snfvo_data}}"
+                          value: "{{tasks.prepare-orders.outputs.parameters.snfvo_data}}"
 
 
                 - name: orchestrate

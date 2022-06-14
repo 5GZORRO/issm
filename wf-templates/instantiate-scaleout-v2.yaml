@@ -41,7 +41,7 @@ spec:
       - name: kafka_dl
 
       - name: order_id
-      - name: snvfo_data 
+      - name: snfvo_data 
     dag:
       tasks:
       - name: trigger-scaleout
@@ -82,7 +82,7 @@ spec:
       - name: kafka_dl
 
       - name: order_id
-      - name: snvfo_data 
+      - name: snfvo_data 
 
     dag:
       tasks:
