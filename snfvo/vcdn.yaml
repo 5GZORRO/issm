@@ -34,7 +34,7 @@ spec:
         arguments:
           parameters:
           - name: key
-            value: slice_order_id
+            value: slice_order_id_0
           - name: json_str
             value: |
               {{workflow.parameters.snfvo_data}}
@@ -498,7 +498,7 @@ spec:
         arguments:
           parameters:
           - name: key
-            value: slice_order_id
+            value: slice_order_id_0
           - name: json_str
             value: |
               {{workflow.parameters.snfvo_data}}
