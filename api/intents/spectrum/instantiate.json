@@ -1,7 +1,5 @@
 {
     "operation": "instantiate",
-    "category": "Slice",
-    "order_id": "5e2d4e01-ffce-4363-9268-af0cb9910dd4",
     "snfvo_data": {
         "userdata_slice": {
             "sm.plmn_id": "00103",  

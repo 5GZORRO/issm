@@ -93,9 +93,27 @@ spec:
           - name: json_str
             value: "{{tasks.get-transaction.outputs.result}}"
 
+      - name: prepare-orders
+        dependencies: [transaction-data]
+        templateRef:
+          name: workflow-catalog
+          template: prepare-orders-from-catalog
+        arguments:
+          parameters:
+          - name: catalogue_url
+            value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
+          - name: order_id
+            # NOTE: here it is an ARRAY
+            value: "{{tasks.transaction-data.outputs.parameters.order_id}}"
+          - name: category
+            value: "{{tasks.transaction-data.outputs.parameters.category}}"
+          - name: snfvo_data
+            value: "{{tasks.transaction-data.outputs.parameters.snfvo_data}}"
+
+
       - name: trigger-scaleout
         template: trigger-scaleout
-        dependencies: [transaction-data, get-platform-env]
+        dependencies: [prepare-orders, get-platform-env]
         arguments:
           parameters:
           - name: service_owner
@@ -103,7 +121,7 @@ spec:
           - name: place
             value: "{{workflow.parameters.place}}"
           - name: order_id
-            value: "{{tasks.transaction-data.outputs.parameters.order_id}}"
+            value: "{{tasks.prepare-orders.outputs.parameters.order_id}}"
           - name: instance_id
             # TODO: inside the transaction
             value: "{{workflow.parameters.instance_id}}"
@@ -121,7 +139,7 @@ spec:
             value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
 
           - name: snfvo_data
-            value: "{{tasks.transaction-data.outputs.parameters.snfvo_data}}"
+            value: "{{tasks.prepare-orders.outputs.parameters.snfvo_data}}"
 
   - name: trigger-scaleout
     inputs:

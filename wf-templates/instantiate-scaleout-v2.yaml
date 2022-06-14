@@ -39,6 +39,9 @@ spec:
       - name: trmf_url
       - name: srsd_url
       - name: kafka_dl
+
+      - name: order_id
+      - name: snvfo_data 
     dag:
       tasks:
       - name: trigger-scaleout
@@ -50,7 +53,7 @@ spec:
           - name: place
             value: "{{workflow.parameters.place}}"
           - name: order_id
-            value: "{{workflow.parameters.order_id}}"
+            value: "{{inputs.parameters.order_id}}"
           - name: category
             value: "{{workflow.parameters.category}}"
           - name: elma_url
@@ -66,7 +69,7 @@ spec:
             value: "{{inputs.parameters.kafka_dl}}"
 
           - name: snfvo_data
-            value: "{{workflow.parameters.snfvo_data}}"
+            value: "{{inputs.parameters.snfvo_data}}"
           
 
   - name: instantiate
@@ -78,6 +81,9 @@ spec:
       - name: srsd_url
       - name: kafka_dl
 
+      - name: order_id
+      - name: snvfo_data 
+
     dag:
       tasks:
       - name: trigger-instantiate
@@ -87,7 +93,7 @@ spec:
           - name: service_owner
             value: "{{workflow.parameters.service_owner}}"
           - name: order_id
-            value: "{{workflow.parameters.order_id}}"
+            value: "{{inputs.parameters.order_id}}"
           - name: category
             value: "{{workflow.parameters.category}}"
           - name: elma_url
@@ -103,7 +109,7 @@ spec:
             value: "{{inputs.parameters.kafka_dl}}"
 
           - name: snfvo_data
-            value: "{{workflow.parameters.snfvo_data}}"
+            value: "{{inputs.parameters.snfvo_data}}"
           - name: related_party
             value: "{{workflow.parameters.related_party}}"
 

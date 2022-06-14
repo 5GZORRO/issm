@@ -182,7 +182,23 @@ spec:
                         - name: domain
                           value: "{{workflow.parameters.service_owner}}"
 
-                  - - name: get-platform-env
+                    - name: prepare-orders
+                      templateRef:
+                        name: workflow-catalog
+                        template: prepare-orders-from-catalog
+                      arguments:
+                        parameters:
+                        - name: catalogue_url
+                          value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
+                        - name: order_id
+                          # NOTE: here it is an ARRAY
+                          value: "{{workflow.parameters.order_id}}"
+                        - name: category
+                          value: "{{workflow.parameters.category}}"
+                        - name: snfvo_data
+                          value: "{{workflow.parameters.snfvo_data}}"
+
+                    - name: get-platform-env
                       templateRef:
                         name: workflow-environment
                         template: get-platform-env
@@ -204,6 +220,11 @@ spec:
 
                         - name: kafka_dl
                           value: "{{steps.get-platform-env.outputs.parameters.kafka_dl}}"
+
+                        - name: order_id
+                          value: "{{steps.prepare-orders.outputs.parameters.order_id}}"
+                        - name: snfvo_data
+                          value: "{{steps.prepare-orders.outputs.parameters.snfvo_data}}"
 
 
                 - name: scaleout
@@ -239,11 +260,27 @@ spec:
                         - name: domain
                           value: "{{workflow.parameters.service_owner}}"
 
-                  - - name: get-platform-env
+                    - name: prepare-orders
+                      templateRef:
+                        name: workflow-catalog
+                        template: prepare-orders-from-catalog
+                      arguments:
+                        parameters:
+                        - name: catalogue_url
+                          value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
+                        - name: order_id
+                          # NOTE: here it is an ARRAY
+                          value: "{{workflow.parameters.order_id}}"
+                        - name: category
+                          value: "{{workflow.parameters.category}}"
+                        - name: snfvo_data
+                          value: "{{workflow.parameters.snfvo_data}}"
+
+                    - name: get-platform-env
                       templateRef:
                         name: workflow-environment
                         template: get-platform-env
-                      
+  
                   - - name: do-scaleout
                       templateRef:
                         name: instantiate-scaleout
@@ -262,6 +299,10 @@ spec:
                         - name: kafka_dl
                           value: "{{steps.get-platform-env.outputs.parameters.kafka_dl}}"
 
+                        - name: order_id
+                          value: "{{steps.prepare-orders.outputs.parameters.order_id}}"
+                        - name: snfvo_data
+                          value: "{{steps.prepare-orders.outputs.parameters.snfvo_data}}"
 
 
                 - name: orchestrate

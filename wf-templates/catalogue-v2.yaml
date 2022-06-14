@@ -18,6 +18,79 @@ metadata:
   name: workflow-catalog
 spec:
   templates:
+  - name: prepare-orders-from-catalog
+    inputs:
+      parameters:
+      - name: catalogue_url
+      # this is an ARRAY
+      - name: order_id
+      - name: category
+      - name: snfvo_data
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        order_ids = {{inputs.parameters.order_id}}
+        category = "{{inputs.parameters.category}}"
+        snfvo_data = {{inputs.parameters.snfvo_data}}
+
+        order_id = ""
+        category_sub_order = {}
+
+        for o_id in order_id:
+            headers = {'Content-Type': 'application/json'}
+            r = requests.get("{{workflow.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/productOrder/o_id",
+                headers=headers)
+            json.dump(r.json(), sys.stdout)
+            sys.stdout.write('\n\n')
+    
+            # retrieve the PO offer
+            # Note: order 1:1 offer
+            po_href = r.json()['productOrderItem'][0]['productOffering']['href']
+            r = requests.get(str(po_href), headers=headers)
+            json.dump(r.json(), sys.stdout)
+            sys.stdout.write('\n\n')
+
+            po = r.json()
+
+            po_c = r.json()['category'][0]['name']
+            if po_c not in categories:
+                raise Exception('*** Illegal PO category "%s" must be: %s ***' % (po_c, categories))
+            if po_c == category:
+                sys.stdout.write('Main order_id: [%s]\n' % o_id)
+                order_id = o_id
+            else:
+                o_ids = category_sub_order.setdefault(po_c, [])
+                o_ids.append(o_id)
+
+        sys.stdout.write('caterogy to orders: %s\n' % category_sub_order)
+        for k in category_sub_order:
+            o_ids = category_sub_order[k]
+            for i in range(len(o_ids)):
+                snfvo_data['%s_order_id_%s' % (k, str(i))] = o_ids[i]
+
+        with open('/tmp/order_id.txt', 'w') as f:
+            f.write(str(order_id))
+
+        with open('/tmp/snfvo_data.txt', 'w') as f:
+            json.dump(snfvo_data, f)
+
+    outputs:
+      parameters:
+      - name: order_id
+        valueFrom:
+          path: /tmp/order_id.txt
+
+      - name: snfvo_data
+        valueFrom:
+          path: /tmp/snfvo_data.txt
+
+
   - name: get-order-from-catalog
     inputs:
       parameters:

@@ -1,10 +1,7 @@
 {
     "operation": "instantiate",
-    "category": "Network Service",
-    "order_id": "5431205d-3d95-463c-97e1-ab263679873d",
     "related_party": "operator-c",
     "snfvo_data": {
-      "slice_order_id": "a4b54a41-f940-4846-b90b-ce5eaaed60ec",
       "userdata_slice": {
         "sm.plmn_id": "00103",
         "sm.imsi_list": "001035432100005,001035432000003",

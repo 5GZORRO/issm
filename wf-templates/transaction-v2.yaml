@@ -55,6 +55,9 @@ spec:
         echo "service_owner:"
         cat /tmp/service_owner.txt
 
+        echo "category:"
+        cat /tmp/category.txt
+
         echo "order_id:"
         cat /tmp/order_id.txt
 
