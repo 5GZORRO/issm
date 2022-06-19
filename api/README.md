@@ -241,7 +241,7 @@ Return:
 Create snfvo with the given name, the product offer it manages, and the management flow logic defined as an Argo WorkflowTemplate CR
 
 ```
-curl -H "Content-type: application/json" -X POST -d '{"snfvo_name": "<string>", "product_offer_name": "<string>", "snfvo_json": "<json>"}' http://issm_api_ip_address:30080/snfvo/<service_owner>
+curl -H "Content-type: application/json" -X POST -d '{"product_offer_id": "<string>", "snfvo_name": "<string>", "snfvo_json": "<json>"}' http://issm_api_ip_address:30080/snfvo/<service_owner>
 ```
 
 REST path:
@@ -254,9 +254,9 @@ REST path:
 Data payload:
 
 ```
-    snfvo_name         - the name of the snfvo (str)
-    product_offer_name - the name of the product offer for this snfvo (str)
-    snfvo_json         - the snfvo WorkflowTemplate CR that defines the management logic flow (WorkflowTemplate json)
+    snfvo_name       - the name of the snfvo (str - free text)
+    product_offer_id - the id of the product offer for this snfvo (str - uuid)
+    snfvo_json       - the snfvo WorkflowTemplate CR that defines the management logic flow (WorkflowTemplate json)
 ```
 
 Return:
@@ -290,8 +290,8 @@ Return:
 ```
     status - 200
     list of dictionaries (json):
-        snfvo_name - snfvo name
-        product_offer_name - the name of the product offer for this snfvo
+        snfvo_name - the name of the snvfo (str - free text)
+        product_offer_id - the id of the product offer for this snfvo (str - uuid)
 ```
 
 Invocation example:
@@ -300,16 +300,16 @@ Invocation example:
     curl -H "Content-type: application/json" -X GET  http://172.28.3.15:30080/snfvo/operator-a
 [
   {
-    "snfvo_name": "ota",
-    "product_offer_name": "OTA demo eucnc core"
+    "snfvo_name": "OTA demo eucnc core",
+    "product_offer_id": "642d5460-53c1-4f97-9a50-702238f70ac6"
   },
   {
-    "snfvo_name": "spectrum",
-    "product_offer_name": "Slice Offer UC2"
+    "snfvo_name": "Slice Offer UC2",
+    "product_offer_id": "2ed69036-81ba-4e9a-a194-c066cea20847"
   },
   {
-    "snfvo_name": "vcdn",
-    "product_offer_name": "CDN Network Service (CDN+SAS)"
+    "snfvo_name": "CDN Network Service (CDN+SAS)",
+    "product_offer_id": "72ce9b8b-532a-4064-a364-181fb4f5013e"
   }
 ]
 ```
@@ -319,7 +319,7 @@ Invocation example:
 Delete snfvo with the given name, and owner
 
 ```
-curl -H "Content-type: application/json" -X DELETE http://issm_api_ip_address:30080/snfvo/<service_owner>/<snfvo_name>
+curl -H "Content-type: application/json" -X DELETE http://issm_api_ip_address:30080/snfvo/<service_owner>/<product_offer_id>
 ```
 
 REST path:
@@ -327,7 +327,7 @@ REST path:
 ```
     issm_api_ip_address - ipaddress ISSM API service.
     service_owner       - the service owner (str)
-    snfvo_name          - the name of the snfvo (str)
+    product_offer_id    - the id of the product offer for this snfvo (str)
 ```
 
 Return:
@@ -339,7 +339,7 @@ Return:
 Invocation example:
 
 ```
- curl -H "Content-type: application/json" -X DELETE http://172.28.3.15:30080/snfvo/operator-c/spectrum
+ curl -H "Content-type: application/json" -X DELETE http://172.28.3.15:30080/snfvo/operator-c/2ed69036-81ba-4e9a-a194-c066cea20847
 ```
 
 ## Build (**relevant for developers only**)

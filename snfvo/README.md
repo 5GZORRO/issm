@@ -33,7 +33,7 @@ Use the cli to onboard it
 **Note:** update `--issm_api_url` and `curl` urls accordingly
 
 ```
-python3 ./cli.py --file ./hello-snfvo.yaml --service_owner operator-b --issm_api_url http://172.28.3.15:30080 --snfvo_name hello --product_offer_name "Hello snfvo (IBM)"
+python3 ./cli.py --file ./hello-snfvo.yaml --service_owner operator-b --issm_api_url http://172.28.3.15:30080 --product_offer_id 72ce9b8b-532a-4064-a364-181fb4f5013e --snfvo_name "Hello snfvo (IBM)"
 ```
 
 ### List snfvo
@@ -45,20 +45,20 @@ curl -H "Content-type: application/json" -X GET  http://172.28.3.15:30080/snfvo/
 
 [
   {
-    "product_offer_name": "Hello snfvo (IBM)",
-    "snfvo_name": "hello"
+    "product_offer_name": "72ce9b8b-532a-4064-a364-181fb4f5013e",
+    "snfvo_name": "Hello snfvo (IBM)"
   },
   {
-    "product_offer_name": "OTA demo eucnc core",
-    "snfvo_name": "ota"
+    "product_offer_id": "642d5460-53c1-4f97-9a50-702238f70ac6",
+    "snfvo_name": "OTA demo eucnc core"
   },
   {
-    "product_offer_name": "Slice Offer UC2",
-    "snfvo_name": "spectrum"
+    "product_offer_id": "2ed69036-81ba-4e9a-a194-c066cea20847",
+    "snfvo_name": "Slice Offer UC2"
   },
   {
-    "product_offer_name": "CDN Network Service (CDN+SAS)",
-    "snfvo_name": "vcdn"
+    "product_offer_id": "72ce9b8b-532a-4064-a364-181fb4f5014a",
+    "snfvo_name": "CDN Network Service (CDN+SAS)"
   }
 ]
 
@@ -84,14 +84,14 @@ Select the transaction
 
 ![IU3](images/hello-snvfo-ui-3.png)
 
-It can be seen that `snfvo-hello` properly called
+It can be seen that `snfvo-72ce9b8b-532a-4064-a364-181fb4f5013e` properly called
 
 ![Flow4](images/hello-snvfo-flow-4.png)
 
 ### Remove hello snfvo
 
 ```
-curl -H "Content-type: application/json" -X DELETE http://172.28.3.15:30080/snfvo/operator-b/hello
+curl -H "Content-type: application/json" -X DELETE http://172.28.3.15:30080/snfvo/operator-b/72ce9b8b-532a-4064-a364-181fb4f5013e
 
 {
   "OK": 200

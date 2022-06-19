@@ -146,6 +146,8 @@ spec:
 
         # PO name
         name = ""
+        # PO id
+        po_id = ""
         sla_did = ""
         vsbName = ""
         mem_unit = ""
@@ -167,6 +169,10 @@ spec:
         # Name
         name = po['name']
         sys.stdout.write('name: "%s" \n' % name)
+
+        # Name
+        po_id = po['id']
+        sys.stdout.write('po_id: "%s" \n' % po_id)
 
         # Place
         href = po['place'][0]['href']
@@ -376,6 +382,9 @@ spec:
         sys.stdout.write('\n')
         did = r.json()['did']
 
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(str(po_id))
+
         with open('/tmp/sla_did.txt', 'w') as f:
             f.write(str(sla_did))
 
@@ -417,6 +426,10 @@ spec:
 
     outputs:
       parameters:
+      - name: id
+        valueFrom:
+          path: /tmp/id.txt
+
       - name: sla_did
         valueFrom:
           path: /tmp/sla_did.txt

@@ -333,24 +333,6 @@ spec:
                         - name: order_id
                           value: "{{workflow.parameters.order_id}}"
 
-                  - - name: snfvo-vcdn
-                      when: "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"CDN Network Service (CDN+SAS)\""
-                      templateRef:
-                        name: snfvo-vcdn-flow
-                        template: instantiate
-
-                  - - name: snfvo-spectrum
-                      when: "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"Slice Offer UC2\""
-                      templateRef:
-                        name: snfvo-spectrum-flow
-                        template: instantiate
-
-                  - - name: snfvo-ota
-                      when: "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"OTA demo eucnc core\""
-                      templateRef:
-                        name: snfvo-ota-flow
-                        template: instantiate
-
                 - name: scaleout-invoke-snfvo
                   # 
                   # Invoke proper s-nfvo (Scaleout)
@@ -364,12 +346,6 @@ spec:
                         parameters:
                         - name: order_id
                           value: "{{workflow.parameters.order_id}}"
-
-                  - - name: snfvo-vcdn
-                      when: "\"{{steps.get-order-from-catalog.outputs.parameters.name}}\" == \"CDN Network Service (CDN+SAS)\""
-                      templateRef:
-                        name: snfvo-vcdn-flow
-                        template: scaleout
 
 
           parameters:
