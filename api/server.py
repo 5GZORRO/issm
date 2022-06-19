@@ -361,7 +361,7 @@ class Proxy:
 
         """
         sys.stdout.write('snfvo_add..\n')
-        sys.stdout.write(str(sensor_json))
+        #sys.stdout.write(str(sensor_json))
         sys.stdout.write('\n')
 
         templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
@@ -413,8 +413,11 @@ class Proxy:
         if snfvo_json:
             try:
                 snfvo_json['metadata']['name'] = _to_snfvo_template_name(product_offer_id)
-                snfvo_json['metadata']['annotations']['product_offer_id'] = product_offer_id
-                snfvo_json['metadata']['annotations']['snfvo_name'] = snfvo_name
+                snfvo_json['metadata']['annotations'] = {
+                    'product_offer_id': product_offer_id,
+                    'snfvo_name': snfvo_name
+                }
+
                 self.api.create_namespaced_custom_object(
                     group="argoproj.io",
                     version="v1alpha1",
@@ -441,13 +444,13 @@ class Proxy:
             plural="workflowtemplates",
             namespace="domain-%s" % service_owner
         )
-        print (wfList)
+        #print (wfList)
         if wfList and len(wfList['items']) > 0:
             for wf in wfList['items']:
                 if not REGEX_SNFVO_ID.match(wf['metadata']['name']):
                     continue
                 else:
-                    product_offer_id = REGEX_SNFVO_ID.match(wf['metadata']['name']).group(1)
+                    product_offer_id = wf['metadata']['annotations']['product_offer_id']#REGEX_SNFVO_ID.match(wf['metadata']['name']).group(1)
                     snfvo_name = wf['metadata']['annotations']['snfvo_name']
                     res.append({
                         'snfvo_name': snfvo_name,
@@ -721,16 +724,8 @@ def snfvo_list(service_owner):
                      '[service_owner=%s] \n' % service_owner)
 
     try:
-        sensor_json = proxy_server.getSensor(
-            service_owner=service_owner, name=DOMAIN_SENSOR_NAME)
-        if not sensor_json:
-            response = flask.jsonify({'error': 'Sensor [%s] not found' %
-                                      DOMAIN_SENSOR_NAME})
-            response.status_code = 404
-            return response
-
         response = flask.jsonify(proxy_server.snfvo_list(
-            service_owner=service_owner, sensor_json=sensor_json))
+            service_owner=service_owner))
         response.status_code = 200
 
     except Exception as e:

@@ -142,7 +142,7 @@ Valid values
 
 ## Trigger ISSM business flow
 
-Follow the guidelines [here](./api/README.md#api)
+Use ISSM-API to submit a transaction. Follow the guidelines [here](./api/README.md#submit-transaction)
 
 then watch business flow progress with Argo GUI (`http://<kubernetes master ipaddress>:2746`) running on the participated MNOs
 
