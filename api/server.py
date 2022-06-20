@@ -24,15 +24,11 @@ import re
 from gevent.wsgi import WSGIServer
 from werkzeug.exceptions import HTTPException
 
-import kubernetes
-from kubernetes.client.rest import ApiException
-
 from kafka import KafkaProducer
 from kafka.admin import KafkaAdminClient, NewTopic
 from kafka.errors import KafkaError, TopicAlreadyExistsError
 
 import iso8601
-
 
 import kubernetes
 from kubernetes.client import V1Namespace
@@ -364,6 +360,26 @@ class Proxy:
         #sys.stdout.write(str(sensor_json))
         sys.stdout.write('\n')
 
+        # TODO: ensure same offer not related to another snfvo
+        if snfvo_json:
+            try:
+                snfvo_json['metadata']['name'] = _to_snfvo_template_name(product_offer_id)
+                snfvo_json['metadata']['annotations'] = {
+                    'product_offer_id': product_offer_id,
+                    'snfvo_name': snfvo_name
+                }
+
+                self.api.create_namespaced_custom_object(
+                    group="argoproj.io",
+                    version="v1alpha1",
+                    plural="workflowtemplates",
+                    namespace="domain-%s" % service_owner,
+                    body=snfvo_json
+                )
+            except Exception as e:
+                sys.stdout.write ('Failed to create snfvo template: %s \n' % str(e))
+                raise
+
         templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
             ['resource']['spec']['templates']
 
@@ -410,23 +426,6 @@ class Proxy:
         if update:
             self._update_sensor(service_owner, sensor_json)
 
-        if snfvo_json:
-            try:
-                snfvo_json['metadata']['name'] = _to_snfvo_template_name(product_offer_id)
-                snfvo_json['metadata']['annotations'] = {
-                    'product_offer_id': product_offer_id,
-                    'snfvo_name': snfvo_name
-                }
-
-                self.api.create_namespaced_custom_object(
-                    group="argoproj.io",
-                    version="v1alpha1",
-                    plural="workflowtemplates",
-                    namespace="domain-%s" % service_owner,
-                    body=snfvo_json
-                )
-            except Exception as e:
-                sys.stdout.write ('Failed to create snfvo template: %s \n' % str(e))
 
     def snfvo_list(self, service_owner):
         """
@@ -486,9 +485,10 @@ class Proxy:
         template_inst = find (templates, lambda t: t['name'] == 'instantiate-invoke-snfvo')
         steps = template_inst['steps']
 
-        # NOTE: steps is nested list
+        # NOTE: steps is a nested list
         snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % product_offer_id)
         if not snfvo_step:
+            # Do not raise if not found
             sys.stdout.write('snfvo [%s] was not found for instantiate\n' % product_offer_id)
         else:
             steps.remove(snfvo_step)
@@ -498,9 +498,10 @@ class Proxy:
         template_sa = find (templates, lambda t: t['name'] == 'scaleout-invoke-snfvo')
         steps = template_sa['steps']
 
-        # NOTE: steps is nested list
+        # NOTE: steps is a nested list
         snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % product_offer_id)
         if not snfvo_step:
+            # Do not raise if not found
             sys.stdout.write('snfvo [%s] was not found for scaleout\n' % product_offer_id)
         else:
             steps.remove(snfvo_step)
@@ -520,6 +521,7 @@ class Proxy:
             )
         except Exception as e:
             sys.stdout.write ('Failed to delete snfvo template: %s \n' % str(e))
+            raise
 
 
 proxy = flask.Flask(__name__)
@@ -710,6 +712,11 @@ def snfvo_create(service_owner):
         response = flask.jsonify({'OK': 200})
         response.status_code = 200
 
+    except ApiException as e:
+        response = flask.jsonify({'error': 'Reason: %s. Body: %s'
+                                  % (e.reason, e.body)})
+        response.status_code = e.status
+
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
@@ -756,6 +763,11 @@ def snfvo_delete(service_owner, product_offer_id):
 
         response = flask.jsonify({'OK': 200})
         response.status_code = 200
+
+    except ApiException as e:
+        response = flask.jsonify({'error': 'Reason: %s. Body: %s'
+                                  % (e.reason, e.body)})
+        response.status_code = e.status
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
