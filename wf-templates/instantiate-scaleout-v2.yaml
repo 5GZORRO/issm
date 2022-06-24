@@ -1,0 +1,202 @@
+# Copyright 2021 - 2022 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+###############################
+#
+# Entry point for API
+# Input:
+#
+# workflow.parameters.service_owner
+# workflow.parameters.place
+# workflow.parameters.order_id
+# workflow.parameters.category
+# workflow.parameters.snfvo_data
+#
+###############################
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: instantiate-scaleout
+spec:
+  templates:
+  - name: scaleout
+    inputs:
+      parameters:
+      - name: catalogue_url
+      - name: elma_url
+      - name: trmf_url
+      - name: srsd_url
+      - name: kafka_dl
+
+      - name: order_id
+      - name: snfvo_data 
+    dag:
+      tasks:
+      - name: trigger-scaleout
+        template: trigger-scaleout
+        arguments:
+          parameters:
+          - name: service_owner
+            value: "{{workflow.parameters.service_owner}}"
+          - name: place
+            value: "{{workflow.parameters.place}}"
+          - name: order_id
+            value: "{{inputs.parameters.order_id}}"
+          - name: category
+            value: "{{workflow.parameters.category}}"
+          - name: elma_url
+            value: "{{inputs.parameters.elma_url}}"
+          - name: catalogue_url
+            value: "{{inputs.parameters.catalogue_url}}"
+          - name: trmf_url
+            value: "{{inputs.parameters.trmf_url}}"
+          - name: srsd_url
+            value: "{{inputs.parameters.srsd_url}}"
+
+          - name: kafka_dl
+            value: "{{inputs.parameters.kafka_dl}}"
+
+          - name: snfvo_data
+            value: "{{inputs.parameters.snfvo_data}}"
+          
+
+  - name: instantiate
+    inputs:
+      parameters:
+      - name: catalogue_url
+      - name: elma_url
+      - name: trmf_url
+      - name: srsd_url
+      - name: kafka_dl
+
+      - name: order_id
+      - name: snfvo_data 
+
+    dag:
+      tasks:
+      - name: trigger-instantiate
+        template: trigger-instantiate
+        arguments:
+          parameters:
+          - name: service_owner
+            value: "{{workflow.parameters.service_owner}}"
+          - name: order_id
+            value: "{{inputs.parameters.order_id}}"
+          - name: category
+            value: "{{workflow.parameters.category}}"
+          - name: elma_url
+            value: "{{inputs.parameters.elma_url}}"
+          - name: catalogue_url
+            value: "{{inputs.parameters.catalogue_url}}"
+          - name: trmf_url
+            value: "{{inputs.parameters.trmf_url}}"
+          - name: srsd_url
+            value: "{{inputs.parameters.srsd_url}}"
+
+          - name: kafka_dl
+            value: "{{inputs.parameters.kafka_dl}}"
+
+          - name: snfvo_data
+            value: "{{inputs.parameters.snfvo_data}}"
+          - name: related_party
+            value: "{{workflow.parameters.related_party}}"
+
+
+  - name: trigger-scaleout
+    inputs:
+      parameters:
+      - name: kafka_dl
+      - name: service_owner
+      - name: place
+      - name: order_id
+      - name: category
+      - name: elma_url
+      - name: catalogue_url
+      - name: trmf_url
+      - name: srsd_url
+      - name: snfvo_data
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-scaleout
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}",
+                  "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
+                  "place": {{inputs.parameters.place}},
+                  "service_owner": "{{inputs.parameters.service_owner}}",
+                  "order_id": "{{inputs.parameters.order_id}}",
+                  "category": "{{inputs.parameters.category}}",
+                  "elma_url": "{{inputs.parameters.elma_url}}",
+                  "catalogue_url": "{{inputs.parameters.catalogue_url}}",
+                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
+                  "trmf_url": "{{inputs.parameters.trmf_url}}",
+                  "srsd_url": "{{inputs.parameters.srsd_url}}",
+                  "snfvo_data": {{inputs.parameters.snfvo_data}}
+                }
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.service_owner}}"
+
+
+  - name: trigger-instantiate
+    inputs:
+      parameters:
+      - name: kafka_dl
+      - name: service_owner
+      - name: order_id
+      - name: category
+      - name: elma_url
+      - name: catalogue_url
+      - name: trmf_url
+      - name: srsd_url
+      - name: snfvo_data
+      - name: related_party
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-instantiate
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}",
+                  "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "operation": "instantiate", "sub_operation": "INSTANTIATE_SERVICE",
+                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
+                  "service_owner": "{{inputs.parameters.service_owner}}",
+                  "order_id": "{{inputs.parameters.order_id}}",
+                  "category": "{{inputs.parameters.category}}",
+                  "elma_url": "{{inputs.parameters.elma_url}}",
+                  "catalogue_url": "{{inputs.parameters.catalogue_url}}",
+                  "trmf_url": "{{inputs.parameters.trmf_url}}",
+                  "srsd_url": "{{inputs.parameters.srsd_url}}",                  
+                  "snfvo_data": {{inputs.parameters.snfvo_data}},
+                  "related_party": "{{inputs.parameters.related_party}}"
+                }
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.service_owner}}"

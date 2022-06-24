@@ -1,0 +1,142 @@
+# Copyright 2020 - 2022 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: snfvo-spectrum
+spec:
+  templates:
+  - name: instantiate
+    steps:
+    - - name: instantiate-service
+        when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
+        template: instantiate-service
+
+  - name: instantiate-service
+    dag:
+      tasks:
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: userdata-slice
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: userdata_slice
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: vsd-parameters
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: trigger-orchestration-slice
+        dependencies: [get-order-from-catalog, userdata-slice, vsd-parameters]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
+
+          - name: vsbName
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
+
+          - name: product_DID
+            value: ""
+
+          - name: sla_DID
+            value: ""
+
+          - name: place
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
+
+          - name: userdata
+            value: "{{tasks.userdata-slice.outputs.result}}"
+
+          - name: vsd_parameters
+            # snfvo_data['vsd_parameters']
+            value: "{{tasks.vsd-parameters.outputs.result}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-slice]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
+
+      - name: slice-status
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+          
+      - name: slice-status-fail
+        dependencies: [slice-status]
+        template: status-fail
+        when: "{{tasks.slice-status.outputs.result}} == \"FAIL\""
+
+
+  - name: scaleout
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
+
+
+  - name: status-fail
+    dag:
+      tasks:
+      - name: fail
+        templateRef:
+          name: workflow-base
+          template: fail
+

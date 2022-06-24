@@ -1,0 +1,119 @@
+# Copyright 2020 - 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#
+# Sensor that receives payload in the below format:
+#
+#{
+#"breachPredictionNotification" : {
+#  "slaID" : "678",
+#  "transactionID" : "operator-a:7777",
+#  "productID" : "8888",
+#  "resourceID" : "3333",
+#  "instanceID" : "2",
+#  "ruleID" : "availability",
+#  "metric" : "http://www.provider.com/metrics/availability",
+#  "value" : 12345,
+#  "datetimeViolation" : "2020-08-19T00:00",
+#  "datetimePrediction" : "2020-08-19T00:00"
+#  }
+#}
+
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: issm-sla-breach
+spec:
+  template:
+    serviceAccountName: argo-events-sa
+  dependencies:
+    - name: breach-dep
+      eventSourceName: issm-sla-breach
+      eventName: sla-breach
+  triggers:
+    - template:
+        name: kafka-workflow-trigger
+        k8s:
+          group: argoproj.io
+          version: v1alpha1
+          resource: workflows
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: issm-sla-breach-
+              spec:
+                entrypoint: handlerequest
+                arguments:
+                  parameters:
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # ISSM kafka bus
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: kafka
+                    value: 172.28.3.196:9092
+
+                  - name: breachPredictionNotification
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # Pre-parsed json from breach payload keys:
+                  # transactionID
+                  # productID
+                  # instanceID
+                  # location
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: transaction_uuid
+
+                templates:
+                - name: handlerequest
+                  steps:
+                  - - name: domain
+                      templateRef:
+                        name: workflow-base
+                        template: py-split
+                      arguments:
+                        parameters:
+                        - name: str
+                          # important: transaction_uuid=<domain>:<tansaction uuid>
+                          value: "{{workflow.parameters.transaction_uuid}}"
+                        - name: idx
+                          value: 0
+
+                  - - name: send-sla-breach
+                      templateRef:
+                        name: workflow-base
+                        template: produce
+                      arguments:
+                        parameters:
+                        - name: data
+                          value: |
+                            {
+                              "breachPredictionNotification": {{workflow.parameters.breachPredictionNotification}}
+                            }
+                        - name: kafka_topic
+                          value: "issm-breach-{{steps.domain.outputs.result}}"
+                        - name: kafka
+                          value: "{{workflow.parameters.kafka}}"
+
+
+          parameters:
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification
+              dest: spec.arguments.parameters.1.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification.transactionID
+              dest: spec.arguments.parameters.2.value

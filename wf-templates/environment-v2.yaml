@@ -1,0 +1,192 @@
+# Copyright 2021 - 2022 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: workflow-environment
+spec:
+  templates:
+  - name: get-platform-env
+    dag:
+      tasks:
+      - name: platform-env
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: platform
+          - name: json_str
+            value: |
+              {
+                "platform": {
+                  "srsd_url": "http://172.28.3.15:32068",
+                  "kafka_dl": "172.28.3.196:9092"
+                }
+              }
+
+      - name: srsd-url
+        dependencies: [platform-env]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: srsd_url
+          - name: json_str
+            value: "{{tasks.platform-env.outputs.result}}"
+
+      - name: kafka-dl
+        dependencies: [platform-env]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: kafka_dl
+          - name: json_str
+            value: "{{tasks.platform-env.outputs.result}}"
+
+
+    outputs:
+      parameters:
+      - name: srsd_url
+        valueFrom:
+          parameter: "{{tasks.srsd-url.outputs.result}}"
+
+      - name: kafka_dl
+        valueFrom:
+          parameter: "{{tasks.kafka-dl.outputs.result}}"
+
+
+  - name: get-domain-env
+    inputs:
+      parameters:
+      - name: domain
+    dag:
+      tasks:
+      - name: domain-envs
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: "{{inputs.parameters.domain}}"
+          - name: json_str
+            value: |
+              {
+                "operator-a": {
+                  "catalogue_url": "http://172.28.3.15:31080",
+                  "elma_url": "http://172.28.3.15:30880",
+                  "trmf_url": "http://172.28.3.15:31113",
+                  "vs_url": "http://10.0.4.10:8083",
+                  "issm_api_url": "http://172.28.3.15:30080"
+                },
+                "operator-b": {
+                  "catalogue_url": "http://172.28.3.15:32080",
+                  "elma_url": "http://172.28.3.15:31880",
+                  "trmf_url": "http://172.28.3.15:31114",
+                  "vs_url": "http://10.0.4.10:8082",
+                  "issm_api_url": "http://172.28.3.15:30080"
+                },
+                "operator-c": {
+                  "catalogue_url": "http://172.28.3.15:32180",
+                  "elma_url": "http://172.28.3.15:32880",
+                  "trmf_url": "http://172.28.3.15:31115",
+                  "vs_url": "http://172.28.3.15:33082",
+                  "issm_api_url": "http://172.28.3.15:30080"
+                }
+              }
+
+      - name: catalogue-url
+        dependencies: [domain-envs]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: catalogue_url
+          - name: json_str
+            value: "{{tasks.domain-envs.outputs.result}}"
+
+      - name: elma-url
+        dependencies: [domain-envs]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: elma_url
+          - name: json_str
+            value: "{{tasks.domain-envs.outputs.result}}"
+
+      - name: trmf-url
+        dependencies: [domain-envs]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: trmf_url
+          - name: json_str
+            value: "{{tasks.domain-envs.outputs.result}}"
+
+      - name: vs-url
+        dependencies: [domain-envs]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vs_url
+          - name: json_str
+            value: "{{tasks.domain-envs.outputs.result}}"
+
+      - name: issm-api-url
+        dependencies: [domain-envs]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: issm_api_url
+          - name: json_str
+            value: "{{tasks.domain-envs.outputs.result}}"
+
+    outputs:
+      parameters:
+      - name: catalogue_url
+        valueFrom:
+          parameter: "{{tasks.catalogue-url.outputs.result}}"
+      - name: elma_url
+        valueFrom:
+          parameter: "{{tasks.elma-url.outputs.result}}"
+      - name: trmf_url
+        valueFrom:
+          parameter: "{{tasks.trmf-url.outputs.result}}"
+      - name: vs_url
+        valueFrom:
+          parameter: "{{tasks.vs-url.outputs.result}}"
+      - name: issm_api_url
+        valueFrom:
+          parameter: "{{tasks.issm-api-url.outputs.result}}"

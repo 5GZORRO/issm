@@ -1,0 +1,25 @@
+{
+    "operation": "scaleout",
+    "place": {
+      "city": "Barcelona",
+      "country": "Spain",
+      "locality": "Barcelona",
+      "geographicLocation": {
+        "name": "Barcelona i2CAT Area, Spain ",
+        "geometryType": "string",
+        "geometry": [
+          {
+            "x": "41.3879",
+            "y": "2.1699",
+            "z": "3388.0"
+          }
+        ]
+      }
+    },
+    "snfvo_data": {
+        "userdata": {},
+        "vsd_parameters": {
+          "users": "1000"
+       }
+    }
+}

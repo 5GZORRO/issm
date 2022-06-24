@@ -1,0 +1,84 @@
+# Copyright 2020 - 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: workflow-transaction
+spec:
+  templates:
+  - name: issm-api-get-transaction
+    inputs:
+      parameters:
+      - name: issm_api_url
+      - name: transaction_uuid
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        headers = {'Content-Type': 'application/json'}
+
+        r = requests.get("{{inputs.parameters.issm_api_url}}/workflows/{{inputs.parameters.transaction_uuid}}",
+            headers=headers)
+        json.dump(r.json(), sys.stdout)
+
+  - name: jq-script
+    inputs:
+      parameters:
+      - name: json_str
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="service_owner").value' > /tmp/service_owner.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="order_id").value' > /tmp/order_id.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="category").value' > /tmp/category.txt
+        echo '{{inputs.parameters.json_str}}' | jq -r '.workflow_parameters[] | select(.name=="snfvo_data").value' > /tmp/snfvo_data.txt
+
+        echo "service_owner:"
+        cat /tmp/service_owner.txt
+
+        echo "category:"
+        cat /tmp/category.txt
+
+        echo "order_id:"
+        cat /tmp/order_id.txt
+
+        echo "snfvo_data:"
+        cat /tmp/snfvo_data.txt
+
+    outputs:
+      parameters:
+      - name: service_owner
+        valueFrom:
+          path: /tmp/service_owner.txt
+
+      - name: order_id
+        valueFrom:
+          path: /tmp/order_id.txt
+
+      - name: category
+        valueFrom:
+          path: /tmp/category.txt
+
+      - name: snfvo_data
+        valueFrom:
+          path: /tmp/snfvo_data.txt
+  

@@ -19,19 +19,16 @@ import os
 import requests
 import sys
 import uuid
+import re
 
 from gevent.wsgi import WSGIServer
 from werkzeug.exceptions import HTTPException
-
-import kubernetes
-from kubernetes.client.rest import ApiException
 
 from kafka import KafkaProducer
 from kafka.admin import KafkaAdminClient, NewTopic
 from kafka.errors import KafkaError, TopicAlreadyExistsError
 
 import iso8601
-
 
 import kubernetes
 from kubernetes.client import V1Namespace
@@ -64,6 +61,19 @@ if not LB_ARGO_SERVER:
 
 
 TRANSACTION_TYPES = ['instantiate', 'scaleout']
+
+
+"""
+SNFVO
+"""
+DOMAIN_SENSOR_NAME='issm-branch'
+REGEX_SNFVO_ID = re.compile('snfvo-(.+?)')
+REGEX_WHEN_VALUE = re.compile('.*==.*\"(.+?)\"')
+
+
+def find(l, predicate):
+    results = [x for x in l if predicate(x)]
+    return results[0] if len(results) > 0 else None
 
 
 def parse_isotime(timestr):
@@ -106,6 +116,11 @@ def publish_intent(kafka_ip, kafka_port, topic, payload):
         producer.close()
 
 
+def _to_snfvo_template_name(snfvo_name):
+    # MUST BE ALIGNED WITH REGEX_SNFVO_ID
+    return "snfvo-%s" % snfvo_name
+
+
 class Proxy:
     def __init__(self):
         """
@@ -135,7 +150,7 @@ class Proxy:
 
         payload = dict(event_uuid=event_uuid, transaction_uuid=event_uuid,
                        service_owner=service_owner,
-                       operation=transaction_type, sub_operation='new_intent')
+                       operation=transaction_type, sub_operation='API')
         payload['callback'] = dict(type='kafka', kafka_topic=service_owner)
         payload.update(intent)
         publish_intent(KAFKA_IP, KAFKA_PORT,
@@ -291,6 +306,222 @@ class Proxy:
             }
 
         return res
+    
+    def getSensor(self, service_owner, name):
+        sys.stdout.write('Requesting getSensor for name '+name+'\n')
+
+        sensor = self.api.get_namespaced_custom_object(
+            group="argoproj.io",
+            version="v1alpha1",
+            namespace="domain-%s" % service_owner,
+            plural="sensors",
+            name=name)
+        sys.stdout.write(str(sensor)+'\n')
+        return sensor
+
+    def _update_sensor(self, service_owner, sensor_json):
+        """
+        Helper method to update a sensor of the given owner
+        """
+        return self.api.replace_namespaced_custom_object(
+            group="argoproj.io",
+            version="v1alpha1",
+            plural="sensors",
+            name=DOMAIN_SENSOR_NAME,
+            namespace="domain-%s" % service_owner,
+            body=sensor_json
+        )
+
+    def snfvo_add(self, service_owner, product_offer_id, snfvo_name, sensor_json,
+                  snfvo_json=None):
+        """
+        Create snfvo. Update the sensor with a 'when' condition step to call into
+        snfvo entry point. The 'when' condition is based on the product offer id
+        so that the snfvo is being used for that offer.
+
+        :param service_owner: the owner of the snfvo
+        :type service_owner: ``str``
+
+        :param product_offer_id: the id of the product offer for this snfvo
+        :type product_offer_id: ``str``
+
+        :param snfvo_name: the name of the snfvo in free text
+        :type snfvo_name: ``str``
+
+        :param sensor_json: the sensor object to update the snfvo with
+        :type sensor_json: ``dict``
+
+        :param snfvo_json: the snfvo WorkflowTemplate CR that defines the management
+                           logic flow (Optional)
+        :type snfvo_json: ``WorkflowTemplate dict``
+
+        """
+        sys.stdout.write('snfvo_add..\n')
+        #sys.stdout.write(str(sensor_json))
+        sys.stdout.write('\n')
+
+        # TODO: ensure same offer not related to another snfvo
+        if snfvo_json:
+            try:
+                snfvo_json['metadata']['name'] = _to_snfvo_template_name(product_offer_id)
+                snfvo_json['metadata']['annotations'] = {
+                    'product_offer_id': product_offer_id,
+                    'snfvo_name': snfvo_name
+                }
+
+                self.api.create_namespaced_custom_object(
+                    group="argoproj.io",
+                    version="v1alpha1",
+                    plural="workflowtemplates",
+                    namespace="domain-%s" % service_owner,
+                    body=snfvo_json
+                )
+            except Exception as e:
+                sys.stdout.write ('Failed to create snfvo template: %s \n' % str(e))
+                raise
+
+        templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
+            ['resource']['spec']['templates']
+
+        update = False
+
+        # instantiate
+        template_inst = find (templates, lambda t: t['name'] == 'instantiate-invoke-snfvo')
+        steps = template_inst['steps']
+
+        snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % product_offer_id)
+        if snfvo_step:
+            sys.stdout.write('snfvo [%s] already exists for instantiate\n' % product_offer_id)
+        else:
+            snfvo_step = {
+                "name": "snfvo-%s" % product_offer_id,
+                "templateRef": {
+                    "name": _to_snfvo_template_name(product_offer_id),
+                    "template": "instantiate"
+                },
+                "when": "\"{{steps.get-order-from-catalog.outputs.parameters.id}}\" == \"%s\"" % product_offer_id
+            }
+            steps.append([snfvo_step])
+            update = True
+
+        # scaleout
+        template_sa = find (templates, lambda t: t['name'] == 'scaleout-invoke-snfvo')
+        steps = template_sa['steps']
+
+        snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % product_offer_id)
+        if snfvo_step:
+            sys.stdout.write('snfvo [%s] already exists for scaleout\n' % product_offer_id)
+        else:
+            snfvo_step = {
+                "name": "snfvo-%s" % product_offer_id,
+                "templateRef": {
+                    "name": _to_snfvo_template_name(product_offer_id),
+                    "template": "scaleout"
+                },
+                "when": "\"{{steps.get-order-from-catalog.outputs.parameters.id}}\" == \"%s\"" % product_offer_id
+            }
+            steps.append([snfvo_step])
+            update = True
+
+        if update:
+            self._update_sensor(service_owner, sensor_json)
+
+
+    def snfvo_list(self, service_owner):
+        """
+        Return the snfvos for the given owner using the sensor to retrieve
+        additional attributes
+
+        :param service_owner: snfvos owner
+        :type service_owner: ``str``
+
+        """
+        res = []
+        wfList = self.api.list_namespaced_custom_object(
+            group="argoproj.io",
+            version="v1alpha1",
+            plural="workflowtemplates",
+            namespace="domain-%s" % service_owner
+        )
+        #print (wfList)
+        if wfList and len(wfList['items']) > 0:
+            for wf in wfList['items']:
+                if not REGEX_SNFVO_ID.match(wf['metadata']['name']):
+                    continue
+                else:
+                    product_offer_id = wf['metadata']['annotations']['product_offer_id']#REGEX_SNFVO_ID.match(wf['metadata']['name']).group(1)
+                    snfvo_name = wf['metadata']['annotations']['snfvo_name']
+                    res.append({
+                        'snfvo_name': snfvo_name,
+                        'product_offer_id': product_offer_id
+                    })
+
+        return res
+
+    def snfvo_delete(self, service_owner, product_offer_id, sensor_json):
+        """
+        Delete snfvo of the given owner from the sensor
+
+        :param service_owner: the owner of the snfvo
+        :type service_owner: ``str``
+
+        :param product_offer_id: the id of the product offer for this snfvo
+        :type product_offer_id: ``str``
+
+        :param sensor_json: the sensor object
+        :type sensor_json: ``dict``
+
+        """
+        sys.stdout.write('snfvo_delete..\n')
+        sys.stdout.write(str(sensor_json))
+        sys.stdout.write('\n')
+
+        templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
+            ['resource']['spec']['templates']
+
+        update = False
+
+        # instantiate
+        template_inst = find (templates, lambda t: t['name'] == 'instantiate-invoke-snfvo')
+        steps = template_inst['steps']
+
+        # NOTE: steps is a nested list
+        snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % product_offer_id)
+        if not snfvo_step:
+            # Do not raise if not found
+            sys.stdout.write('snfvo [%s] was not found for instantiate\n' % product_offer_id)
+        else:
+            steps.remove(snfvo_step)
+            update = True
+
+        # scaleout
+        template_sa = find (templates, lambda t: t['name'] == 'scaleout-invoke-snfvo')
+        steps = template_sa['steps']
+
+        # NOTE: steps is a nested list
+        snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % product_offer_id)
+        if not snfvo_step:
+            # Do not raise if not found
+            sys.stdout.write('snfvo [%s] was not found for scaleout\n' % product_offer_id)
+        else:
+            steps.remove(snfvo_step)
+            update = True
+
+        if update:
+            self._update_sensor(service_owner, sensor_json)
+
+        try:
+            self.api.delete_namespaced_custom_object(
+                group="argoproj.io",
+                version="v1alpha1",
+                namespace="domain-%s" % service_owner,
+                plural="workflowtemplates",
+                name=_to_snfvo_template_name(product_offer_id),
+                body=kubernetes.client.V1DeleteOptions()
+            )
+        except Exception as e:
+            sys.stdout.write ('Failed to delete snfvo template: %s \n' % str(e))
+            raise
 
 
 proxy = flask.Flask(__name__)
@@ -453,6 +684,97 @@ def workflows_get(transaction_uuid):
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
         return response
+
+
+@proxy.route("/snfvo/<service_owner>",  methods=['POST'])
+def snfvo_create(service_owner):
+    sys.stdout.write('Received snfvo request for '
+                     '[service_owner=%s] \n' % service_owner)
+    try:
+        value = getMessagePayload()
+        product_offer_id = value['product_offer_id']
+        snfvo_name = value['snfvo_name']
+        snfvo_json = value['snfvo_json']
+
+        sensor_json = proxy_server.getSensor(
+            service_owner=service_owner, name=DOMAIN_SENSOR_NAME)
+        if not sensor_json:
+            response = flask.jsonify({'error': 'Sensor [%s] not found' %
+                                      DOMAIN_SENSOR_NAME})
+            response.status_code = 404
+            return response
+
+        proxy_server.snfvo_add(
+            service_owner=service_owner, product_offer_id=product_offer_id,
+            snfvo_name=snfvo_name, sensor_json=sensor_json,
+            snfvo_json=snfvo_json)
+
+        response = flask.jsonify({'OK': 200})
+        response.status_code = 200
+
+    except ApiException as e:
+        response = flask.jsonify({'error': 'Reason: %s. Body: %s'
+                                  % (e.reason, e.body)})
+        response.status_code = e.status
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /snfvo %s\n' % str(response))
+    return response
+
+
+@proxy.route("/snfvo/<service_owner>",  methods=['GET'])
+def snfvo_list(service_owner):
+    sys.stdout.write('Received snfvo list request for '
+                     '[service_owner=%s] \n' % service_owner)
+
+    try:
+        response = flask.jsonify(proxy_server.snfvo_list(
+            service_owner=service_owner))
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit list /snfvo %s\n' % str(response))
+    return response
+        
+
+@proxy.route("/snfvo/<service_owner>/<product_offer_id>",  methods=['DELETE'])
+def snfvo_delete(service_owner, product_offer_id):
+    sys.stdout.write('Received snfvo delete request for '
+                     '[service_owner=%s, product_offer_id=%s] \n' %
+                     (service_owner, product_offer_id))
+    try:
+        sensor_json = proxy_server.getSensor(
+            service_owner=service_owner, name=DOMAIN_SENSOR_NAME)
+        if not sensor_json:
+            response = flask.jsonify({'error': 'Sensor [%s] not found' %
+                                      DOMAIN_SENSOR_NAME})
+            response.status_code = 404
+            return response
+
+        proxy_server.snfvo_delete(
+            service_owner=service_owner, product_offer_id=product_offer_id,
+            sensor_json=sensor_json)
+
+        response = flask.jsonify({'OK': 200})
+        response.status_code = 200
+
+    except ApiException as e:
+        response = flask.jsonify({'error': 'Reason: %s. Body: %s'
+                                  % (e.reason, e.body)})
+        response.status_code = e.status
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit delete /snfvo %s\n' % str(response))
+    return response
 
 
 def main():

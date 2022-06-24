@@ -27,10 +27,8 @@ spec:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ISSM kafka
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    - name: kafka_ip
-      value: 172.28.3.196
-    - name: kafka_port
-      value: 9092
+    - name: kafka
+      value: 172.28.3.196:9092
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # payload attributes
@@ -43,7 +41,7 @@ spec:
       value: "31-01-2022T05:55"
 
     - name: transaction_id
-      value: 366303cd4e1b4856b6b8044ede35959d
+      value: f4e04bcc9d824dd9bc9a4971a8d4dcb3
     - name: product_DID
       value: MjTShRh41FHFsw3bcdutT3
     - name: instance_id
@@ -51,18 +49,16 @@ spec:
     - name: place
       value: |
         {
-          "city": "Pisa",
-          "country": "Italy",
-          "locality": "San Piero A Grado, Pisa",
+          "city": "Barcelona",
+          "country": "Spain",
+          "locality": "Barcelona",
           "geographicLocation": {
-            "id": "bc87f1b8-45ce-4d81-9380-6efa6577ad08",
-            "name": "Pisa Nextworks Area, Italy",
+            "name": "Barcelona i2CAT Area, Spain ",
             "geometryType": "string",
             "geometry": [
               {
-                "id": "e51826f6-4318-4a0e-9616-36728ab7810a",
-                "x": "10.400000",
-                "y": "43.716667",
+                "x": "41.3879",
+                "y": "2.1699",
                 "z": "3388.0"
               }
             ]
@@ -73,7 +69,6 @@ spec:
   - name: handle
     steps:
     - - name: send-sla-breach
-        # publish discovered resources for the optimizer to consume
         templateRef:
           name: workflow-base
           template: produce
@@ -86,7 +81,7 @@ spec:
                   "metric": "{{workflow.parameters.metric}}",
                   "datatimeViolation": "{{workflow.parameters.datatime_violation}}",
                   "datatimePrediction": "{{workflow.parameters.datatime_prediction}}",
-                  "transactionID": "{{workflow.parameters.transaction_id}}",
+                  "transactionID": "operator-a:{{workflow.parameters.transaction_id}}",
                   "productID": "{{workflow.parameters.product_DID}}",
                   "instanceID": "{{workflow.parameters.instance_id}}",
                   "place": {{workflow.parameters.place}}
@@ -94,7 +89,5 @@ spec:
               }
           - name: kafka_topic
             value: isbp-topic-out
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"

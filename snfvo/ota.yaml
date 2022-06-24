@@ -1,0 +1,319 @@
+# Copyright 2020 - 2022 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: snfvo-ota
+spec:
+  templates:
+  - name: instantiate
+    steps:
+    - - name: instantiate-service
+        when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
+        template: instantiate-service
+
+  - name: instantiate-service
+    dag:
+      tasks:
+      - name: edge-order-id
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: edge_order_id
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: userdata-edge
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: userdata_edge
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: vsd-parameters
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+
+      - name: get-edge-order-from-catalog
+        dependencies: [edge-order-id]
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.edge-order-id.outputs.result}}"
+
+      - name: trigger-orchestration-edge
+        dependencies: [userdata-edge, get-edge-order-from-catalog, vsd-parameters]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.related_party}}"
+
+          - name: vsbName
+            value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.vsbName}}"
+
+          - name: product_DID
+            value: ""
+
+          - name: sla_DID
+            value: ""
+
+          - name: place
+            value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.place}}"
+
+          - name: userdata
+            value: "{{tasks.userdata-edge.outputs.result}}"
+
+          - name: vsd_parameters
+            # snfvo_data['vsd_parameters']
+            value: "{{tasks.vsd-parameters.outputs.result}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-edge]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-edge.outputs.parameters.event_uuid}}"
+
+      - name: edge-status
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+          
+      - name: edge-status-success
+        dependencies: [edge-status]
+        template: edge-status-success
+        when: "{{tasks.edge-status.outputs.result}} == \"SUCCESS\""
+        arguments:
+          parameters:
+          - name: payload
+            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+
+      - name: edge-status-fail
+        dependencies: [edge-status]
+        template: edge-status-fail
+        when: "{{tasks.edge-status.outputs.result}} == \"FAIL\""
+
+
+  - name: edge-status-success
+    inputs:
+      parameters:
+      - name: payload
+    dag:
+      tasks:
+      - name: status-attributes
+        template: edge-service-attributes
+        arguments:
+          parameters:
+          - name: payload
+            value: |
+              {{inputs.parameters.payload}}
+
+      - name: userdata-core
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: userdata_core
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: vsd-parameters
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: add-user-data-core
+        dependencies: [status-attributes, userdata-core]
+        templateRef:
+          name: workflow-base
+          template: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: "{{tasks.userdata-core.outputs.result}}"
+          - name: dict2
+            value: "{{tasks.status-attributes.outputs.parameters.dict}}"
+
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: trigger-orchestration-core
+        dependencies: [add-user-data-core, get-order-from-catalog, vsd-parameters]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
+
+          - name: vsbName
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
+
+          - name: product_DID
+            value: ""
+
+          - name: sla_DID
+            value: ""
+
+          - name: place
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
+
+          - name: userdata
+            value: "{{tasks.add-user-data-core.outputs.parameters.dict}}"
+
+          - name: vsd_parameters
+            # snfvo_data['vsd_parameters']
+            value: "{{tasks.vsd-parameters.outputs.result}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-core]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-core.outputs.parameters.event_uuid}}"
+
+      - name: core-status
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: core-status-fail
+        dependencies: [core-status]
+        template: status-fail
+        when: "{{tasks.core-status.outputs.result}} == \"FAIL\""
+
+
+  - name: status-fail
+    dag:
+      tasks:
+      - name: fail
+        templateRef:
+          name: workflow-base
+          template: fail
+
+
+  - name: scaleout
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
+  
+
+  - name: edge-service-attributes
+    inputs:
+      parameters:
+      - name: payload
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import os
+        import sys
+
+        payload = {{inputs.parameters.payload}}
+
+        print(payload)
+
+        result = {}
+        result['nsmm.remote_gw_address'] = payload['vsi_info']['externalGwAddress']
+        result['nsmm.allocated_subnet'] = payload['vsi_info']['allocatedVlSubnets']['app_net']
+        result['nsmm.vpn_net'] = payload['vsi_info']['allocatedVlSubnets']['vpn_net']
+
+        with open('/tmp/dict.txt', 'w') as f:
+            json.dump(result, f)
+
+    outputs:
+      parameters:
+      - name: dict
+        valueFrom:
+          path: /tmp/dict.txt
+    

@@ -1,0 +1,9 @@
+{
+    "operation": "instantiate",
+    "category": "VNF",
+    "order_id": "163e9c08-c16b-46ba-bbec-3ca285fdf774",
+    "related_party": "operator-b",
+    "snfvo_data": {
+      "hello": "world"
+    }
+}

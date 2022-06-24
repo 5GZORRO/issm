@@ -18,44 +18,6 @@ metadata:
   name: workflow-base
 spec:
   templates:
-  - name: callback
-    # Invoke user provided callback by publishing the given data into the provided
-    # kafka topic (specified in callback json) of ISSM kafka bus.
-    #
-    # Note: if no callback provided then this step is considered as NOP
-    #
-    # Parameters
-    # callback: callback (json)
-    # data: the payload to publish (json)
-    inputs:
-      parameters:
-      - name: callback
-      - name: data
-    steps:
-    - - name: kafka-topic-from-callback
-        template: from-key
-        #when: "{{inputs.parameters.callback}} != \"DEFAULT\""
-        arguments:
-          parameters:
-          - name: key
-            value: "kafka_topic"
-          - name: json_str
-            value: "{{inputs.parameters.callback}}"
-
-    - - name: invoke-callback
-        template: produce
-        #when: "{{inputs.parameters.callback}} != \"DEFAULT\""
-        arguments:
-          parameters:
-          - name: kafka_topic
-            value: "{{steps.kafka-topic-from-callback.outputs.result}}"
-          - name: kafka_ip
-            value: "{{workflow.parameters.kafka_ip}}"
-          - name: kafka_port
-            value: "{{workflow.parameters.kafka_port}}"
-          - name: data
-            value: "{{inputs.parameters.data}}"
-
   - name: publish-on-kafka
     inputs:
       parameters:
@@ -68,10 +30,8 @@ spec:
             parameters:
             - name: kafka_topic
               value: "{{inputs.parameters.kafka_topic}}"
-            - name: kafka_ip
-              value: "{{workflow.parameters.kafka_ip}}"
-            - name: kafka_port
-              value: "{{workflow.parameters.kafka_port}}"
+            - name: kafka
+              value: "{{workflow.parameters.kafka}}"
             - name: data
               value: "{{inputs.parameters.data}}"
 
@@ -80,14 +40,12 @@ spec:
     #
     # Parameters
     # kafka_topic: the topic to publish the message on (string)
-    # kafka_ip: ipaddress of the kafka broker (string)
-    # kafka_port: kafka broker port (number)
+    # kafka: ipaddress:port of the kafka broker (string)
     # data: the payload to publish (json)
     inputs:
       parameters:
       - name: kafka_topic
-      - name: kafka_ip
-      - name: kafka_port
+      - name: kafka
       - name: data
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
@@ -104,7 +62,7 @@ spec:
         KAFKA_TIMEOUT = 10
         KAFKA_API_VERSION = (1, 1, 0)
 
-        KAFKA_SERVER = "{}:{}".format("{{inputs.parameters.kafka_ip}}", "{{inputs.parameters.kafka_port}}")
+        KAFKA_SERVER = "{}".format("{{inputs.parameters.kafka}}")
         producer = KafkaProducer(bootstrap_servers=KAFKA_SERVER,
                                  api_version=KAFKA_API_VERSION,
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
@@ -116,6 +74,66 @@ spec:
         except KafkaError as ke:
             print("1")
         print ("0")
+
+
+  - name: consume
+    # Consumes a message from kafka broker of a matched event_uuid
+    #
+    # Parameters
+    # kafka_topic: the topic to publish the message on (string)
+    # kafka_ip: ipaddress of the kafka broker (string)
+    # kafka_port: kafka broker port (number)
+    # msg_id: the id of the message to look for (str)
+    inputs:
+      parameters:
+      - name: kafka_topic
+      - name: kafka
+      - name: msg_id
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import os
+        import sys
+
+        from kafka import KafkaConsumer
+        from kafka.errors import KafkaError
+
+        KAFKA_TOPIC = '{{inputs.parameters.kafka_topic}}'
+        KAFKA_TIMEOUT = 10
+        KAFKA_API_VERSION = (1, 1, 0)
+
+        MSG_ID = "{{inputs.parameters.msg_id}}"
+        payload = {}
+
+        KAFKA_SERVER = "{}".format("{{inputs.parameters.kafka}}")
+        consumer = KafkaConsumer(bootstrap_servers=KAFKA_SERVER,
+                                 client_id="aaa",
+                                 enable_auto_commit=True,
+                                 api_version=KAFKA_API_VERSION, group_id=MSG_ID)
+        consumer.subscribe(pattern=KAFKA_TOPIC)
+
+        for msg in consumer:
+            # TODO: drain topic messages first so we do not consume stale messages
+            payload = json.loads(msg.value.decode('utf-8', 'ignore'))
+            sys.stdout.write('Received payload: %s \n' % payload)
+            if payload.get('msg_id', '') == MSG_ID:
+                sys.stdout.write('It is my message: %s \n' % payload)
+                break
+
+        with open('/tmp/payload.txt', 'w') as f:
+            # don't dump it - keep its format so that other python steps can parse it
+            f.write(str(payload))
+            #json.dump(payload, f)
+
+    outputs:
+      parameters:
+      - name: payload
+        valueFrom:
+          path: /tmp/payload.txt
+
 
   - name: from-key
     inputs:
@@ -151,6 +169,14 @@ spec:
       source: |
         exit 123
 
+  - name: success
+    script:
+      image: debian:9.4
+      imagePullPolicy: IfNotPresent
+      command: [bash]
+      source: |
+        exit 0
+
   - name: event-uuid
     script:
       image: python:alpine3.6
@@ -160,17 +186,53 @@ spec:
         import uuid
         print(str(uuid.uuid4()).replace('-',''))
 
-  - name: correct-mno-name
-    # TODO: remove this once unified format is applied
+  - name: py-split
     inputs:
       parameters:
-      - name: mno_name
+      - name: str
+      - name: idx
     script:
       image: python:alpine3.6
       imagePullPolicy: IfNotPresent
       command: [python]
       source: |
-        print(str("{{inputs.parameters.mno_name}}").replace('_','-').lower())
+        # integer
+        idx = {{inputs.parameters.idx}}
+        # string
+        str_in = "{{inputs.parameters.str}}"
+        print (str_in.split(':')[idx])
+
+  - name: add-to-dict
+    inputs:
+      parameters:
+      - name: dict1
+      - name: dict2
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import sys
+
+        dict1 = {{inputs.parameters.dict1}}
+        dict2 = {{inputs.parameters.dict2}}
+
+        sys.stdout.write('dict1: %s \n' % dict1)
+        sys.stdout.write('dict2: %s \n' % dict2)
+
+        dict1.update(dict2)
+        sys.stdout.write('dict1 after update: %s \n' % dict1)        
+
+        with open('/tmp/dict.txt', 'w') as f:
+            json.dump(dict1, f)
+
+    outputs:
+      parameters:
+      - name: dict
+        valueFrom:
+          path: /tmp/dict.txt
+
 
   - name: sla-breach-data
     inputs:
@@ -223,3 +285,13 @@ spec:
       - name: product_DID
         valueFrom:
           path: /tmp/product_DID.txt
+
+  - name: whalesay
+    inputs:
+      parameters:
+      - name: message
+    container:
+      image: docker/whalesay
+      imagePullPolicy: IfNotPresent
+      command: [cowsay]
+      args: ["{{inputs.parameters.message}}"]

@@ -1,0 +1,841 @@
+# Copyright 2020 - 2022 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: snfvo-vcdn
+spec:
+  templates:
+  - name: instantiate
+    steps:
+    - - name: instantiate-service
+        when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
+        template: instantiate-service
+
+  - name: instantiate-service
+    dag:
+      tasks:
+      - name: slice-order-id
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: slice_order_id_0
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: userdata-slice
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: userdata_slice
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: vsd-parameters
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: get-slice-order-from-catalog
+        dependencies: [slice-order-id]
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.slice-order-id.outputs.result}}"
+
+      - name: trigger-orchestration-slice
+        dependencies: [get-slice-order-from-catalog, userdata-slice, vsd-parameters]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.related_party}}"
+
+          - name: vsbName
+            value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
+
+          - name: product_DID
+            value: ""
+
+          - name: sla_DID
+            value: ""
+
+          - name: place
+            value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.place}}"
+
+          - name: userdata
+            # slice userdata is at snfvo_data['userdata']
+            value: "{{tasks.userdata-slice.outputs.result}}"
+
+          - name: vsd_parameters
+            # snfvo_data['vsd_parameters']
+            value: "{{tasks.vsd-parameters.outputs.result}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-slice]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
+
+      - name: slice-status
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+          
+      - name: slice-status-success
+        dependencies: [slice-status]
+        template: slice-status-success
+        when: "{{tasks.slice-status.outputs.result}} == \"SUCCESS\""
+        arguments:
+          parameters:
+          - name: payload
+            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+
+      - name: slice-status-fail
+        dependencies: [slice-status]
+        template: slice-status-fail
+        when: "{{tasks.slice-status.outputs.result}} == \"FAIL\""
+
+
+  - name: slice-status-success
+    inputs:
+      parameters:
+      - name: payload
+    dag:
+      tasks:
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: get-slice-instance-id
+        dependencies: [get-order-from-catalog]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{inputs.parameters.payload}}
+
+      - name: add-user-data-vcdn
+        dependencies: [get-slice-instance-id]
+        templateRef:
+          name: workflow-base
+          template: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: |
+              { }
+          - name: dict2
+            value: |
+              {
+                "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}",
+                "edge_resource_instance": "{{tasks.get-slice-instance-id.outputs.result}}"
+              }
+
+      - name: vsd-parameters
+        dependencies: [add-user-data-vcdn]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: trigger-orchestration-vcdn-service
+        dependencies: [add-user-data-vcdn, vsd-parameters]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
+          - name: vsbName
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
+          - name: product_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
+          - name: sla_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
+          - name: place
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
+          - name: userdata
+            value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
+
+          - name: vsd_parameters
+            # snfvo_data['vsd_parameters']
+            value: "{{tasks.vsd-parameters.outputs.result}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-vcdn-service]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-vcdn-service.outputs.parameters.event_uuid}}"
+
+      - name: vcdn-status
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: vcdn-status-success
+        dependencies: [vcdn-status]
+        template: vcdn-status-success
+        when: "{{tasks.vcdn-status.outputs.result}} == \"SUCCESS\""
+        arguments:
+          parameters:
+          - name: product_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
+          - name: sla_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
+          - name: place
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
+          - name: payload
+            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+
+      - name: vcdn-status-fail
+        dependencies: [vcdn-status]
+        template: vcdn-status-fail
+        when: "{{tasks.vcdn-status.outputs.result}} == \"FAIL\""
+
+
+  - name: slice-status-fail
+    dag:
+      tasks:
+      - name: fail
+        templateRef:
+          name: workflow-base
+          template: fail
+
+
+  - name: vcdn-status-success
+    inputs:
+      parameters:
+      - name: product_DID
+      - name: sla_DID
+      - name: place
+      - name: payload
+    dag:
+      tasks:
+      - name: get-vcdn-instance-id
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{inputs.parameters.payload}}
+
+      - name: sla-event
+        dependencies: [get-vcdn-instance-id]
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "eventType": "new_SLA",
+                "transactionID": "{{workflow.parameters.service_owner}}:{{workflow.parameters.transaction_uuid}}",
+                "productID": "{{inputs.parameters.product_DID}}",
+                "SLAID": "{{inputs.parameters.sla_DID}}",
+                "instanceID": "{{tasks.get-vcdn-instance-id.outputs.result}}",
+                "place": {{inputs.parameters.place}},
+                "kafka": "{{workflow.parameters.kafka}}",
+                "topic": "isbp-topic-out"
+              }
+          - name: kafka_topic
+            value: "isbp-topic"
+          - name: kafka
+            value: "{{workflow.parameters.kafka_dl}}"
+
+
+  - name: vcdn-status-fail
+    dag:
+      tasks:
+      - name: fail
+        templateRef:
+          name: workflow-base
+          template: fail
+
+
+
+
+
+  - name: scaleout
+    steps:
+    - - name: scaleout-service
+        when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
+        template: scaleout-service
+    - - name: best-edge-selection
+        when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
+        template: best-edge-selection
+
+
+###
+
+
+  - name: scaleout-service
+    dag:
+      tasks:
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: build-discovery-query
+        dependencies: [get-order-from-catalog]
+        templateRef:
+          name: workflow-discovery
+          template: build-intent-query
+        arguments:
+          parameters:
+          - name: category
+            value: Edge
+
+          - name: place
+            value: "{{workflow.parameters.place}}"
+          - name: cpu_max
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.cpu_max}}"
+          - name: mem_max
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.mem_max}}"
+          - name: mem_unit
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.mem_unit}}"
+          - name: storage_max
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.storage_max}}"
+          - name: storage_unit
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.storage_unit}}"
+  
+      - name: discover-edges
+        templateRef:
+          name: workflow-discovery
+          template: srds-service
+        dependencies: [build-discovery-query]
+        arguments:
+          parameters:
+          - name: srsd_url
+            value: "{{workflow.parameters.srsd_url}}"
+          - name: intent_query
+            value: "{{tasks.build-discovery-query.outputs.result}}"
+  
+      - name: send-edges-to-optimizer
+        dependencies: [discover-edges]
+        templateRef:
+          name: workflow-base
+          template: publish-on-kafka
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                "topic": "issm-in-{{workflow.parameters.service_owner}}", 
+                "category": "{{workflow.parameters.category}}",
+                "resources": {{tasks.discover-edges.outputs.result}},
+                "operation": "scaleout", "sub_operation": "BEST_OFFER_SELECTION",
+                "service_owner": "{{workflow.parameters.service_owner}}",
+                "sla_breach": {{workflow.parameters.sla_breach}},
+                "elma_url": "{{workflow.parameters.elma_url}}",
+                "order_id": "{{workflow.parameters.order_id}}",
+                "catalogue_url": "{{workflow.parameters.catalogue_url}}",
+                "trmf_url": "{{workflow.parameters.trmf_url}}",
+                "srsd_url": "{{workflow.parameters.srsd_url}}",
+                "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
+                "snfvo_data": {{workflow.parameters.snfvo_data}},
+                "category": "{{workflow.parameters.category}}",
+                "kafka": "{{workflow.parameters.kafka}}",
+                "kafka_dl": "{{workflow.parameters.kafka_dl}}"
+              }
+          - name: kafka_topic
+            value: issm-optimizer
+
+
+###
+
+
+  - name: best-edge-selection
+    dag:
+      tasks:
+      - name: loop-edges
+        template: loop-best-offers
+        arguments:
+          parameters:
+          - name: best_offer
+            value: "{{item}}"
+        withParam: "{{workflow.parameters.resources}}"
+
+  - name: loop-best-offers
+    inputs:
+      parameters:
+      - name: best_offer
+    dag:
+      tasks:
+      - name: print-edge
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{inputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.'
+      
+      - name: edge-attributes
+        templateRef:
+          name: workflow-discovery
+          template: resource-attributes
+        arguments:
+          parameters:
+          - name: resource
+            value: "{{inputs.parameters.best_offer}}"
+        
+      - name: acquire
+        dependencies: [edge-attributes, print-edge]
+        template: acquire
+        arguments:
+          parameters:
+          - name: resource_id
+            value: "{{tasks.edge-attributes.outputs.parameters.id}}"
+          - name: operator_id_seller
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
+          - name: operator_id_buyer
+            value: "{{workflow.parameters.service_owner}}"
+          - name: resource_did
+            value: "{{tasks.edge-attributes.outputs.parameters.did}}"
+
+
+      - name: slice-order-id
+        dependencies: [acquire]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: slice_order_id_0
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: get-slice-order-from-catalog
+        dependencies: [slice-order-id]
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.slice-order-id.outputs.result}}"
+
+      - name: vsd-parameters
+        dependencies: [acquire]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+
+#=========== Scaleout: Slice
+
+      - name: trigger-orchestration-slice
+        dependencies: [get-slice-order-from-catalog, vsd-parameters]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
+
+          - name: vsbName
+            value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
+
+          - name: product_DID
+            # N/A for slice
+            value: ""
+
+          - name: sla_DID
+            # N/A for slice
+            value: ""
+
+          - name: place
+            value: "{{tasks.edge-attributes.outputs.parameters.place}}"
+
+          - name: userdata
+            value: "{ }"
+
+          - name: vsd_parameters
+            value: "{{tasks.vsd-parameters.outputs.result}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-slice]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
+
+      - name: slice-status
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+          
+      - name: slice-status-success
+        dependencies: [slice-status]
+        template: slice-status-success-sa
+        when: "{{tasks.slice-status.outputs.result}} == \"SUCCESS\""
+        arguments:
+          parameters:
+          - name: payload
+            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+          - name: best_offer
+            value: "{{inputs.parameters.best_offer}}"
+          
+
+      - name: slice-status-fail
+        dependencies: [slice-status]
+        template: slice-status-fail-sa
+        when: "{{tasks.slice-status.outputs.result}} == \"FAIL\""
+
+
+  - name: slice-status-success-sa
+    inputs:
+      parameters:
+      - name: payload
+      - name: best_offer
+    dag:
+      tasks:
+      - name: edge-attributes
+        templateRef:
+          name: workflow-discovery
+          template: resource-attributes
+        arguments:
+          parameters:
+          - name: resource
+            value: "{{inputs.parameters.best_offer}}"
+      
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: get-slice-instance-id
+        dependencies: [get-order-from-catalog]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{inputs.parameters.payload}}
+
+      - name: add-user-data-vcdn
+        dependencies: [get-slice-instance-id]
+        templateRef:
+          name: workflow-base
+          template: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: |
+              { }
+          - name: dict2
+            value: |
+              {
+                "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}",
+                "edge_resource_instance": "{{tasks.get-slice-instance-id.outputs.result}}"
+              }
+
+      - name: vsd-parameters
+        dependencies: [get-slice-instance-id]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: trigger-orchestration-vcdn-service
+        dependencies: [edge-attributes, add-user-data-vcdn, vsd-parameters]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
+          - name: vsbName
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
+          - name: product_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
+          - name: sla_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
+          - name: place
+            value: "{{tasks.edge-attributes.outputs.parameters.place}}"
+          - name: userdata
+            value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
+
+          - name: vsd_parameters
+            # snfvo_data['vsd_parameters']
+            value: "{{tasks.vsd-parameters.outputs.result}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-vcdn-service]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-vcdn-service.outputs.parameters.event_uuid}}"
+
+      - name: vcdn-status
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: vcdn-status-success
+        dependencies: [vcdn-status]
+        template: vcdn-status-success-sa
+        when: "{{tasks.vcdn-status.outputs.result}} == \"SUCCESS\""
+        arguments:
+          parameters:
+          - name: product_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
+          - name: sla_DID
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
+          - name: place
+            value: "{{tasks.edge-attributes.outputs.parameters.place}}"
+          - name: payload
+            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+
+      - name: vcdn-status-fail
+        dependencies: [vcdn-status]
+        template: vcdn-status-fail-sa
+        when: "{{tasks.vcdn-status.outputs.result}} == \"FAIL\""
+
+
+  - name: vcdn-status-success-sa
+    inputs:
+      parameters:
+      - name: product_DID
+      - name: sla_DID
+      - name: place
+      - name: payload
+    dag:
+      tasks:
+      - name: get-vcdn-instance-id
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{inputs.parameters.payload}}
+
+      - name: sla-event
+        dependencies: [get-vcdn-instance-id]
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "eventType": "new_SLA",
+                "transactionID": "{{workflow.parameters.service_owner}}:{{workflow.parameters.transaction_uuid}}",
+                "productID": "{{inputs.parameters.product_DID}}",
+                "SLAID": "{{inputs.parameters.sla_DID}}",
+                "instanceID": "{{tasks.get-vcdn-instance-id.outputs.result}}",
+                "place": {{inputs.parameters.place}},
+                "kafka": "{{workflow.parameters.kafka}}",
+                "topic": "isbp-topic-out"
+              }
+          - name: kafka_topic
+            value: "isbp-topic"
+          - name: kafka
+            value: "{{workflow.parameters.kafka_dl}}"
+
+
+  - name: vcdn-status-fail
+    dag:
+      tasks:
+      - name: fail
+        templateRef:
+          name: workflow-base
+          template: fail
+
+
+  - name: slice-status-fail-sa
+    dag:
+      tasks:
+      - name: fail
+        templateRef:
+          name: workflow-base
+          template: fail
+
+
+  - name: acquire
+    inputs:
+      parameters:
+      - name: resource_id
+      - name: operator_id_seller
+      - name: operator_id_buyer
+      - name: resource_did
+    steps:
+      - - name: acquire-resource
+          templateRef:
+            name: workflow-catalog
+            template: create-order
+          arguments:
+            parameters:
+            - name: resource_id
+              value: "{{inputs.parameters.resource_id}}"
+            - name: operator_id_seller
+              value: "{{inputs.parameters.operator_id_seller}}"
+            - name: operator_id_buyer
+              value: "{{workflow.parameters.service_owner}}"
+
+      - - name: notify-reputation-manager
+          templateRef:
+            name: workflow-catalog
+            template: notify-trmf
+          arguments:
+            parameters:
+            - name: resource_did
+              value: "{{inputs.parameters.resource_did}}"

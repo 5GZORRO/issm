@@ -1,0 +1,328 @@
+# Copyright 2020 - 2022 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+################################################################################
+#
+# Important: this template can either run in stakeholder context or 3rd-party
+#
+################################################################################
+
+#
+# Parameters being used:
+#
+# service_owner: stakeholder name
+# vsbName: blue-print name
+# transaction_uuid: transaction uuid
+#
+#
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  # Note: this name must be identical accross all domain operators
+  name: orchestrate
+spec:
+  templates:
+  - name: orchestrate
+    dag:
+      tasks:
+      - name: get-domain-env
+        templateRef:
+          name: workflow-environment
+          template: get-domain-env
+        arguments:
+          parameters:
+          - name: domain
+            # myself
+            value: "{{workflow.parameters.resource_owner}}"
+      
+      - name: create-vsd
+        dependencies: [get-domain-env]
+        template: create-descriptor
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
+          - name: tenant_name
+            value: "{{workflow.parameters.service_owner}}"
+          - name: vsbName
+            value: "{{workflow.parameters.vsbName}}"
+          - name: parameters
+            value: "{{workflow.parameters.vsd_parameters}}"
+
+
+      - name: create-vsi
+        dependencies: [create-vsd]
+        template: create-instance
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
+          - name: tenant_name
+            value: "{{workflow.parameters.service_owner}}"
+          - name: vsd_id
+            value: "{{tasks.create-vsd.outputs.parameters.vsd_id}}"
+          - name: name
+            value: "{{workflow.parameters.vsbName}}"
+          - name: userdata
+            value: "{{workflow.parameters.userdata}}"
+
+      - name: poll
+        dependencies: [create-vsi]
+        template: poll
+        arguments:
+          parameters:
+          - name: poll
+            value: "true"
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
+          - name: tenant_name
+            value: "{{workflow.parameters.service_owner}}"
+          - name: vsi_id
+            value: "{{tasks.create-vsi.outputs.parameters.vsi_id}}"
+          - name: jq_query
+            value: ".status"
+          - name: jq_query_value
+            value: "INSTANTIATED"
+          - name: timeout
+            value: 10
+
+      - name: create-vsi-fail
+        dependencies: [poll]
+        template: create-vsi-fail
+        when: "{{tasks.poll.outputs.parameters.status}} == \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.create-vsi.outputs.parameters.vsi_id}}"
+
+      - name: create-vsi-success
+        dependencies: [poll]
+        template: create-vsi-success
+        when: "{{tasks.poll.outputs.parameters.status}} != \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.create-vsi.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
+            
+
+  - name: create-vsi-success
+    inputs:
+      parameters:
+      - name: vsi_id
+      - name: vsi_info
+    dag:
+      tasks:
+      - name: publish-status
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+
+          - name: data
+            value: |
+              { "msg_id": "{{workflow.name}}",
+                "vsi_id": "{{inputs.parameters.vsi_id}}",
+                "status": "SUCCESS",
+                "vsi_info": {{inputs.parameters.vsi_info}}
+              }
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+
+
+  - name: create-vsi-fail
+    inputs:
+      parameters:
+      - name: vsi_id
+    dag:
+      tasks:
+      - name: publish-status
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+
+          - name: data
+            value: |
+              { "msg_id": "{{workflow.name}}",
+                "vsi_id": "{{inputs.parameters.vsi_id}}",
+                "status": "FAIL"
+              }
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+
+      - name: fail
+        dependencies: [publish-status]
+        templateRef:
+          name: workflow-base
+          template: fail
+
+
+  - name: create-descriptor
+    # Create a new VSD from the given blueprint name
+    #
+    # Parameters:
+    # vs_url: URL to vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant (str)
+    # vsbName: the name of the blueprint VSD is created from
+    # name: VSD name
+    # parameters: qos parameters to be given to this VSD
+    #
+    # outputs:
+    # vsd_id: vertical descriptor id    
+    inputs:
+      parameters:
+      - name: vs_url
+      - name: tenant_name
+      - name: vsbName
+      - name: parameters
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import random
+        import sys
+
+        sys.stdout.write('Create descriptor..\n')
+
+        vsd_id = str(random.randint(1, 1000))
+        sys.stdout.write('Created descriptor with vsd_id: %s \n' % vsd_id)
+
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(str(vsd_id))
+    outputs:
+      parameters:
+      - name: vsd_id
+        valueFrom:
+          path: /tmp/id.txt
+
+
+  - name: create-instance
+    # Create a new VSI
+    #
+    # Parameters:
+    # vs_url: URL to vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant to create (str)
+    # vsd_id: the id of the descriptor this VSI is created from (str)
+    #
+    # outputs:
+    # vsi_id: vertical service instance id
+    inputs:
+      parameters:
+      - name: vs_url
+      - name: tenant_name
+      - name: vsd_id
+      - name: name
+      - name: userdata
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import random
+        import sys
+
+        sys.stdout.write('Create instance..\n')
+        vsi_id = str(random.randint(1, 1000))
+        sys.stdout.write('Creating service instance with vsi_id: %s \n' % vsi_id)
+
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(str(vsi_id))
+
+    outputs:
+      parameters:
+      - name: vsi_id
+        valueFrom:
+          path: /tmp/id.txt
+
+
+  - name: poll
+    # Poll for some VSI attribute (in case poll=true) as denoted by by jq_query and jq_query_value.
+    # timeout is relevant for polling only
+    #
+    # Parameters:
+    # poll: whether or not to poll (boolean). If false, then skip polling
+    # vs_url: URL to vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant (str)
+    # vsi_id: VSI id (str)
+    # jq_query: VSI attribute to poll/query (str in jq format)
+    # jq_query_value: the conditional value of the attribute; applicable for polling mode (str)
+    # timeout: polling timeout (seconds in integer)
+    #
+    # Return: TIMEOUT in case of timeout or the attribute value
+    inputs:
+      parameters:
+      - name: poll
+      - name: vs_url
+      - name: tenant_name
+      - name: vsi_id
+      - name: jq_query
+      - name: jq_query_value
+      - name: timeout
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import time
+        import sys
+
+        timeout = "{{inputs.parameters.timeout}}"
+        name = "{{workflow.parameters.vsbName}}"
+        status = "INSTANTIATED"
+
+        sys.stdout.write('Waiting: %s \n' % str(timeout))
+        time.sleep(int(timeout))
+
+        sys.stdout.write('Poll completed with status: %s \n' % status)
+
+        with open('/tmp/status.txt', 'w') as f:
+            f.write(status)
+
+        vsi_info = {
+            "name": name,
+            "description": name,
+            "vsiId": 17,
+            "vsdId": 15,
+            "status": "INSTANTIATED",
+            "externalGwAddress": "10.30.6.36",
+            "internalVpnSubnets": ["192.168.161.16/28"],
+            "allocatedVlSubnets": {
+              "app_net": "192.168.161.16/28",
+              "vpn_net": "192.168.161.0/28"
+            }
+        }
+
+        with open('/tmp/vsi_info.txt', 'w') as f:
+            json.dump(vsi_info, f)
+
+    outputs:
+      parameters:
+      - name: status
+        valueFrom:
+          path: /tmp/status.txt
+
+      - name: vsi_info
+        valueFrom:
+          path: /tmp/vsi_info.txt
+          

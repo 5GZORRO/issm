@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: issm-sla-breach
+spec:
+  kafka:
+    sla-breach:
+      url: $KAFKA_HOST:$KAFKA_PORT
+      topic: $SLA_BREACH_DOMAIN_TOPIC
+      jsonBody: true
+      partition: "0"
+      connectionBackoff:
+        duration: 10000000000
+        steps: 5
+        factor: 2
+        jitter: 0.2

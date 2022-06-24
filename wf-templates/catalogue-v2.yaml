@@ -1,0 +1,582 @@
+# Copyright 2020 - 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: workflow-catalog
+spec:
+  templates:
+  - name: prepare-orders-from-catalog
+    inputs:
+      parameters:
+      - name: catalogue_url
+      # this is an ARRAY
+      - name: order_id
+      - name: category
+      - name: snfvo_data
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        order_ids = {{inputs.parameters.order_id}}
+        category = "{{inputs.parameters.category}}"
+        snfvo_data = {{inputs.parameters.snfvo_data}}
+
+        sys.stdout.write('order_ids: %s\ncategory: "%s"\nsnfvo_data: %s\n' %
+                          (order_ids, category, snfvo_data))
+
+        order_id = ""
+        category_sub_order = {}
+
+        categories = ["VNF", "Edge", "Slice", "Network Service"]
+
+        found = False
+        headers = {'Content-Type': 'application/json'}
+        for o_id in order_ids:
+            sys.stdout.write('Retrieve Order ID: %s\n' % o_id)
+            r = requests.get("{{inputs.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/productOrder/%s" % o_id,
+                headers=headers)
+            json.dump(r.json(), sys.stdout)
+            sys.stdout.write('\n\n')
+    
+            # retrieve the PO offer
+            # Note: order 1:1 offer
+            po_href = r.json()['productOrderItem'][0]['productOffering']['href']
+            r = requests.get(str(po_href), headers=headers)
+            json.dump(r.json(), sys.stdout)
+            sys.stdout.write('\n\n')
+
+            po = r.json()
+
+            po_c = r.json()['category'][0]['name']
+            if po_c not in categories:
+                raise Exception('*** Illegal PO category "%s" must be: %s ***' % (po_c, categories))
+            if po_c == category and not found:
+                # mark the first one as MAIN
+                found = True
+                sys.stdout.write('Main order_id: %s\n' % o_id)
+                order_id = o_id
+            else:
+                o_ids = category_sub_order.setdefault(po_c.lower().replace(" ", ""), [])
+                o_ids.append(o_id)
+
+        sys.stdout.write('caterogy to orders: %s\n' % category_sub_order)
+        for k in category_sub_order:
+            o_ids = category_sub_order[k]
+            for i in range(len(o_ids)):
+                snfvo_data['%s_order_id_%s' % (k, str(i))] = o_ids[i]
+
+        with open('/tmp/order_id.txt', 'w') as f:
+            f.write(str(order_id))
+
+        with open('/tmp/snfvo_data.txt', 'w') as f:
+            json.dump(snfvo_data, f)
+
+    outputs:
+      parameters:
+      - name: order_id
+        valueFrom:
+          path: /tmp/order_id.txt
+
+      - name: snfvo_data
+        valueFrom:
+          path: /tmp/snfvo_data.txt
+
+
+  - name: get-order-from-catalog
+    inputs:
+      parameters:
+      - name: order_id
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import re
+        import requests
+        import sys
+
+        REGEX = re.compile('.*([0-9]+).*')
+        categories = ["VNF", "Edge", "Slice", "Network Service"]
+        def find(l, predicate):
+            """
+            util method
+            """
+            results = [x for x in l if predicate(x)]
+            return results[0] if len(results) > 0 else None
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.get("{{workflow.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/productOrder/{{inputs.parameters.order_id}}",
+            headers=headers)
+        json.dump(r.json(), sys.stdout)
+        sys.stdout.write('\n')
+
+        # retrieve the PO offer
+        # Note: order 1:1 offer
+        po_href = r.json()['productOrderItem'][0]['productOffering']['href']
+        r = requests.get(str(po_href), headers=headers)
+        json.dump(r.json(), sys.stdout)
+        sys.stdout.write('\n')
+
+        po = r.json()
+        try:
+            category = r.json()['category'][0]['name']
+            if category not in categories:
+                raise Exception('*** Illegal PO category "%s" must be: %s ***' % (category, categories))
+        except:
+            raise
+
+        # PO name
+        name = ""
+        # PO id
+        po_id = ""
+        sla_did = ""
+        vsbName = ""
+        mem_unit = ""
+        mem_min = ""
+        mem_max = ""
+        cpu_min = ""
+        cpu_max = ""
+        storage_unit = ""
+        storage_min = ""
+        storage_max = ""
+
+        place = {}
+        related_party = ""
+
+        # SLA
+        sla_did = po.get('serviceLevelAgreement', {}).get('id', "")
+        sys.stdout.write('sla_did: "%s" \n' % sla_did)
+
+        # Name
+        name = po['name']
+        sys.stdout.write('name: "%s" \n' % name)
+
+        # Name
+        po_id = po['id']
+        sys.stdout.write('po_id: "%s" \n' % po_id)
+
+        # Place
+        href = po['place'][0]['href']
+        r = requests.get(str(href), headers=headers)
+        json.dump(r.json(), sys.stdout)
+        sys.stdout.write('\n')
+        place = r.json()
+        sys.stdout.write('place: "%s" \n' % place)
+
+        # resource owner
+        # TODO: revise 'VNF'
+        if category in ['Network Service', 'Slice', 'Edge', 'Cloud', 'VNF']:
+            href = po['productSpecification']['href']
+            r = requests.get(str(href), headers=headers)
+            json.dump(r.json(), sys.stdout)
+            sys.stdout.write('\n')
+            related_party = r.json()['relatedParty'][0]['name']
+            related_party = related_party.replace('_','-').lower()
+            sys.stdout.write('related_party: "%s" \n' % related_party)
+
+        if category == 'VNF':
+            href = po['productSpecification']['href']
+            r = requests.get(str(href), headers=headers)
+            href = r.json()['resourceSpecification'][0]['href']
+            r = requests.get(str(href), headers=headers)
+            json.dump(r.json(), sys.stdout)
+            sys.stdout.write('\n')
+    
+            rsc_list = r.json()[0]['resourceSpecCharacteristic']
+            # 1. vsbName
+            element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
+            if not element:
+                raise Exception("*** Unable to find 'vsbName' ***")
+    
+            vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
+            sys.stdout.write('vsbName: "%s" \n' % vsbName)
+    
+            # 2. vCPU Requirements
+            element = find(rsc_list, lambda e: e.get('name', '') == 'vCPU Requirements')
+            if not element:
+                raise Exception("*** Unable to find 'vCPU Requirements' ***")
+    
+            # min
+            min = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-vCPU')
+            if not min:
+                raise Exception("*** Unable to find 'min-vCPU' ***")
+            cpu_min = min['value']['value']
+    
+            # max
+            max = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-vCPU')
+            if not max:
+                raise Exception("*** Unable to find 'max-vCPU' ***")
+            cpu_max = max['value']['value']
+    
+            sys.stdout.write('cpu_min/max: "%s, %s" \n' % (cpu_min, cpu_max))
+    
+            # 3. Virtual Memory Requirements
+            element = find(rsc_list, lambda e: e.get('name', '') == 'Virtual Memory Requirements')
+            if not element:
+                raise Exception("*** Unable to find 'Virtual Memory Requirements' ***")
+    
+            # min
+            min = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-virtual-memory')
+            if not min:
+                raise Exception("*** Unable to find 'min-virtual-memory' ***")
+            mem_min = min['value']['value']
+            mem_unit = min['unitOfMeasure']
+    
+            # max
+            max = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-virtual-memory')
+            if not max:
+                raise Exception("*** Unable to find 'max-virtual-memory' ***")
+            mem_max = max['value']['value']
+    
+            sys.stdout.write('mem_min/max: "%s, %s" \n' % (mem_min, mem_max))
+            sys.stdout.write('mem_unit: "%s" \n' % mem_unit)
+    
+            # 4. Storage Requirements
+            element = find(rsc_list, lambda e: e.get('name', '') == 'Storage Requirements')
+            if not element:
+                raise Exception("*** Unable to find 'Storage Requirements' ***")
+    
+            # min
+            min = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-storage')
+            if not min:
+                raise Exception("*** Unable to find 'min-storage' ***")
+            storage_min = min['value']['value']
+            storage_unit = min['unitOfMeasure']
+    
+            # max
+            max = find(element['resourceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-storage')
+            if not max:
+                raise Exception("*** Unable to find 'max-storage' ***")
+            storage_max = max['value']['value']
+    
+            sys.stdout.write('storage_min/max: "%s, %s" \n' % (storage_min, storage_max))
+            sys.stdout.write('storage_unit: "%s" \n' % storage_unit)
+
+
+        if category == 'Network Service':
+            href = po['productSpecification']['href']
+            r = requests.get(str(href), headers=headers)
+            json.dump(r.json(), sys.stdout)
+            sys.stdout.write('\n')
+    
+            href = r.json()['serviceSpecification'][0]['href']
+            r = requests.get(str(href), headers=headers)
+            json.dump(r.json(), sys.stdout)
+            sys.stdout.write('\n')
+    
+            rsc_list = r.json()['serviceSpecCharacteristic']
+            # 1. vsbName
+            element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
+            if not element:
+                raise Exception("*** Unable to find 'vsbName' ***")
+    
+            vsbName = element['serviceSpecCharacteristicValue'][0]['value']['value']
+            sys.stdout.write('vsbName: "%s" \n' % vsbName)
+    
+            # 2. vCPU Requirements
+            element = find(rsc_list, lambda e: e.get('name', '') == 'vCPU Requirements')
+            if not element:
+                raise Exception("*** Unable to find 'vCPU Requirements' ***")
+    
+            # min
+            min = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-vCPU')
+            if not min:
+                raise Exception("*** Unable to find 'min-vCPU' ***")
+            cpu_min = min['value']['value']
+    
+            # max
+            max = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-vCPU')
+            if not max:
+                raise Exception("*** Unable to find 'max-vCPU' ***")
+            cpu_max = max['value']['value']
+    
+            sys.stdout.write('cpu_min/max: "%s, %s" \n' % (cpu_min, cpu_max))
+    
+            # 3. Virtual Memory Requirements
+            element = find(rsc_list, lambda e: e.get('name', '') == 'Virtual Memory Requirements')
+            if not element:
+                raise Exception("*** Unable to find 'Virtual Memory Requirements' ***")
+    
+            # min
+            min = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-virtual-memory')
+            if not min:
+                raise Exception("*** Unable to find 'min-virtual-memory' ***")
+            mem_min = min['value']['value']
+            mem_unit = min['unitOfMeasure']
+    
+            # max
+            max = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-virtual-memory')
+            if not max:
+                raise Exception("*** Unable to find 'max-virtual-memory' ***")
+            mem_max = max['value']['value']
+    
+            sys.stdout.write('mem_min/max: "%s, %s" \n' % (mem_min, mem_max))
+            sys.stdout.write('mem_unit: "%s" \n' % mem_unit)
+    
+            # 4. Storage Requirements
+            element = find(rsc_list, lambda e: e.get('name', '') == 'Storage Requirements')
+            if not element:
+                raise Exception("*** Unable to find 'Storage Requirements' ***")
+    
+            # min
+            min = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-storage')
+            if not min:
+                raise Exception("*** Unable to find 'min-storage' ***")
+            storage_min = min['value']['value']
+            storage_unit = min['unitOfMeasure']
+    
+            # max
+            max = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-storage')
+            if not max:
+                raise Exception("*** Unable to find 'max-storage' ***")
+            storage_max = max['value']['value']
+    
+            sys.stdout.write('storage_min/max: "%s, %s" \n' % (storage_min, storage_max))
+            sys.stdout.write('storage_unit: "%s" \n' % storage_unit)
+
+        if category == 'Slice':
+            href = po['productSpecification']['href']
+            r = requests.get(str(href), headers=headers)
+            json.dump(r.json(), sys.stdout)
+            sys.stdout.write('\n')
+    
+            href = r.json()['serviceSpecification'][0]['href']
+            r = requests.get(str(href), headers=headers)
+            json.dump(r.json(), sys.stdout)
+            sys.stdout.write('\n')
+    
+            rsc_list = r.json()['serviceSpecCharacteristic']
+            # 1. vsbName
+            element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
+            if not element:
+                raise Exception("*** Unable to find 'vsbName' ***")
+    
+            vsbName = element['serviceSpecCharacteristicValue'][0]['value']['value']
+            sys.stdout.write('vsbName: "%s" \n' % vsbName)
+
+        # can only use DID
+        # sys.stdout.write('po id: "%s" \n' % po['id'])
+        r = requests.get("{{workflow.parameters.catalogue_url}}/tmf-api/productCatalogManagement/v4/productOfferingStatus/%s" % po['id'],
+            headers=headers)
+
+        json.dump(r.json(), sys.stdout)
+        sys.stdout.write('\n')
+        did = r.json()['did']
+
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(str(po_id))
+
+        with open('/tmp/sla_did.txt', 'w') as f:
+            f.write(str(sla_did))
+
+        with open('/tmp/vsbName.txt', 'w') as f:
+            f.write(str(vsbName))
+
+        with open('/tmp/mem_unit.txt', 'w') as f:
+            f.write(str(mem_unit))
+
+        with open('/tmp/mem_min.txt', 'w') as f:
+            f.write(str(mem_min))
+        with open('/tmp/mem_max.txt', 'w') as f:
+            f.write(str(mem_max))
+
+        with open('/tmp/cpu_min.txt', 'w') as f:
+            f.write(str(cpu_min))
+        with open('/tmp/cpu_max.txt', 'w') as f:
+            f.write(str(cpu_max))
+
+        with open('/tmp/storage_unit.txt', 'w') as f:
+            f.write(str(storage_unit))
+
+        with open('/tmp/storage_min.txt', 'w') as f:
+            f.write(str(storage_min))
+        with open('/tmp/storage_max.txt', 'w') as f:
+            f.write(str(storage_max))
+
+        with open('/tmp/did.txt', 'w') as f:
+            f.write(str(did))
+
+        with open('/tmp/place.txt', 'w') as f:
+            json.dump(place, f)
+
+        with open('/tmp/related_party.txt', 'w') as f:
+            f.write(related_party)
+
+        with open('/tmp/name.txt', 'w') as f:
+            f.write(name)
+
+    outputs:
+      parameters:
+      - name: id
+        valueFrom:
+          path: /tmp/id.txt
+
+      - name: sla_did
+        valueFrom:
+          path: /tmp/sla_did.txt
+
+      - name: vsbName
+        valueFrom:
+          path: /tmp/vsbName.txt
+
+      - name: mem_unit
+        valueFrom:
+          path: /tmp/mem_unit.txt
+
+      - name: mem_min
+        valueFrom:
+          path: /tmp/mem_min.txt
+      - name: mem_max
+        valueFrom:
+          path: /tmp/mem_max.txt
+
+      - name: cpu_min
+        valueFrom:
+          path: /tmp/cpu_min.txt
+      - name: cpu_max
+        valueFrom:
+          path: /tmp/cpu_max.txt
+
+      - name: storage_unit
+        valueFrom:
+          path: /tmp/storage_unit.txt
+
+      - name: storage_min
+        valueFrom:
+          path: /tmp/storage_min.txt
+      - name: storage_max
+        valueFrom:
+          path: /tmp/storage_max.txt
+
+      - name: place
+        valueFrom:
+          path: /tmp/place.txt
+
+      - name: related_party
+        valueFrom:
+          path: /tmp/related_party.txt
+
+      - name: did
+        valueFrom:
+          path: /tmp/did.txt
+
+      - name: name
+        valueFrom:
+          path: /tmp/name.txt
+
+  - name: create-order
+    inputs:
+      parameters:
+      - name: resource_id
+      - name: operator_id_seller
+      - name: operator_id_buyer
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        def raise_for_status(r):
+            http_error_msg = ''
+            if 400 <= r.status_code < 500:
+                http_error_msg = '%s Client Error: %s' % (r.status_code, r.reason)
+
+            elif 500 <= r.status_code < 600:
+                http_error_msg = '%s Server Error: %s' % (r.status_code, r.reason)
+
+            return http_error_msg
+
+        transaction_uuid = "{{workflow.parameters.transaction_uuid}}"
+        payload = {
+           "description": "Product Order by ISSM Transaction ID: %s" % transaction_uuid,
+           "requestedStartDate": "2022-01-01T08:00:00.000Z",
+           "requestedCompletionDate": "2023-12-31T08:00:00.000Z",
+           "productOrderItem": [
+              {
+                 "quantity": 1,
+                 "action": "add",
+                 "productOffering": {
+                    "id": "{{inputs.parameters.resource_id}}"
+                 }
+              }
+           ],
+           "relatedParty": [
+              {
+                 "name": "{{inputs.parameters.operator_id_seller}}",
+                 "role": "Seller"
+              },
+              {
+                 "name": "{{inputs.parameters.operator_id_buyer}}",
+                 "role": "Buyer"
+              }
+           ]
+        }
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.post("{{workflow.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/productOrder",
+            json=payload,
+            headers=headers)
+        sys.stdout.write('r.text [%s]\n' % r.text)
+        error_msg = raise_for_status(r)
+        if error_msg:
+            raise Exception('%s. %s' % (error_msg, r.text))
+
+  - name: notify-trmf
+    inputs:
+      parameters:
+      - name: resource_did
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        def raise_for_status(r):
+            http_error_msg = ''
+            if 400 <= r.status_code < 500:
+                http_error_msg = '%s Client Error: %s' % (r.status_code, r.reason)
+
+            elif 500 <= r.status_code < 600:
+                http_error_msg = '%s Server Error: %s' % (r.status_code, r.reason)
+
+            return http_error_msg
+
+        resource_did = "{{inputs.parameters.resource_did}}"
+        sys.stdout.write('Input parameters. resource_did: "%s"\n' % resource_did)
+        payload = {
+            "offerDID": resource_did
+        }
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.post("{{workflow.parameters.trmf_url}}/notify_final_selection",
+            json=payload,
+            headers=headers)
+        sys.stdout.write('r.text [%s]\n' % r.text)
+        error_msg = raise_for_status(r)
+        if error_msg:
+            raise Exception('%s. %s' % (error_msg, r.text))

@@ -1,0 +1,63 @@
+# Copyright 2020 - 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: workflow-orchestrator
+spec:
+  templates:
+  - name: trigger-orchestration
+    inputs:
+      parameters:
+      - name: resource_owner
+      - name: vsbName
+      - name: product_DID
+      - name: sla_DID
+      - name: place
+      - name: userdata
+      - name: vsd_parameters
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-orchestration
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "operation": "{{workflow.parameters.operation}}", "sub_operation": "ORCHESTRATE",
+                  "place": {{inputs.parameters.place}},
+                  "elma_url": "{{workflow.parameters.elma_url}}",
+                  "vsbName": "{{inputs.parameters.vsbName}}", "product_DID": "{{inputs.parameters.product_DID}}",
+                  "sla_DID": "{{inputs.parameters.sla_DID}}",
+                  "service_owner": "{{workflow.parameters.service_owner}}",
+                  "resource_owner": "{{inputs.parameters.resource_owner}}",
+                  "sla_breach": {{workflow.parameters.sla_breach}},
+                  "userdata": {{inputs.parameters.userdata}},
+                  "vsd_parameters": {{inputs.parameters.vsd_parameters}},
+                  "kafka_dl": "{{workflow.parameters.kafka_dl}}"
+                }
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.resource_owner}}"
+    outputs:
+      parameters:
+      - name: event_uuid
+        valueFrom:
+          parameter: "{{steps.event-uuid.outputs.result}}"

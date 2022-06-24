@@ -1,0 +1,392 @@
+# Copyright 2020 - 2021 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+################################################################################
+#
+# Important: this template can either run in stakeholder context or 3rd-party
+#
+################################################################################
+
+#
+# Parameters being used:
+#
+# service_owner: stakeholder name
+# resource_owner: this domain
+# vsbName: blue-print name
+# transaction_uuid: transaction uuid
+#
+#
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  # Note: this name must be identical accross all domain operators
+  name: orchestrate
+spec:
+  templates:
+  - name: orchestrate
+    dag:
+      tasks:
+      - name: get-domain-env
+        templateRef:
+          name: workflow-environment
+          template: get-domain-env
+        arguments:
+          parameters:
+          - name: domain
+            # myself
+            value: "{{workflow.parameters.resource_owner}}"
+      
+      - name: nsso-create-vsd
+        dependencies: [get-domain-env]
+        template: create-descriptor
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
+          - name: tenant_name
+            value: "{{workflow.parameters.service_owner}}"
+          - name: vsbName
+            value: "{{workflow.parameters.vsbName}}"
+          - name: parameters
+            value: "{{workflow.parameters.vsd_parameters}}"
+
+
+      - name: nsso-create-vsi
+        dependencies: [nsso-create-vsd]
+        template: create-instance
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
+          - name: tenant_name
+            value: "{{workflow.parameters.service_owner}}"
+          - name: vsd_id
+            value: "{{tasks.nsso-create-vsd.outputs.parameters.vsd_id}}"
+          - name: name
+            value: "{{workflow.parameters.vsbName}}"
+          - name: userdata
+            value: "{{workflow.parameters.userdata}}"
+
+      - name: nsso-poll
+        # TODO: re-write this to python so that all steps are aligned with json format
+        dependencies: [nsso-create-vsi]
+        template: poll
+        arguments:
+          parameters:
+          - name: poll
+            value: "true"
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
+          - name: tenant_name
+            value: "{{workflow.parameters.service_owner}}"
+          - name: vsi_id
+            value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+          - name: jq_query
+            value: ".status"
+          - name: jq_query_value
+            value: "INSTANTIATED"
+          - name: timeout
+            # polls every 10s
+            value: 18
+
+      - name: prepare-vsi-info
+        # steps to conver a flattened none-pythonic 'json' string (i.e. with null value), into
+        # pythonic json for other python steps to consume
+        dependencies: [nsso-poll]
+        template: prepare-vsi-info
+        arguments:
+          parameters:
+          - name: vsi_info
+            value: "{{tasks.nsso-poll.outputs.parameters.vsi_info}}"
+
+      - name: nsso-create-vsi-fail
+        dependencies: [prepare-vsi-info]
+        template: nsso-create-vsi-fail
+        when: "{{tasks.nsso-poll.outputs.parameters.status}} == \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.prepare-vsi-info.outputs.result}}"
+
+      - name: nsso-create-vsi-success
+        dependencies: [prepare-vsi-info]
+        template: nsso-create-vsi-success
+        when: "{{tasks.nsso-poll.outputs.parameters.status}} != \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.nsso-create-vsi.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.prepare-vsi-info.outputs.result}}"
+
+
+  - name: nsso-create-vsi-success
+    inputs:
+      parameters:
+      - name: vsi_id
+      - name: vsi_info
+    dag:
+      tasks:
+      - name: publish-status
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+
+          - name: data
+            value: |
+              { "msg_id": "{{workflow.name}}",
+                "vsi_id": "{{inputs.parameters.vsi_id}}",
+                "status": "SUCCESS",
+                "vsi_info": {{inputs.parameters.vsi_info}}
+              }
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+
+
+  - name: nsso-create-vsi-fail
+    inputs:
+      parameters:
+      - name: vsi_id
+      - name: vsi_info      
+    dag:
+      tasks:
+      - name: publish-status
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+
+          - name: data
+            value: |
+              { "msg_id": "{{workflow.name}}",
+                "vsi_id": "{{inputs.parameters.vsi_id}}",
+                "status": "FAIL",
+                "vsi_info": {{inputs.parameters.vsi_info}}
+              }
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+
+      - name: fail
+        dependencies: [publish-status]
+        templateRef:
+          name: workflow-base
+          template: fail
+
+
+  - name: create-descriptor
+    # Create a new VSD from the given blueprint name
+    #
+    # Parameters:
+    # vs_url: URL to vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant (str)
+    # vsbName: the name of the blueprint VSD is created from
+    # name: VSD name
+    # parameters: qos parameters to be given to this VSD
+    #
+    # outputs:
+    # vsd_id: vertical descriptor id    
+    inputs:
+      parameters:
+      - name: vs_url
+      - name: tenant_name
+      - name: vsbName
+      - name: parameters
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+        generate_post_descriptor_create()
+        {
+          cat <<EOF
+        {
+          "vsd": {
+            "name": "$1",
+            "version": "0.1",
+            "sst": "EMBB",
+            "managementType": "PROVIDER_MANAGED",
+            "vsBlueprintId": "$2",
+            "qosParameters": {{inputs.parameters.parameters}}
+          },
+          "tenantId": "{{inputs.parameters.tenant_name}}",
+          "isPublic": "true"
+        }
+        EOF
+        }
+
+        echo "Log in admin.."
+        curl -X POST -d username=admin -d password=admin -c /tmp/a_c {{inputs.parameters.vs_url}}/login
+
+        echo "Retrieve blueprints.."
+        bp_list="$(curl -b /tmp/a_c {{inputs.parameters.vs_url}}/portal/catalogue/vsblueprint --header "Content-Type:application/json" 2>/dev/null)"
+
+        bp_id="$(echo $bp_list | jq -r '.[] | select(.name=="{{inputs.parameters.vsbName}}") | .vsBlueprintId')"
+        echo "Blueprint id [$bp_id] matches vsbName [{{inputs.parameters.vsbName}}]"
+
+        echo "Log in {{inputs.parameters.tenant_name}}.."
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
+
+        # note: nsso does not accept two descriptors with same name
+        echo "Create descriptor.."
+        uuid=$(cat /proc/sys/kernel/random/uuid)
+        vsd_id="$(curl -b /tmp/t_c --data "$(generate_post_descriptor_create $uuid $bp_id)" -X POST {{inputs.parameters.vs_url}}/portal/catalogue/vsdescriptor --header "Content-Type:application/json" 2>/dev/null)"
+        echo $vsd_id > /tmp/id.txt
+    outputs:
+      parameters:
+      - name: vsd_id
+        valueFrom:
+          path: /tmp/id.txt
+
+
+  - name: create-instance
+    # Create a new VSI
+    #
+    # Parameters:
+    # vs_url: URL to vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant to create (str)
+    # vsd_id: the id of the descriptor this VSI is created from (str)
+    #
+    # outputs:
+    # vsi_id: vertical service instance id
+    inputs:
+      parameters:
+      - name: vs_url
+      - name: tenant_name
+      - name: vsd_id
+      - name: name
+      - name: userdata
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+        generate_post_instance_create()
+        {
+          cat <<EOF
+        {
+          "name": "{{inputs.parameters.name}}",
+          "description": "5G Zorro demo slice",
+          "vsdId": "{{inputs.parameters.vsd_id}}",
+          "tenantId": "{{inputs.parameters.tenant_name}}",
+          "userData": {{inputs.parameters.userdata}}
+        }
+        EOF
+        }
+
+        echo "Log in {{inputs.parameters.tenant_name}}.."
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
+
+        echo "Create instance.."
+        vsi_id="$(curl -b /tmp/t_c --data "$(generate_post_instance_create $vsd_id)" -X POST {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs --header "Content-Type:application/json" 2>/dev/null)"
+        echo "NSSO instantiate returned $vsi_id"
+        echo $vsi_id > /tmp/id.txt
+    outputs:
+      parameters:
+      - name: vsi_id
+        valueFrom:
+          path: /tmp/id.txt
+
+
+  - name: poll
+    # Poll for some VSI attribute (in case poll=true) as denoted by by jq_query and jq_query_value.
+    # timeout is relevant for polling only
+    #
+    # Parameters:
+    # poll: whether or not to poll (boolean). If false, then skip polling
+    # vs_url: URL to vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant (str)
+    # vsi_id: VSI id (str)
+    # jq_query: VSI attribute to poll/query (str in jq format)
+    # jq_query_value: the conditional value of the attribute; applicable for polling mode (str)
+    # timeout: polling timeout (seconds in integer)
+    #
+    # Return: TIMEOUT in case of timeout or the attribute value
+    inputs:
+      parameters:
+      - name: poll
+      - name: vs_url
+      - name: tenant_name
+      - name: vsi_id
+      - name: jq_query
+      - name: jq_query_value
+      - name: timeout
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+        # possible string to be written to /tmp/vsi_info.txt
+        # {"vsiId":"123","name":"firmware_agent","description":"5G Zorro demo slice","vsdId":"122","status":"FAILED","errorMessage":null,"externalInterconnections":[],"externalGwAddress":"10.30.6.8","allocatedVlSubnets":{"vpn_net":"192.168.161.0/28","app_net":"192.168.161.16/28"},"internalVpnSubnets":[],"internalInterconnections":{}}
+        echo "Log in {{inputs.parameters.tenant_name}}.."
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
+
+        echo "{}" > /tmp/vsi_info.txt
+        if [ {{inputs.parameters.poll}} = "true" ]; then
+          i=0
+          until [ "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
+             echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
+             echo "Poll wait for vsi_id: {{inputs.parameters.vsi_id}}.. (10 sec)"
+             echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})"
+             sleep 10
+             i=$((i+1))
+          done
+          if [ $i -gt {{inputs.parameters.timeout}} ]; then
+            echo "TIMEOUT"
+            echo "TIMEOUT" > /tmp/status.txt
+          else
+            echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+            echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
+            echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})"
+          fi
+        else
+          echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+          echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
+          echo "$(curl -b /tmp/t_c {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}})"
+        fi
+    outputs:
+      parameters:
+      - name: status
+        valueFrom:
+          path: /tmp/status.txt
+
+      - name: vsi_info
+        valueFrom:
+          path: /tmp/vsi_info.txt
+
+
+  - name: prepare-vsi-info
+    inputs:
+      parameters:
+      - name: vsi_info
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+
+        # It is already a 'string' just wrap it with pythonic quotes and "print" it as
+        # json so that null turns into pythonic None (for other pythonic steps to consume)
+        vsi_info = '{{inputs.parameters.vsi_info}}'
+        vsi_info_json = json.loads(vsi_info)
+        print(vsi_info_json)
