@@ -1,25 +1,33 @@
 # ISSM
 
+## Introduction
+
 This is the __Intelligent slice and service manager__ component responsible for executing orchestration workflows in a context of a business transaction, such as extending a slice across a second domain in cooperation with the Network Slice and Service Orchestration.
-
-## Pre-requisites
-
-To install ISSM follow the installation guidelines per component following the below flow:
-1. **Provision kubernetes cluster**. The guidelines are available [here](docs/kubernetes.md).
-2. **Install kafka broker.** Follow the guidelines [here](docs/kafka.md).
-3. **Install Datalake services**. Follow the guidelines [here](https://github.com/5GZORRO/datalake).
-4. **Install SRSD**. Follow the guidelines [here](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application/tree/main/demo_June_21).
-5. **Install ISSM-O**. Follow the guidelines [here](https://github.com/5GZORRO/issm-optimizer).
-
-**Orchestration:**
-For each mobile network operator (MNO), install either [NSSO](https://github.com/5GZORRO/nsso) or [ISSM-MEC-CNMP](https://github.com/5GZORRO/issm-mec-cnmp).
 
 ISSM is comprised of a centralized component and a local instance running at the MNO premises
 
 ![Testbed](images/issm-distributed-0.5.png)
 
+## Pre-requisites
 
-## Deploy ISSM centralized components
+### Software dependencies
+
+1. [Kubernetes](docs/kubernetes.md)
+2. [Kafka](docs/kafka.md)
+
+### 5GZORRO Module dependencies
+
+1. [Datalake](https://github.com/5GZORRO/datalake)
+2. [Smart Resource and Service Discovery](https://github.com/5GZORRO/Smart-Resource-and-Service-Discovery-application)
+3. [5G-TRMF](https://github.com/5GZORRO/5G-TRMF)
+4. [ISSM Optimizer](https://github.com/5GZORRO/issm-optimizer)
+5. [Resource and Service Offer Catalog](https://github.com/5GZORRO/resource-and-service-offer-catalog)
+
+### 5GZORRO Orchestration Module
+
+For each mobile network operator (MNO), install either [NSSO](https://github.com/5GZORRO/nsso) or [ISSM-MEC-CNMP](https://github.com/5GZORRO/issm-mec-cnmp).
+
+## Installation (ISSM centralized components)
 
 Log into 5GZorro platform kuberneters master
 
@@ -69,7 +77,7 @@ Create the sensor and templates
 ./apply-sla.sh
 ```
 
-## Deploy ISSM local instance
+## Installation (ISSM local instance)
 
 Follow these instructions to install a local ISSM agent (sensor and flow templates) in the participating 5GZorro operators. Repeat this process for every operator (i.e. `operator-a`, `operator-b` and `operator-c`)
 
@@ -144,7 +152,12 @@ Valid values
 
 Use ISSM-API to submit a transaction. Follow the guidelines [here](./api/README.md#submit-transaction)
 
-then watch business flow progress with Argo GUI (`http://<kubernetes master ipaddress>:2746`) running on the participated MNOs
+then watch business flow progress with [Argo GUI](docs/argo.md#argo-ui) running on the participated MNOs
+
+## Maintainers
+**Avi Weit** - weit@il.ibm.com
+
+**David Breitgand** - davidbr@il.ibm.com
 
 ## Licensing
 

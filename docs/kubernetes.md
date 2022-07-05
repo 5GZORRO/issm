@@ -2,11 +2,11 @@
 
 Follow these instructions to install Kubernetes cluster.
 
-Create Ubuntu 18.04 VMs with 2vCPUs 8GB RAM 100 GB disk
+Create Ubuntu 20.04 VMs with 2vCPUs 8GB RAM 100 GB disk
 
 For all VMs (master and nodes) perform the below
 
-## Docker CE 18.6.0
+## Docker CE 19.03.9
 Update packages
 
 ```

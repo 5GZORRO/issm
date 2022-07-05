@@ -2,7 +2,7 @@
 
 Follow these instructions to install Kafka broker.
 
-Create Ubuntu 18.04 VM with 2vCPUs 8GB RAM 50 GB disk
+Create Ubuntu 20.04 VM with 2vCPUs 8GB RAM 50 GB disk
 
 The below instructions are taken from [kafka-docker readme](https://github.com/wurstmeister/kafka-docker/blob/master/README.md)
 
