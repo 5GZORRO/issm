@@ -7,7 +7,7 @@ ISSM-API provides management API endpoints for create, delete and list transacti
 issm-api calls into argo-server REST endpoints.
 
 * Argo server is automatically installed with argo and is internally available within kubernetes
-* Expose argo-server externally via these [instructions](https://argoproj.github.io/argo-workflows/argo-server/#expose-a-loadbalancer)
+* Expose argo-server externally via these [instructions](https://argoproj.github.io/argo-workflows/argo-server/#expose-a-loadbalancer): `kubectl patch svc argo-server -n argo -p '{"spec": {"type": "LoadBalancer"}}'`
 
 ## Deploy the service
 
