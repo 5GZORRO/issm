@@ -118,6 +118,19 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
 
+      - name: get-slice-instance-id
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
       - name: slice-status
         dependencies: [wait-for-status]
         templateRef:
@@ -130,15 +143,28 @@ spec:
           - name: json_str
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
-          
+
+      - name: update-order
+        dependencies: [get-slice-instance-id]
+        templateRef:
+          name: workflow-catalog
+          template: update-order-instance-id
+        # in any case, persist instanceId
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.slice-order-id.outputs.result}}"
+          - name: instance_id
+            value: "{{tasks.get-slice-instance-id.outputs.result}}"
+
       - name: slice-status-success
         dependencies: [slice-status]
         template: slice-status-success
         when: "{{tasks.slice-status.outputs.result}} == \"SUCCESS\""
         arguments:
           parameters:
-          - name: payload
-            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+          - name: instance_id
+            value: "{{tasks.get-slice-instance-id.outputs.result}}"
 
       - name: slice-status-fail
         dependencies: [slice-status]
@@ -149,7 +175,7 @@ spec:
   - name: slice-status-success
     inputs:
       parameters:
-      - name: payload
+      - name: instance_id
     dag:
       tasks:
       - name: get-order-from-catalog
@@ -161,21 +187,8 @@ spec:
           - name: order_id
             value: "{{workflow.parameters.order_id}}"
 
-      - name: get-slice-instance-id
-        dependencies: [get-order-from-catalog]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: vsi_id
-          - name: json_str
-            value: |
-              {{inputs.parameters.payload}}
-
       - name: add-user-data-vcdn
-        dependencies: [get-slice-instance-id]
+        dependencies: [get-order-from-catalog]
         templateRef:
           name: workflow-base
           template: add-to-dict
@@ -189,7 +202,7 @@ spec:
               {
                 "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
                 "transaction_id": "{{workflow.parameters.transaction_uuid}}",
-                "edge_resource_instance": "{{tasks.get-slice-instance-id.outputs.result}}"
+                "edge_resource_instance": "{{inputs.parameters.instance_id}}"
               }
 
       - name: vsd-parameters
@@ -244,6 +257,19 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-vcdn-service.outputs.parameters.event_uuid}}"
 
+      - name: get-vcdn-instance-id
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
       - name: vcdn-status
         dependencies: [wait-for-status]
         templateRef:
@@ -257,6 +283,19 @@ spec:
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
 
+      - name: update-order
+        dependencies: [get-vcdn-instance-id]
+        templateRef:
+          name: workflow-catalog
+          template: update-order-instance-id
+        # in any case, persist instanceId
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+          - name: instance_id
+            value: "{{tasks.get-vcdn-instance-id.outputs.result}}"
+
       - name: vcdn-status-success
         dependencies: [vcdn-status]
         template: vcdn-status-success
@@ -269,8 +308,8 @@ spec:
             value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
           - name: place
             value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
-          - name: payload
-            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+          - name: instance_id
+            value: "{{tasks.get-slice-instance-id.outputs.result}}"
 
       - name: vcdn-status-fail
         dependencies: [vcdn-status]
@@ -293,21 +332,9 @@ spec:
       - name: product_DID
       - name: sla_DID
       - name: place
-      - name: payload
+      - name: instance_id
     dag:
       tasks:
-      - name: get-vcdn-instance-id
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: vsi_id
-          - name: json_str
-            value: |
-              {{inputs.parameters.payload}}
-
       - name: sla-event
         dependencies: [get-vcdn-instance-id]
         templateRef:
@@ -321,7 +348,7 @@ spec:
                 "transactionID": "{{workflow.parameters.service_owner}}:{{workflow.parameters.transaction_uuid}}",
                 "productID": "{{inputs.parameters.product_DID}}",
                 "SLAID": "{{inputs.parameters.sla_DID}}",
-                "instanceID": "{{tasks.get-vcdn-instance-id.outputs.result}}",
+                "instanceID": "{{inputs.parameters.instance_id}}",
                 "place": {{inputs.parameters.place}},
                 "kafka": "{{workflow.parameters.kafka}}",
                 "topic": "isbp-topic-out"
@@ -574,6 +601,19 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
 
+      - name: get-slice-instance-id
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
       - name: slice-status
         dependencies: [wait-for-status]
         templateRef:
@@ -586,15 +626,29 @@ spec:
           - name: json_str
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
-          
+
+      - name: update-order
+        dependencies: [get-slice-instance-id]
+        templateRef:
+          name: workflow-catalog
+          template: update-order-instance-id
+        # in any case, persist instanceId
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.slice-order-id.outputs.result}}"
+          - name: instance_id
+            value: "{{tasks.get-slice-instance-id.outputs.result}}"
+
+
       - name: slice-status-success
         dependencies: [slice-status]
         template: slice-status-success-sa
         when: "{{tasks.slice-status.outputs.result}} == \"SUCCESS\""
         arguments:
           parameters:
-          - name: payload
-            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+          - name: instance_id
+            value: "{{tasks.get-slice-instance-id.outputs.result}}"
           - name: best_offer
             value: "{{inputs.parameters.best_offer}}"
           
@@ -608,7 +662,7 @@ spec:
   - name: slice-status-success-sa
     inputs:
       parameters:
-      - name: payload
+      - name: instance_id
       - name: best_offer
     dag:
       tasks:
@@ -630,21 +684,8 @@ spec:
           - name: order_id
             value: "{{workflow.parameters.order_id}}"
 
-      - name: get-slice-instance-id
-        dependencies: [get-order-from-catalog]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: vsi_id
-          - name: json_str
-            value: |
-              {{inputs.parameters.payload}}
-
       - name: add-user-data-vcdn
-        dependencies: [get-slice-instance-id]
+        dependencies: [get-order-from-catalog]
         templateRef:
           name: workflow-base
           template: add-to-dict
@@ -658,11 +699,11 @@ spec:
               {
                 "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
                 "transaction_id": "{{workflow.parameters.transaction_uuid}}",
-                "edge_resource_instance": "{{tasks.get-slice-instance-id.outputs.result}}"
+                "edge_resource_instance": "{{inputs.parameters.instance_id}}"
               }
 
       - name: vsd-parameters
-        dependencies: [get-slice-instance-id]
+        dependencies: [add-user-data-vcdn]
         templateRef:
           name: workflow-base
           template: from-key
@@ -713,6 +754,19 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-vcdn-service.outputs.parameters.event_uuid}}"
 
+      - name: get-vcdn-instance-id
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
       - name: vcdn-status
         dependencies: [wait-for-status]
         templateRef:
@@ -726,6 +780,19 @@ spec:
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
 
+      - name: update-order
+        dependencies: [get-vcdn-instance-id]
+        templateRef:
+          name: workflow-catalog
+          template: update-order-instance-id
+        # in any case, persist instanceId
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+          - name: instance_id
+            value: "{{tasks.get-vcdn-instance-id.outputs.result}}"
+
       - name: vcdn-status-success
         dependencies: [vcdn-status]
         template: vcdn-status-success-sa
@@ -738,8 +805,8 @@ spec:
             value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
           - name: place
             value: "{{tasks.edge-attributes.outputs.parameters.place}}"
-          - name: payload
-            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+          - name: instance_id
+            value: "{{tasks.get-slice-instance-id.outputs.result}}"
 
       - name: vcdn-status-fail
         dependencies: [vcdn-status]
@@ -753,23 +820,10 @@ spec:
       - name: product_DID
       - name: sla_DID
       - name: place
-      - name: payload
+      - name: instance_id
     dag:
       tasks:
-      - name: get-vcdn-instance-id
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: vsi_id
-          - name: json_str
-            value: |
-              {{inputs.parameters.payload}}
-
       - name: sla-event
-        dependencies: [get-vcdn-instance-id]
         templateRef:
           name: workflow-base
           template: produce
@@ -781,7 +835,7 @@ spec:
                 "transactionID": "{{workflow.parameters.service_owner}}:{{workflow.parameters.transaction_uuid}}",
                 "productID": "{{inputs.parameters.product_DID}}",
                 "SLAID": "{{inputs.parameters.sla_DID}}",
-                "instanceID": "{{tasks.get-vcdn-instance-id.outputs.result}}",
+                "instanceID": "{{inputs.parameters.instance_id}}",
                 "place": {{inputs.parameters.place}},
                 "kafka": "{{workflow.parameters.kafka}}",
                 "topic": "isbp-topic-out"
