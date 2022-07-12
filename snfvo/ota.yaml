@@ -34,7 +34,7 @@ spec:
         arguments:
           parameters:
           - name: key
-            value: edge_order_id
+            value: networkservice_order_id_0
           - name: json_str
             value: |
               {{workflow.parameters.snfvo_data}}
