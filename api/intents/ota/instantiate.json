@@ -1,6 +1,7 @@
 {
     "operation": "instantiate",
     "related_party": "operator-c",
+    "order_id": ["a8bdc851-21f6-4e66-8a0d-63c0c11e88c3", "2be0ec41-11d3-40a4-8ba2-bdc6d0b35d98"]
     "snfvo_data": {
       "userdata_edge": {
         "cp_address.upf_e.n4_net.cp_n4": "192.168.162.3",
