@@ -160,6 +160,18 @@ spec:
           template: success
 
 
+  - name: terminate
+    steps:
+    - - name: print-hello
+        templateRef:
+          name: workflow-base
+          template: whalesay
+        arguments:
+          parameters:
+          - name: message
+            value: "hello snfvo from terminate entry point"
+
+
   - name: status-fail
     dag:
       tasks:

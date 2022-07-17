@@ -60,7 +60,7 @@ if not LB_ARGO_SERVER:
     raise sys.exit(1)
 
 
-TRANSACTION_TYPES = ['instantiate', 'scaleout']
+TRANSACTION_TYPES = ['instantiate', 'scaleout', 'terminate']
 
 
 """
@@ -139,7 +139,7 @@ class Proxy:
         :type service_owner: ``str``
 
         :param transaction_type: the operation for this flow. Currently 'instantiate',
-                          'scaleout' are supported.
+                          'scaleout' and 'terminate' are supported.
         :type transaction_type: ``str``
 
         :param intent: intent payload e.g. slice creation intent
@@ -423,6 +423,25 @@ class Proxy:
             steps.append([snfvo_step])
             update = True
 
+        # terminate
+        template_terminate = find (templates, lambda t: t['name'] == 'terminate-invoke-snfvo')
+        steps = template_terminate['steps']
+
+        snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % product_offer_id)
+        if snfvo_step:
+            sys.stdout.write('snfvo [%s] already exists for terminate\n' % product_offer_id)
+        else:
+            snfvo_step = {
+                "name": "snfvo-%s" % product_offer_id,
+                "templateRef": {
+                    "name": _to_snfvo_template_name(product_offer_id),
+                    "template": "terminate"
+                },
+                "when": "\"{{steps.get-order-from-catalog.outputs.parameters.id}}\" == \"%s\"" % product_offer_id
+            }
+            steps.append([snfvo_step])
+            update = True
+
         if update:
             self._update_sensor(service_owner, sensor_json)
 
@@ -506,6 +525,20 @@ class Proxy:
         else:
             steps.remove(snfvo_step)
             update = True
+
+        # terminate
+        template_terminate = find (templates, lambda t: t['name'] == 'terminate-invoke-snfvo')
+        steps = template_terminate['steps']
+
+        # NOTE: steps is a nested list
+        snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % product_offer_id)
+        if not snfvo_step:
+            # Do not raise if not found
+            sys.stdout.write('snfvo [%s] was not found for terminate\n' % product_offer_id)
+        else:
+            steps.remove(snfvo_step)
+            update = True
+
 
         if update:
             self._update_sensor(service_owner, sensor_json)

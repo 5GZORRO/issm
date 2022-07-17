@@ -116,7 +116,17 @@ spec:
             value: "{{tasks.create-vsi.outputs.parameters.vsi_id}}"
           - name: vsi_info
             value: "{{tasks.poll.outputs.parameters.vsi_info}}"
-            
+
+  - name: orchestrate-terminate
+    steps:
+    - - name: print-hello
+        templateRef:
+          name: workflow-base
+          template: whalesay
+        arguments:
+          parameters:
+          - name: message
+            value: "hello from DUMMY orchestrate-terminate entry point"
 
   - name: create-vsi-success
     inputs:
@@ -244,6 +254,45 @@ spec:
         sys.stdout.write('Create instance..\n')
         vsi_id = str(random.randint(1, 1000))
         sys.stdout.write('Creating service instance with vsi_id: %s \n' % vsi_id)
+
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(str(vsi_id))
+
+    outputs:
+      parameters:
+      - name: vsi_id
+        valueFrom:
+          path: /tmp/id.txt
+
+
+  - name: delete-instance
+    # Teminates a VSI
+    #
+    # Parameters:
+    # vs_url: URL to vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant to use (str)
+    #
+    # outputs:
+    # vsi_id: deleted vertical service instance id
+    inputs:
+      parameters:
+      - name: vs_url
+      - name: tenant_name
+      - name: vsi_id
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import random
+        import sys
+        import time
+
+        vsi_id = "{{inputs.parameters.vsi_id}}"
+        sys.stdout.write('Delete instance %s..\n' % str(vsi_id))
+
+        # simulate instance deletion
+        time.sleep(int(5))
 
         with open('/tmp/id.txt', 'w') as f:
             f.write(str(vsi_id))

@@ -28,7 +28,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: instantiate-scaleout
+  name: instantiate-scaleout-terminate
 spec:
   templates:
   - name: scaleout
@@ -114,6 +114,42 @@ spec:
             value: "{{workflow.parameters.related_party}}"
 
 
+  - name: terminate
+    inputs:
+      parameters:
+      - name: catalogue_url
+      - name: elma_url
+      - name: trmf_url
+      - name: kafka_dl
+
+      - name: order_id
+      - name: snfvo_data 
+    dag:
+      tasks:
+      - name: trigger-terminate
+        template: trigger-terminate
+        arguments:
+          parameters:
+          - name: service_owner
+            value: "{{workflow.parameters.service_owner}}"
+          - name: order_id
+            value: "{{inputs.parameters.order_id}}"
+          - name: category
+            value: "{{workflow.parameters.category}}"
+          - name: elma_url
+            value: "{{inputs.parameters.elma_url}}"
+          - name: catalogue_url
+            value: "{{inputs.parameters.catalogue_url}}"
+          - name: trmf_url
+            value: "{{inputs.parameters.trmf_url}}"
+
+          - name: kafka_dl
+            value: "{{inputs.parameters.kafka_dl}}"
+
+          - name: snfvo_data
+            value: "{{inputs.parameters.snfvo_data}}"
+
+
   - name: trigger-scaleout
     inputs:
       parameters:
@@ -197,6 +233,45 @@ spec:
                   "srsd_url": "{{inputs.parameters.srsd_url}}",                  
                   "snfvo_data": {{inputs.parameters.snfvo_data}},
                   "related_party": "{{inputs.parameters.related_party}}"
+                }
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.service_owner}}"
+
+  - name: trigger-terminate
+    inputs:
+      parameters:
+      - name: kafka_dl
+      - name: service_owner
+      - name: order_id
+      - name: category
+      - name: elma_url
+      - name: catalogue_url
+      - name: trmf_url
+      - name: snfvo_data
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-scaleout
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}",
+                  "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "operation": "terminate", "sub_operation": "TERMINATE_SERVICE",
+                  "service_owner": "{{inputs.parameters.service_owner}}",
+                  "order_id": "{{inputs.parameters.order_id}}",
+                  "category": "{{inputs.parameters.category}}",
+                  "elma_url": "{{inputs.parameters.elma_url}}",
+                  "catalogue_url": "{{inputs.parameters.catalogue_url}}",
+                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
+                  "trmf_url": "{{inputs.parameters.trmf_url}}",
+                  "snfvo_data": {{inputs.parameters.snfvo_data}}
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"

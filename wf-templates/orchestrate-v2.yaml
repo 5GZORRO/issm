@@ -61,3 +61,39 @@ spec:
       - name: event_uuid
         valueFrom:
           parameter: "{{steps.event-uuid.outputs.result}}"
+
+  - name: trigger-orchestration-terminate
+    inputs:
+      parameters:
+      - name: resource_owner
+      - name: product_DID
+      - name: sla_DID
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-orchestration
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "operation": "{{workflow.parameters.operation}}", "sub_operation": "ORCHESTRATE_TERMINATE",
+                  "elma_url": "{{workflow.parameters.elma_url}}",
+                  "product_DID": "{{inputs.parameters.product_DID}}",
+                  "sla_DID": "{{inputs.parameters.sla_DID}}",
+                  "service_owner": "{{workflow.parameters.service_owner}}",
+                  "resource_owner": "{{inputs.parameters.resource_owner}}",
+                  "kafka_dl": "{{workflow.parameters.kafka_dl}}"
+                }
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.resource_owner}}"
+    outputs:
+      parameters:
+      - name: event_uuid
+        valueFrom:
+          parameter: "{{steps.event-uuid.outputs.result}}"

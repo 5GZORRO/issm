@@ -2,7 +2,7 @@
 
 This folder contains the snfvos to be used by the project's use-cases.
 
-Snfvo is an Argo WorkflowTemplate that contains the transaction logic for a specific product offer. It should be defined with `instantiate` and `scaleout` entry points depending on the transaction type being used
+Snfvo is an Argo WorkflowTemplate that contains the transaction logic for a specific product offer. It should be defined with `instantiate`, `scaleout` and `terminate` entry points depending on the transaction type being used
 
 An snfvo is owned by a service owner (operator domain) and is related to a product offer by its name
 
@@ -24,7 +24,7 @@ You (`operator-b`) must own the offer by creating an order; Log into [5GZorro po
 
 ### Create snfvo flow
 
-Write your snfvo template with the specific logic to manage your product offer. It should be defined with `instantiate` and `scaleout` entry points. Let's refer to [hello-world](./hello-snfvo.yaml) as an "hello" example
+Write your snfvo template with the specific logic to manage your product offer. It should be defined with `instantiate`, `scaleout` and `terminate` entry points. Let's refer to [hello-world](./hello-snfvo.yaml) as an "hello" example
 
 ### Onboard snfvo
 

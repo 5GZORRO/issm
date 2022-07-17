@@ -152,6 +152,10 @@ spec:
                       when: "{{workflow.parameters.operation}} == \"scaleout\""
                       template: scaleout
 
+                  - - name: terminate
+                      when: "{{workflow.parameters.operation}} == \"terminate\""
+                      template: terminate
+
 
                 - name: instantiate
                   steps:
@@ -208,7 +212,7 @@ spec:
                     - name: do-instantiate
                       dependencies: [prepare-orders, get-platform-env]
                       templateRef:
-                        name: instantiate-scaleout
+                        name: instantiate-scaleout-terminate
                         template: instantiate
                       arguments:
                         parameters:
@@ -289,7 +293,7 @@ spec:
                     - name: do-scaleout
                       dependencies: [prepare-orders, get-platform-env]
                       templateRef:
-                        name: instantiate-scaleout
+                        name: instantiate-scaleout-terminate
                         template: scaleout
                       arguments:
                         parameters:
@@ -311,13 +315,89 @@ spec:
                           value: "{{tasks.prepare-orders.outputs.parameters.snfvo_data}}"
 
 
+                - name: terminate
+                  steps:
+                  - - name: terminate-from-api
+                      when: "{{workflow.parameters.sub_operation}} == \"API\""
+                      template: terminate-from-api
+
+                  - - name: terminate-invoke-snfvo
+                      when: "{{workflow.parameters.sub_operation}} == \"TERMINATE_SERVICE\""
+                      template: terminate-invoke-snfvo
+
+                  - - name: terminate-orchestrate
+                      when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE_TERMINATE\""
+                      template: orchestrate-terminate
+
+
+                - name: terminate-from-api
+                  dag:
+                    tasks:
+                    - name: get-domain-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-domain-env
+                      arguments:
+                        parameters:
+                        - name: domain
+                          value: "{{workflow.parameters.service_owner}}"
+
+                    - name: prepare-orders
+                      dependencies: [get-domain-env]
+                      templateRef:
+                        name: workflow-catalog
+                        template: prepare-orders-from-catalog
+                      arguments:
+                        parameters:
+                        - name: catalogue_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
+                        - name: order_id
+                          # NOTE: here it is an ARRAY
+                          value: "{{workflow.parameters.order_id}}"
+                        - name: category
+                          value: "{{workflow.parameters.category}}"
+                        - name: snfvo_data
+                          value: "{{workflow.parameters.snfvo_data}}"
+
+                    - name: get-platform-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-platform-env
+
+                    - name: do-terminate
+                      dependencies: [prepare-orders, get-platform-env]
+                      templateRef:
+                        name: instantiate-scaleout-terminate
+                        template: terminate
+                      arguments:
+                        parameters:
+                        - name: catalogue_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
+                        - name: elma_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.elma_url}}"
+                        - name: trmf_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
+
+                        - name: kafka_dl
+                          value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
+
+                        - name: order_id
+                          value: "{{tasks.prepare-orders.outputs.parameters.order_id}}"
+                        - name: snfvo_data
+                          value: "{{tasks.prepare-orders.outputs.parameters.snfvo_data}}"
+
+
                 - name: orchestrate
                   templateRef:
                     name: orchestrate
                     template: orchestrate
 
+                - name: orchestrate-terminate
+                  templateRef:
+                    name: orchestrate
+                    template: orchestrate-terminate
 
-                  
+
 
                 - name: instantiate-invoke-snfvo
                   # 
@@ -336,6 +416,21 @@ spec:
                 - name: scaleout-invoke-snfvo
                   # 
                   # Invoke proper s-nfvo (Scaleout)
+                  #
+                  steps:
+                  - - name: get-order-from-catalog
+                      templateRef:
+                        name: workflow-catalog
+                        template: get-order-from-catalog
+                      arguments:
+                        parameters:
+                        - name: order_id
+                          value: "{{workflow.parameters.order_id}}"
+
+
+                - name: terminate-invoke-snfvo
+                  # 
+                  # Invoke proper s-nfvo (Terminate)
                   #
                   steps:
                   - - name: get-order-from-catalog

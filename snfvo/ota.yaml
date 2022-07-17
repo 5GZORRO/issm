@@ -24,6 +24,12 @@ spec:
         when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
         template: instantiate-service
 
+  - name: terminate
+    steps:
+    - - name: terminate-service
+        when: "{{workflow.parameters.sub_operation}} == \"TERMINATE_SERVICE\""
+        template: terminate-service
+
   - name: instantiate-service
     dag:
       tasks:
@@ -343,6 +349,137 @@ spec:
           name: workflow-base
           template: success
   
+
+  - name: terminate-service
+    dag:
+      tasks:
+      - name: edge-order-id
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: networkservice_order_id_0
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      # Terminate Edge
+      - name: get-edge-order-from-catalog
+        dependencies: [edge-order-id]
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.edge-order-id.outputs.result}}"
+
+      - name: get-edge-order-status-from-catalog
+        dependencies: [edge-order-id]
+        templateRef:
+          name: workflow-catalog
+          template: get-order-status
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.edge-order-id.outputs.result}}"
+
+      # Terminate Core
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: get-order-status-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-status
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+
+
+      - name: trigger-orchestration-terminate-edge
+        dependencies: [get-edge-order-from-catalog, get-order-from-catalog]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration-terminate
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.related_party}}"
+          - name: product_DID
+            value: ""
+          - name: sla_DID
+            value: ""
+          - name: vsi_id
+            value: ??????
+
+
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-terminate-edge]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-core.outputs.parameters.event_uuid}}"
+
+
+
+      - name: trigger-orchestration-terminate-core
+        dependencies: [get-edge-order-from-catalog, get-order-from-catalog]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration-terminate
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
+          - name: product_DID
+            value: ""
+          - name: sla_DID
+            value: ""
+          - name: vsi_id
+            value: ??????
+
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-terminate-core]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-core.outputs.parameters.event_uuid}}"
+
+
+
+
+
+
+
 
   - name: edge-service-attributes
     inputs:

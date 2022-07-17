@@ -39,4 +39,14 @@ spec:
           parameters:
           - name: message
             value: "hello snfvo from scaleout entry point"
-  
+
+  - name: terminate
+    steps:
+    - - name: print-hello
+        templateRef:
+          name: workflow-base
+          template: whalesay
+        arguments:
+          parameters:
+          - name: message
+            value: "hello snfvo from terminate entry point"
