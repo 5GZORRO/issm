@@ -118,6 +118,7 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
 
+  ##############
       - name: get-slice-instance-id
         dependencies: [wait-for-status]
         templateRef:
@@ -127,19 +128,6 @@ spec:
           parameters:
           - name: key
             value: vsi_id
-          - name: json_str
-            value: |
-              {{tasks.wait-for-status.outputs.parameters.payload}}
-
-      - name: slice-status
-        dependencies: [wait-for-status]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: status
           - name: json_str
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
@@ -156,6 +144,20 @@ spec:
             value: "{{tasks.slice-order-id.outputs.result}}"
           - name: instance_id
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
+  ##############
+
+      - name: slice-status
+        dependencies: [get-slice-instance-id]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
 
       - name: slice-status-success
         dependencies: [slice-status]
@@ -257,6 +259,7 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-vcdn-service.outputs.parameters.event_uuid}}"
 
+##############
       - name: get-vcdn-instance-id
         dependencies: [wait-for-status]
         templateRef:
@@ -266,19 +269,6 @@ spec:
           parameters:
           - name: key
             value: vsi_id
-          - name: json_str
-            value: |
-              {{tasks.wait-for-status.outputs.parameters.payload}}
-
-      - name: vcdn-status
-        dependencies: [wait-for-status]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: status
           - name: json_str
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
@@ -295,6 +285,20 @@ spec:
             value: "{{workflow.parameters.order_id}}"
           - name: instance_id
             value: "{{tasks.get-vcdn-instance-id.outputs.result}}"
+##############
+
+      - name: vcdn-status
+        dependencies: [get-vcdn-instance-id]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
 
       - name: vcdn-status-success
         dependencies: [vcdn-status]
@@ -309,7 +313,7 @@ spec:
           - name: place
             value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
           - name: instance_id
-            value: "{{tasks.get-slice-instance-id.outputs.result}}"
+            value: "{{tasks.get-vcdn-instance-id.outputs.result}}"
 
       - name: vcdn-status-fail
         dependencies: [vcdn-status]
@@ -336,7 +340,6 @@ spec:
     dag:
       tasks:
       - name: sla-event
-        dependencies: [get-vcdn-instance-id]
         templateRef:
           name: workflow-base
           template: produce
@@ -601,6 +604,7 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
 
+############
       - name: get-slice-instance-id
         dependencies: [wait-for-status]
         templateRef:
@@ -610,19 +614,6 @@ spec:
           parameters:
           - name: key
             value: vsi_id
-          - name: json_str
-            value: |
-              {{tasks.wait-for-status.outputs.parameters.payload}}
-
-      - name: slice-status
-        dependencies: [wait-for-status]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: status
           - name: json_str
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
@@ -639,7 +630,20 @@ spec:
             value: "{{tasks.slice-order-id.outputs.result}}"
           - name: instance_id
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
+############
 
+      - name: slice-status
+        dependencies: [get-slice-instance-id]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
 
       - name: slice-status-success
         dependencies: [slice-status]
@@ -754,6 +758,7 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-vcdn-service.outputs.parameters.event_uuid}}"
 
+#################
       - name: get-vcdn-instance-id
         dependencies: [wait-for-status]
         templateRef:
@@ -763,19 +768,6 @@ spec:
           parameters:
           - name: key
             value: vsi_id
-          - name: json_str
-            value: |
-              {{tasks.wait-for-status.outputs.parameters.payload}}
-
-      - name: vcdn-status
-        dependencies: [wait-for-status]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: status
           - name: json_str
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
@@ -792,6 +784,21 @@ spec:
             value: "{{workflow.parameters.order_id}}"
           - name: instance_id
             value: "{{tasks.get-vcdn-instance-id.outputs.result}}"
+#################
+
+      - name: vcdn-status
+        dependencies: [get-vcdn-instance-id]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
 
       - name: vcdn-status-success
         dependencies: [vcdn-status]
@@ -806,7 +813,7 @@ spec:
           - name: place
             value: "{{tasks.edge-attributes.outputs.parameters.place}}"
           - name: instance_id
-            value: "{{tasks.get-slice-instance-id.outputs.result}}"
+            value: "{{tasks.get-vcdn-instance-id.outputs.result}}"
 
       - name: vcdn-status-fail
         dependencies: [vcdn-status]
