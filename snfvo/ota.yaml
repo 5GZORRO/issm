@@ -118,8 +118,36 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-edge.outputs.parameters.event_uuid}}"
 
-      - name: edge-status
+############
+      - name: get-edge-instance-id
         dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: update-order
+        dependencies: [get-edge-instance-id]
+        templateRef:
+          name: workflow-catalog
+          template: update-order-instance-id
+        # in any case, persist instanceId
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+          - name: instance_id
+            value: "{{tasks.get-edge-instance-id.outputs.result}}"
+############
+
+      - name: edge-status
+        dependencies: [get-edge-instance-id]
         templateRef:
           name: workflow-base
           template: from-key
@@ -130,6 +158,7 @@ spec:
           - name: json_str
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
+
           
       - name: edge-status-success
         dependencies: [edge-status]
@@ -249,8 +278,36 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration-core.outputs.parameters.event_uuid}}"
 
-      - name: core-status
+###########
+      - name: get-core-instance-id
         dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: update-order
+        dependencies: [get-core-instance-id]
+        templateRef:
+          name: workflow-catalog
+          template: update-order-instance-id
+        # in any case, persist instanceId
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+          - name: instance_id
+            value: "{{tasks.get-core-instance-id.outputs.result}}"
+#############
+
+      - name: core-status
+        dependencies: [get-core-instance-id]
         templateRef:
           name: workflow-base
           template: from-key
@@ -261,6 +318,7 @@ spec:
           - name: json_str
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
+
 
       - name: core-status-fail
         dependencies: [core-status]

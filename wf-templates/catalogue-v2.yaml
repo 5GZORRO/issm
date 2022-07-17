@@ -580,3 +580,41 @@ spec:
         error_msg = raise_for_status(r)
         if error_msg:
             raise Exception('%s. %s' % (error_msg, r.text))
+
+  - name: update-order-instance-id
+    inputs:
+      parameters:
+      - name: order_id
+      - name: instance_id
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        def raise_for_status(r):
+            http_error_msg = ''
+            if 400 <= r.status_code < 500:
+                http_error_msg = '%s Client Error: %s' % (r.status_code, r.reason)
+
+            elif 500 <= r.status_code < 600:
+                http_error_msg = '%s Server Error: %s' % (r.status_code, r.reason)
+
+            return http_error_msg
+
+        order_id = "{{inputs.parameters.order_id}}"
+        instance_id = "{{inputs.parameters.instance_id}}"
+
+        sys.stdout.write('Input parameters. order_id: "%s", instance_id: "%s"\n' % (order_id, instance_id))
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.post("{{workflow.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/updateProductOrderStatus/%s?instanceId=%s" %
+            (order_id, instance_id), json={}, headers=headers)
+        sys.stdout.write('r.text [%s]\n' % r.text)
+        error_msg = raise_for_status(r)
+        if error_msg:
+            raise Exception('%s. %s' % (error_msg, r.text))
+  
