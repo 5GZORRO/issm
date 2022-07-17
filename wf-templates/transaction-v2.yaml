@@ -19,6 +19,18 @@ metadata:
 spec:
   templates:
   - name: issm-api-get-transaction
+    # Return transaction attributes.
+    #
+    # Query ISSM API service with the given transaction uuid.
+    # This step is mainly being used by the SLA breach handler to build a scaleout
+    # transaction out from the the one that caused SLA violation.
+    #
+    # Parameters:
+    # issm_api_url: url to domain issm-api (str)
+    # transaction_uuid: transaction uuid (str)
+    #
+    # outputs:
+    # refer to <outputs:> section for details
     inputs:
       parameters:
       - name: issm_api_url

@@ -19,6 +19,7 @@ metadata:
 spec:
   templates:
   - name: build-intent-query
+    # Buid a discovery intent query with the supplied input paramaters (category, location and sizings)
     inputs:
       parameters:
       - name: category
@@ -51,6 +52,14 @@ spec:
 
 
   - name: srds-service
+    # Query discovery service with the given query intent.
+    #
+    # Parameters:
+    # srsd_url: discovery service url (str)
+    # intent_query: search query (json)
+    #
+    # Outputs:
+    # offers: list of product offers (json)
     inputs:
       parameters:
       - name: srsd_url

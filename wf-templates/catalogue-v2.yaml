@@ -19,6 +19,20 @@ metadata:
 spec:
   templates:
   - name: prepare-orders-from-catalog
+    # This step is responsible for parsing the list of orders provided by the
+    # intent - into 'main' and 'sub' orders.
+    #
+    # 'main' order is returned via output order_id and sub order(s) are set inside the provided
+    # snfvo_data as <sub order category>_order_id_<index>
+    #
+    # Parameters:
+    # catalogue_url: url to the catalogue (str)
+    # order_id: order uuids (list of str in json)
+    # category: the category of the main order as being provided in input intent (string)
+    # snfvo_data: snvfo data as being provided in input intent (json)
+    #
+    # outputs:
+    # refer to <outputs:> section for details
     inputs:
       parameters:
       - name: catalogue_url
@@ -101,6 +115,18 @@ spec:
 
 
   - name: get-order-from-catalog
+    # This step is responsible for retrieving order's offer information by
+    # querying the domain catalogue with the given order uuid.
+    #
+    # It uses the order's offer category to properly extract the data.
+    #
+    # Note: it is assumed that order contains a single product offer (1:1)
+    #
+    # Parameters:
+    # order_id: The uuid of the order (str)
+    #
+    # outputs:
+    # refer to <outputs:> section for details
     inputs:
       parameters:
       - name: order_id
@@ -484,6 +510,13 @@ spec:
           path: /tmp/name.txt
 
   - name: create-order
+    # Step to create an order object.
+    #
+    # Parameters:
+    # resource_id: product offer uuid (str)
+    # operator_id_seller: operator name that owns this product offer (str)
+    # operator_id_buyer: operator name. Usually service owner (str)
+    #
     inputs:
       parameters:
       - name: resource_id
@@ -544,6 +577,11 @@ spec:
             raise Exception('%s. %s' % (error_msg, r.text))
 
   - name: notify-trmf
+    # Update TRMF with the given product offer DID.
+    # This srtep is being called after a resource is being purchased
+    #
+    # Parameters:
+    # resource_did: product offer DID
     inputs:
       parameters:
       - name: resource_did
@@ -582,6 +620,11 @@ spec:
             raise Exception('%s. %s' % (error_msg, r.text))
 
   - name: update-order-instance-id
+    # Set instanceId inside order status.
+    #
+    # Parameters:
+    # order_id: order uuid (str)
+    # instance_id: instance uuid (str)
     inputs:
       parameters:
       - name: order_id
