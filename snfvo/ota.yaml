@@ -365,7 +365,6 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
-      # Terminate Edge
       - name: get-edge-order-from-catalog
         dependencies: [edge-order-id]
         templateRef:
@@ -386,29 +385,21 @@ spec:
           - name: order_id
             value: "{{tasks.edge-order-id.outputs.result}}"
 
-      # Terminate Core
-      - name: get-order-from-catalog
+      - name: edge-instance-id
+        dependencies: [get-edge-order-status-from-catalog]
         templateRef:
-          name: workflow-catalog
-          template: get-order-from-catalog
+          name: workflow-base
+          template: from-key
         arguments:
           parameters:
-          - name: order_id
-            value: "{{workflow.parameters.order_id}}"
-
-      - name: get-order-status-from-catalog
-        templateRef:
-          name: workflow-catalog
-          template: get-order-status
-        arguments:
-          parameters:
-          - name: order_id
-            value: "{{workflow.parameters.order_id}}"
-
-
+          - name: key
+            value: instanceId
+          - name: json_str
+            value: |
+              {{tasks.get-edge-order-status-from-catalog.outputs.parameters.order_status}}
 
       - name: trigger-orchestration-terminate-edge
-        dependencies: [get-edge-order-from-catalog, get-order-from-catalog]
+        dependencies: [get-edge-order-from-catalog, edge-instance-id]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration-terminate
@@ -422,28 +413,47 @@ spec:
           - name: sla_DID
             value: ""
           - name: vsi_id
-            value: ??????
+            value: "{{tasks.edge-instance-id.outputs.result}}"
 
 
+############# TODO wait for status and trigger SLA (delete) Event ?
 
-      - name: wait-for-status
-        dependencies: [trigger-orchestration-terminate-edge]
+
+      - name: get-order-from-catalog
         templateRef:
-          name: workflow-base
-          template: consume
+          name: workflow-catalog
+          template: get-order-from-catalog
         arguments:
           parameters:
-          - name: kafka
-            value: "{{workflow.parameters.kafka}}"
-          - name: kafka_topic
-            value: "issm-in-{{workflow.parameters.service_owner}}"
-          - name: msg_id
-            value: "{{tasks.trigger-orchestration-core.outputs.parameters.event_uuid}}"
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
 
+
+      - name: get-core-order-status-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-status
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: core-instance-id
+        dependencies: [get-core-order-status-from-catalog]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: instanceId
+          - name: json_str
+            value: |
+              {{tasks.get-core-order-status-from-catalog.outputs.parameters.order_status}}
 
 
       - name: trigger-orchestration-terminate-core
-        dependencies: [get-edge-order-from-catalog, get-order-from-catalog]
+        dependencies: [get-order-from-catalog, core-instance-id]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration-terminate
@@ -457,26 +467,11 @@ spec:
           - name: sla_DID
             value: ""
           - name: vsi_id
-            value: ??????
-
-
-      - name: wait-for-status
-        dependencies: [trigger-orchestration-terminate-core]
-        templateRef:
-          name: workflow-base
-          template: consume
-        arguments:
-          parameters:
-          - name: kafka
-            value: "{{workflow.parameters.kafka}}"
-          - name: kafka_topic
-            value: "issm-in-{{workflow.parameters.service_owner}}"
-          - name: msg_id
-            value: "{{tasks.trigger-orchestration-core.outputs.parameters.event_uuid}}"
+            value: "{{tasks.core-instance-id.outputs.result}}"
 
 
 
-
+############# TODO wait for status and trigger SLA (delete) Event ?
 
 
 
