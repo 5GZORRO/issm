@@ -694,9 +694,17 @@ spec:
 
         headers = {'Content-Type': 'application/json'}
         r = requests.get("{{workflow.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/productOrderStatus/%s" %
-            order_id headers=headers)
+            order_id, headers=headers)
         sys.stdout.write('r.text [%s]\n' % r.text)
         error_msg = raise_for_status(r)
         if error_msg:
             raise Exception('%s. %s' % (error_msg, r.text))
         json.dump(r.json(), sys.stdout)
+        with open('/tmp/order_status.txt', 'w') as f:
+            json.dump(r.json(), f)
+
+    outputs:
+      parameters:
+      - name: order_status
+        valueFrom:
+          path: /tmp/order_status.txt
