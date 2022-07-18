@@ -24,6 +24,13 @@ spec:
         when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
         template: instantiate-service
 
+  - name: terminate
+    steps:
+    - - name: terminate-service
+        when: "{{workflow.parameters.sub_operation}} == \"TERMINATE_SERVICE\""
+        template: terminate-service
+
+
   - name: instantiate-service
     dag:
       tasks:
@@ -160,16 +167,56 @@ spec:
           template: success
 
 
-  - name: terminate
-    steps:
-    - - name: print-hello
+  - name: terminate-service
+    dag:
+      tasks:
+      - name: get-order-from-catalog
         templateRef:
-          name: workflow-base
-          template: whalesay
+          name: workflow-catalog
+          template: get-order-from-catalog
         arguments:
           parameters:
-          - name: message
-            value: "hello snfvo from terminate entry point"
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: get-order-status-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-status
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: get-slice-instance-id
+        dependencies: [get-order-status-from-catalog]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: instanceId
+          - name: json_str
+            value: |
+              {{tasks.get-order-status-from-catalog.outputs.parameters.order_status}}
+
+      - name: trigger-orchestration-terminate-slice
+        dependencies: [get-order-from-catalog, get-slice-instance-id]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration-terminate
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
+          - name: product_DID
+            value: ""
+          - name: sla_DID
+            value: ""
+          - name: vsi_id
+            value: "{{tasks.get-slice-instance-id.outputs.result}}"
 
 
   - name: status-fail
