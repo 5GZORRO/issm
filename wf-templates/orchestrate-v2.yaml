@@ -68,6 +68,7 @@ spec:
       - name: resource_owner
       - name: product_DID
       - name: sla_DID
+      - name: vsi_id
     steps:
       - - name: event-uuid
           templateRef:
@@ -88,6 +89,7 @@ spec:
                   "sla_DID": "{{inputs.parameters.sla_DID}}",
                   "service_owner": "{{workflow.parameters.service_owner}}",
                   "resource_owner": "{{inputs.parameters.resource_owner}}",
+                  "vsi_id": "{{inputs.parameters.vsi_id}}",
                   "kafka_dl": "{{workflow.parameters.kafka_dl}}"
                 }
             - name: kafka_topic

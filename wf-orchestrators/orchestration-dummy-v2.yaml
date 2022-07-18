@@ -126,7 +126,7 @@ spec:
         arguments:
           parameters:
           - name: message
-            value: "hello from DUMMY orchestrate-terminate entry point"
+            value: "DUMMY orchestrate-terminate entry point. InstnceId {{workflow.parameters.vsi_id}}"
 
   - name: create-vsi-success
     inputs:

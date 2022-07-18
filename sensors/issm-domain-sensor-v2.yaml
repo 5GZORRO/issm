@@ -140,6 +140,9 @@ spec:
 
                   - name: vsd_parameters
                     value: OVERRIDE
+
+                  - name: vsi_id
+                    value: OVERRIDE
                   
                 templates:
                 - name: handlerequest
@@ -613,3 +616,9 @@ spec:
                   {
                   }
               dest: spec.arguments.parameters.23.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.vsi_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.24.value
