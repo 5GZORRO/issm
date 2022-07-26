@@ -59,7 +59,7 @@ spec:
         order_id = ""
         category_sub_order = {}
 
-        categories = ["VNF", "Edge", "Slice", "Network Service"]
+        categories = ["VNF", "Edge", "Slice", "Network Service", "Spectrum"]
 
         found = False
         headers = {'Content-Type': 'application/json'}
@@ -141,7 +141,7 @@ spec:
         import sys
 
         REGEX = re.compile('.*([0-9]+).*')
-        categories = ["VNF", "Edge", "Slice", "Network Service"]
+        categories = ["VNF", "Edge", "Slice", "Network Service", "Spectrum"]
         def find(l, predicate):
             """
             util method
