@@ -1,0 +1,306 @@
+# Copyright 2020 - 2022 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: snfvo-spectrum
+spec:
+  templates:
+  - name: instantiate
+    steps:
+    - - name: instantiate-service
+        when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
+        template: instantiate-service
+
+  - name: instantiate-service
+    dag:
+      tasks:
+      - name: spectrum-order-id
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: spectrum_order_id_0
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: get-spectrum-order-from-catalog
+        dependencies: [spectrum-order-id]
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{tasks.spectrum-order-id.outputs.result}}"
+
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: userdata-slice
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: userdata_slice
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: spectrum-parameters
+        dependencies: [get-spectrum-order-from-catalog]
+        template: spectrum-parameters
+        arguments:
+          parameters:
+          - name: resourceSpecification
+            value: "{{tasks.get-spectrum-order-from-catalog.outputs.parameters.resourceSpecification}}"
+
+      - name: vsd-parameters
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: slice-parameters-spectrum-parameters
+        dependencies: [userdata-slice, spectrum-parameters]
+        templateRef:
+          name: workflow-base
+          template: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: "{{tasks.userdata-slice.outputs.result}}"
+          - name: dict2
+            value: "{{tasks.spectrum-parameters.outputs.parameters.spectrum_parameters}}"
+
+      - name: trigger-orchestration-slice
+        dependencies: [get-order-from-catalog, slice-parameters-spectrum-parameters, vsd-parameters]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
+
+          - name: vsbName
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
+
+          - name: product_DID
+            value: "TBD"
+
+          - name: sla_DID
+            value: "TBD"
+
+          - name: place
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
+
+          - name: userdata
+            value: "{{tasks.slice-parameters-spectrum-parameters.outputs.result}}"
+
+          - name: vsd_parameters
+            value: "{{tasks.vsd-parameters.outputs.result}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-slice]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-slice.outputs.parameters.event_uuid}}"
+
+###########
+      - name: get-slice-instance-id
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: update-order
+        dependencies: [get-slice-instance-id]
+        templateRef:
+          name: workflow-catalog
+          template: update-order-instance-id
+        # in any case, persist instanceId
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+          - name: instance_id
+            value: "{{tasks.get-slice-instance-id.outputs.result}}"
+#########
+
+      - name: slice-status
+        dependencies: [get-slice-instance-id]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: slice-status-fail
+        dependencies: [slice-status]
+        template: status-fail
+        when: "{{tasks.slice-status.outputs.result}} == \"FAIL\""
+
+
+  - name: scaleout
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
+
+
+  - name: status-fail
+    dag:
+      tasks:
+      - name: fail
+        templateRef:
+          name: workflow-base
+          template: fail
+
+
+  - name: spectrum-parameters
+    inputs:
+      parameters:
+      - name: resourceSpecification
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import os
+        import sys
+
+        def find(l, predicate):
+            """
+            util method
+            """
+            results = [x for x in l if predicate(x)]
+            return results[0] if len(results) > 0 else None
+
+        resourceSpecification = {{inputs.parameters.resourceSpecification}}
+
+        #print(resourceSpecification)
+
+        rsc_list = resourceSpecification[0]['resourceSpecCharacteristic']
+
+        # 1. operationBand
+        element = find(rsc_list, lambda e: e.get('name', '') == 'operationBand')
+        if not element:
+            raise Exception("*** Unable to find 'operationBand' ***")
+    
+        operationBand = element['resourceSpecCharacteristicValue'][0]['value']['value']
+        sys.stdout.write('operationBand: "%s" \n' % operationBand)
+
+        # 2. startFreqDl
+        element = find(rsc_list, lambda e: e.get('name', '') == 'startFreqDl')
+        if not element:
+            raise Exception("*** Unable to find 'startFreqDl' ***")
+    
+        startFreqDl = element['resourceSpecCharacteristicValue'][0]['value']['value']
+        sys.stdout.write('startFreqDl: "%s" \n' % startFreqDl)
+
+        # 3. endFreqDl
+        element = find(rsc_list, lambda e: e.get('name', '') == 'endFreqDl')
+        if not element:
+            raise Exception("*** Unable to find 'endFreqDl' ***")
+    
+        endFreqDl = element['resourceSpecCharacteristicValue'][0]['value']['value']
+        sys.stdout.write('endFreqDl: "%s" \n' % endFreqDl)
+
+        # 4. startFreqUl
+        element = find(rsc_list, lambda e: e.get('name', '') == 'startFreqUl')
+        if not element:
+            raise Exception("*** Unable to find 'startFreqUl' ***")
+    
+        startFreqUl = element['resourceSpecCharacteristicValue'][0]['value']['value']
+        sys.stdout.write('startFreqUl: "%s" \n' % startFreqUl)
+
+        # 5. endFreqUl
+        element = find(rsc_list, lambda e: e.get('name', '') == 'endFreqUl')
+        if not element:
+            raise Exception("*** Unable to find 'endFreqUl' ***")
+    
+        endFreqUl = element['resourceSpecCharacteristicValue'][0]['value']['value']
+        sys.stdout.write('endFreqUl: "%s" \n' % endFreqUl)
+
+        # 6. duplexMode
+        element = find(rsc_list, lambda e: e.get('name', '') == 'duplexMode')
+        if not element:
+            raise Exception("*** Unable to find 'duplexMode' ***")
+    
+        duplexMode = element['resourceSpecCharacteristicValue'][0]['value']['value']
+        sys.stdout.write('duplexMode: "%s" \n' % duplexMode)
+
+        spectrum_parameters = {
+            operation_band: str(operationBand),
+
+            ful_low: str(startFreqUl),
+            ful_high: str(endFreqUl),
+
+            fdl_low: str(startFreqDl),
+            fdl_high: str(endFreqDl),
+
+            duplex_mode: str(duplexMode)
+        }
+
+        with open('/tmp/spectrum_parameters.txt', 'w') as f:
+            json.dump(spectrum_parameters, f)
+
+    outputs:
+      parameters:
+      - name: spectrum_parameters
+        valueFrom:
+          path: /tmp/spectrum_parameters.txt

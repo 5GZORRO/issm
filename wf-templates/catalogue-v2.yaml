@@ -188,6 +188,9 @@ spec:
         place = {}
         related_party = ""
 
+        resourceSpecification = {}
+        serviceSpecification = {}
+
         # SLA
         sla_did = po.get('serviceLevelAgreement', {}).get('id', "")
         sys.stdout.write('sla_did: "%s" \n' % sla_did)
@@ -208,16 +211,25 @@ spec:
         place = r.json()
         sys.stdout.write('place: "%s" \n' % place)
 
-        # resource owner
-        # TODO: revise 'VNF'
-        if category in ['Network Service', 'Slice', 'Edge', 'Cloud', 'VNF']:
+        if category in ['Network Service', 'Slice', 'Edge', 'Cloud', 'VNF', 'Spectrum']:
             href = po['productSpecification']['href']
             r = requests.get(str(href), headers=headers)
             json.dump(r.json(), sys.stdout)
             sys.stdout.write('\n')
+            # resource owner
             related_party = r.json()['relatedParty'][0]['name']
             related_party = related_party.replace('_','-').lower()
             sys.stdout.write('related_party: "%s" \n' % related_party)
+
+            # resourceSpecification
+            href = r.json()['resourceSpecification'][0]['href']
+            r = requests.get(str(href), headers=headers)
+            resourceSpecification = r.json()
+
+            # serviceSpecification
+            href = r.json()['serviceSpecification'][0]['href']
+            r = requests.get(str(href), headers=headers)
+            serviceSpecification = r.json()
 
         if category == 'VNF':
             href = po['productSpecification']['href']
@@ -450,6 +462,12 @@ spec:
         with open('/tmp/name.txt', 'w') as f:
             f.write(name)
 
+        with open('/tmp/resourceSpecification.txt', 'w') as f:
+            json.dump(resourceSpecification, f)
+
+        with open('/tmp/serviceSpecification.txt', 'w') as f:
+            json.dump(serviceSpecification, f)
+
     outputs:
       parameters:
       - name: id
@@ -508,6 +526,15 @@ spec:
       - name: name
         valueFrom:
           path: /tmp/name.txt
+
+      - name: resourceSpecification
+        valueFrom:
+          path: /tmp/resourceSpecification.txt
+
+      - name: serviceSpecification
+        valueFrom:
+          path: /tmp/serviceSpecification.txt
+
 
   - name: create-order
     # Step to create an order object.
