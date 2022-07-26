@@ -126,7 +126,7 @@ spec:
             value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
 
           - name: userdata
-            value: "{{tasks.slice-parameters-spectrum-parameters.outputs.result}}"
+            value: "{{tasks.slice-parameters-spectrum-parameters.outputs.parameters.dict}}"
 
           - name: vsd_parameters
             value: "{{tasks.vsd-parameters.outputs.result}}"
@@ -285,15 +285,15 @@ spec:
         sys.stdout.write('duplexMode: "%s" \n' % duplexMode)
 
         spectrum_parameters = {
-            operation_band: str(operationBand),
+            "operation_band": str(operationBand),
 
-            ful_low: str(startFreqUl),
-            ful_high: str(endFreqUl),
+            "ful_low": float(startFreqUl),
+            "ful_high": float(endFreqUl),
 
-            fdl_low: str(startFreqDl),
-            fdl_high: str(endFreqDl),
+            "fdl_low": float(startFreqDl),
+            "fdl_high": float(endFreqDl),
 
-            duplex_mode: str(duplexMode)
+            "duplex_mode": str(duplexMode)
         }
 
         with open('/tmp/spectrum_parameters.txt', 'w') as f:

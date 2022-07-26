@@ -222,14 +222,22 @@ spec:
             sys.stdout.write('related_party: "%s" \n' % related_party)
 
             # resourceSpecification
-            href = r.json()['resourceSpecification'][0]['href']
-            r = requests.get(str(href), headers=headers)
-            resourceSpecification = r.json()
+            try:
+                href = r.json()['resourceSpecification'][0]['href']
+                r = requests.get(str(href), headers=headers)
+                resourceSpecification = r.json()
+            except:
+                # return empty resourceSpecification
+                pass
 
             # serviceSpecification
-            href = r.json()['serviceSpecification'][0]['href']
-            r = requests.get(str(href), headers=headers)
-            serviceSpecification = r.json()
+            try:
+                href = r.json()['serviceSpecification'][0]['href']
+                r = requests.get(str(href), headers=headers)
+                serviceSpecification = r.json()
+            except:
+                # return empty serviceSpecification
+                pass
 
         if category == 'VNF':
             href = po['productSpecification']['href']
