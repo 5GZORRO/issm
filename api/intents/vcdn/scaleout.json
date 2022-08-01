@@ -1,5 +1,6 @@
 {
     "operation": "scaleout",
+    "order_id": [{"uuid": "1ecfc241-64e3-4135-9294-bc7232282284", "main": true}, {"uuid": "70857b4b-118b-4612-8868-7595ccdd55db", "main": false}],
     "place": {
       "city": "Barcelona",
       "country": "Spain",
