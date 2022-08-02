@@ -89,20 +89,25 @@ spec:
 
                 - name: order-deleted
                   steps:
-                  - - name: print
+                  - - name: get-domain-env
                       templateRef:
-                        name: workflow-base
-                        template: whalesay
+                        name: workflow-environment
+                        template: get-domain-env
                       arguments:
                         parameters:
-                        - name: message
-                          value: "order-delete to be handled in later version"
+                        - name: domain
+                          value: "{{workflow.parameters.service_owner}}"
 
-
-
-
-
-
+                  - - name: delete-snfvo
+                      template: delete-snfvo
+                      arguments:
+                        parameters:
+                        - name: order_id
+                          value: "{{workflow.parameters.order_id}}"
+                        - name: catalogue_url
+                          value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
+                        - name: issm_api_url
+                          value: "{{steps.get-domain-env.outputs.parameters.issm_api_url}}"
 
 
                 - name: onboard-snfvo
@@ -194,13 +199,51 @@ spec:
                       r.raise_for_status()
 
 
+                - name: delete-snfvo
+                  inputs:
+                    parameters:
+                    - name: order_id
+                    - name: catalogue_url
+                    - name: issm_api_url
 
+                  script:
+                    image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-yaml-v0.1
+                    imagePullPolicy: IfNotPresent
+                    command: [python]
+                    source: |
+                      import json
+                      import requests
+                      import yaml
+                      import sys
 
+                      order_id = "{{inputs.parameters.order_id}}"
+                      catalogue_url = "{{inputs.parameters.catalogue_url}}"
+                      issm_api_url = "{{inputs.parameters.issm_api_url}}"
+                      service_owner = "{{workflow.parameters.service_owner}}"
 
+                      headers = {'Content-Type': 'application/json'}
+                      r = requests.get("%s/tmf-api/productOrderingManagement/v4/productOrder/%s" % (catalogue_url, order_id), headers=headers)
+                      #json.dump(r.json(), sys.stdout)
+                      #sys.stdout.write('\n')
 
+                      # retrieve the PO offer
+                      po_href = r.json()['productOrderItem'][0]['productOffering']['href']
+                      r = requests.get(str(po_href), headers=headers)
+                      #json.dump(r.json(), sys.stdout)
+                      #sys.stdout.write('\n')
 
+                      po = r.json()
 
+                      # Name
+                      name = po['name']
+                      sys.stdout.write('name: "%s" \n' % name)
 
+                      # Id
+                      po_id = po['id']
+                      sys.stdout.write('po_id: "%s" \n' % po_id)
+
+                      r = requests.delete(issm_api_url+'/snfvo/%s/%s' % (service_owner, po_id), headers=headers)
+                      r.raise_for_status()
 
           parameters:
             - src:
