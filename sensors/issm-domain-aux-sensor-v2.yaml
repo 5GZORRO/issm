@@ -52,6 +52,7 @@ spec:
                 - name: handlerequest
                   steps:
                   - - name: order
+                      # Handle order related events
                       when: "{{workflow.parameters.operation}} == \"order\""
                       template: order
 
@@ -111,6 +112,16 @@ spec:
 
 
                 - name: onboard-snfvo
+                  # Onboard snfvo.
+                  #
+                  # Retrieve snfvo of the offer inside the order, create its template and
+                  # update domain sensor to use it
+                  #
+                  # Parameters:
+                  # order_id: order uuid (str)
+                  # catalogue_url: URL to domain catalogue (str)
+                  # issm_api_url: URL to domain ISSM API (str)
+                  #
                   inputs:
                     parameters:
                     - name: order_id
@@ -200,6 +211,16 @@ spec:
 
 
                 - name: delete-snfvo
+                  # Delete snfvo.
+                  #
+                  # Delete snfvo of the offer inside the order; delete its template and
+                  # remove it from domain sensor
+                  #
+                  # Parameters:
+                  # order_id: order uuid (str)
+                  # catalogue_url: URL to domain catalogue (str)
+                  # issm_api_url: URL to domain ISSM API (str)
+                  #
                   inputs:
                     parameters:
                     - name: order_id
