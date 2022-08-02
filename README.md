@@ -138,7 +138,6 @@ envsubst < deploy/kafka-domain-aux-event-source.yaml.template | kubectl apply -n
 
 ```
 export MNO_NAME=operator-a
-export MNO_NAMESPACE=domain-$MNO_NAME
 
 ./apply-domain.sh <ORCHESTRATOR>
 ```
