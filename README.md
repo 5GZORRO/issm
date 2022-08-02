@@ -129,6 +129,9 @@ envsubst < deploy/kafka-event-source.yaml.template | kubectl apply -n $MNO_NAMES
 
 export SLA_BREACH_DOMAIN_TOPIC=issm-breach-$MNO_NAME
 envsubst < deploy/kafka-domain-sla-breach-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
+
+export AUX_DOMAIN_TOPIC=issm-aux-$MNO_NAME
+envsubst < deploy/kafka-domain-aux-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
 ```
 
 ### Deploy sensor and templates
