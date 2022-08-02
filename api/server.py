@@ -96,6 +96,9 @@ def publish_intent(kafka_ip, kafka_port, topic, payload):
     :param kafka_port: kafka broker port
     :type kafka_port: ``int``
 
+    :param topic: kafka topic
+    :type topic: ``str``
+
     :param payload: the payload (intent) to send
     :type payload: ``dict``
     """
@@ -524,6 +527,26 @@ class Proxy:
             raise
 
 
+    def aux_submit(self, service_owner, intent):
+        """
+        Submit an auxiliary notification on-behalf of the service_owner.
+
+        :param service_owner: the name of the service owner.
+        :type service_owner: ``str``
+
+        :param intent: intent payload comprising at least operation and sub_operation
+        :type intent: ``dict`` with operation and sub_operation keys along with
+                      any additional dict key/values
+        """
+        addition = dict(service_owner=service_owner)
+        intent.update(addition)
+
+        publish_intent(KAFKA_IP, KAFKA_PORT,
+                       topic='issm-aux-%s' % service_owner, payload=intent)
+        return 'OK'
+
+
+
 proxy = flask.Flask(__name__)
 proxy.debug = True
 server = None
@@ -775,6 +798,34 @@ def snfvo_delete(service_owner, product_offer_id):
 
     sys.stdout.write('Exit delete /snfvo %s\n' % str(response))
     return response
+
+
+@proxy.route("/aux/<service_owner>",  methods=['POST'])
+def aux_submit(service_owner):
+    sys.stdout.write('Received aux submit request for '
+                     '[service_owner=%s] \n' % service_owner)
+    try:
+        value = getMessagePayload()
+
+        value['operation']
+        value['sub_operation']
+
+        intent = value
+        response = flask.jsonify(
+            proxy_server.aux_submit(service_owner=service_owner,intent=intent))
+
+        response.status_code = 200
+        #response.headers["Access-Control-Allow-Origin"] = "*"
+        return response
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        #response.headers["Access-Control-Allow-Origin"] = "*"
+        response.status_code = 500
+
+    sys.stdout.write('Exit /aux %s\n' % str(response))
+    return response
+
 
 
 def main():
