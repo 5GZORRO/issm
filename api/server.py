@@ -36,6 +36,10 @@ from kubernetes.client import V1ObjectMeta
 from kubernetes.client.rest import ApiException
 
 
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import text
+
+
 KAFKA_API_VERSION = (0, 10, 1)
 KAFKA_TIMEOUT = 10  # seconds
 
@@ -553,6 +557,15 @@ server = None
 
 proxy_server = None
 
+# change to name of your database; add path if necessary
+db_name = 'sockmarket.db'
+
+proxy.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + db_name
+
+proxy.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+
+# this variable, db, will be used for all SQLAlchemy commands
+db = SQLAlchemy(proxy)
 
 def setServer(s):
     global server
@@ -562,6 +575,29 @@ def setServer(s):
 def setProxy(p):
     global proxy_server
     proxy_server = p
+
+
+class CompositeProductOrderStatus(db.Model):
+    __tablename__ = 'composite_product_order_status'
+    transaction_uuid = db.Column(db.String, primary_key=True)
+    instances = db.relationship("StatusInstance")
+
+    def __init__(self, transaction_uuid):
+        self.transaction_uuid= transaction_uuid
+
+
+class StatusInstance(db.Model):
+    __tablename__ = 'status_instance'
+    transaction_uuid = db.Column(db.String, db.ForeignKey("composite_product_order_status.transaction_uuid"))
+    vsi_id_related_party = db.Column(db.String, primary_key=True)
+    main = db.Column(db.Boolean)
+    order_id = db.Column(db.String)
+
+    def __init__(self, vsi_id_related_party):
+        self.name = vsi_id_related_party
+
+
+db.create_all(app=proxy)
 
 
 def getMessagePayload():
@@ -826,6 +862,65 @@ def aux_submit(service_owner):
     sys.stdout.write('Exit /aux %s\n' % str(response))
     return response
 
+
+@proxy.route('/db')
+def testdb():
+    try:
+        db.session.query(text('1')).from_statement(text('SELECT 1')).all()
+        return '<h1>It works.</h1>'
+    except Exception as e:
+        # e holds description of the error
+        error_text = "<p>The error:<br>" + str(e) + "</p>"
+        hed = '<h1>Something is broken.</h1>'
+        return hed + error_text
+
+
+@proxy.route('/compositeorderstatus', methods=['POST'])
+def status_add():
+    try:
+        value = getMessagePayload()
+        transaction_uuid = value['transaction_uuid']
+        record = CompositeProductOrderStatus(transaction_uuid)
+        db.session.add(record)
+        db.session.commit()
+        response = flask.jsonify({'OK': 200})
+        response.status_code = 200
+
+    except ApiException as e:
+        response = flask.jsonify({'error': 'Reason: %s. Body: %s'
+                                  % (e.reason, e.body)})
+        response.status_code = e.status
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /compositeorderstatus %s\n' % str(response))
+    return response
+
+
+@proxy.route('/compositeorderstatus', methods=['GET'])
+def status_list():
+    result = []
+    try:
+        cos = CompositeProductOrderStatus.query.order_by(
+            CompositeProductOrderStatus.transaction_uuid).all()
+        for e in cos:
+            result.append(e.transaction_uuid)
+        response = flask.jsonify(result)
+        response.status_code = 200
+
+    except ApiException as e:
+        response = flask.jsonify({'error': 'Reason: %s. Body: %s'
+                                  % (e.reason, e.body)})
+        response.status_code = e.status
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /compositeorderstatus %s\n' % str(response))
+    return response
 
 
 def main():
