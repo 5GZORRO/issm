@@ -593,10 +593,11 @@ class StatusInstance(db.Model):
     main = db.Column(db.Boolean, nullable=False)
     order_id = db.Column(db.String, nullable=False)
 
-    def __init__(self, vsi_id_related_party, main, order_id):
+    def __init__(self, vsi_id_related_party, main, order_id, transaction_uuid):
         self.vsi_id_related_party = vsi_id_related_party
         self.main = main
         self.order_id = order_id
+        self.transaction_uuid = transaction_uuid
 
 
 db.create_all(app=proxy)
@@ -947,15 +948,15 @@ def statusInstance(transaction_uuid):
     try:
         value = getMessagePayload()
 
-        records = CompositeProductOrderStatus.query.filter_by(
-            transaction_uuid=transaction_uuid)
+        record = CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid).first()
 
         main = value['main']
         vsi_id_related_party = value['vsi_id_related_party']
         order_id = value['order_id']
         
-        records[0].instances.append(StatusInstance(vsi_id_related_party=vsi_id_related_party,
-                                main=main, order_id=order_id))
+        record.instances.append(StatusInstance(vsi_id_related_party=vsi_id_related_party,
+                                main=main, order_id=order_id, transaction_uuid=transaction_uuid))
         db.session.commit()
         response = flask.jsonify({'OK': 200})
         response.status_code = 200
