@@ -590,11 +590,13 @@ class StatusInstance(db.Model):
     __tablename__ = 'status_instance'
     transaction_uuid = db.Column(db.String, db.ForeignKey("composite_product_order_status.transaction_uuid"))
     vsi_id_related_party = db.Column(db.String, primary_key=True)
-    main = db.Column(db.Boolean)
-    order_id = db.Column(db.String)
+    main = db.Column(db.Boolean, nullable=False)
+    order_id = db.Column(db.String, nullable=False)
 
-    def __init__(self, vsi_id_related_party):
-        self.name = vsi_id_related_party
+    def __init__(self, vsi_id_related_party, main, order_id):
+        self.vsi_id_related_party = vsi_id_related_party
+        self.main = main
+        self.order_id = order_id
 
 
 db.create_all(app=proxy)
@@ -875,11 +877,9 @@ def testdb():
         return hed + error_text
 
 
-@proxy.route('/compositeorderstatus', methods=['POST'])
-def status_add():
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>', methods=['POST'])
+def transaction_status_add(transaction_uuid):
     try:
-        value = getMessagePayload()
-        transaction_uuid = value['transaction_uuid']
         record = CompositeProductOrderStatus(transaction_uuid)
         db.session.add(record)
         db.session.commit()
@@ -895,12 +895,12 @@ def status_add():
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
 
-    sys.stdout.write('Exit /compositeorderstatus %s\n' % str(response))
+    sys.stdout.write('Exit /productOrderStatusTransaction %s\n' % str(response))
     return response
 
 
-@proxy.route('/compositeorderstatus', methods=['GET'])
-def status_list():
+@proxy.route('/productOrderStatusTransaction', methods=['GET'])
+def transaction_status_list():
     result = []
     try:
         cos = CompositeProductOrderStatus.query.order_by(
@@ -919,8 +919,59 @@ def status_list():
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
 
-    sys.stdout.write('Exit /compositeorderstatus %s\n' % str(response))
+    sys.stdout.write('Exit /productOrderStatusTransaction %s\n' % str(response))
     return response
+
+
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>', methods=['DELETE'])
+def transaction_status_delete(transaction_uuid):
+    try:
+        records = CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid)
+        db.session.delete(records[0])
+        db.session.commit()
+        response = flask.jsonify({'OK': 200})
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit delete /productOrderStatusTransaction %s\n' % str(response))
+    return response
+
+
+
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance', methods=['POST'])
+def statusInstance(transaction_uuid):
+    try:
+        value = getMessagePayload()
+
+        records = CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid)
+
+        main = value['main']
+        vsi_id_related_party = value['vsi_id_related_party']
+        order_id = value['order_id']
+        
+        records[0].instances.append(StatusInstance(vsi_id_related_party=vsi_id_related_party,
+                                main=main, order_id=order_id))
+        db.session.commit()
+        response = flask.jsonify({'OK': 200})
+        response.status_code = 200
+
+    except ApiException as e:
+        response = flask.jsonify({'error': 'Reason: %s. Body: %s'
+                                  % (e.reason, e.body)})
+        response.status_code = e.status
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /statusInstance %s\n' % str(response))
+    return response
+
 
 
 def main():
