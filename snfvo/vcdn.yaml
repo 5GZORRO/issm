@@ -150,8 +150,6 @@ spec:
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
           - name: related_party
             value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.related_party}}"
-            
-            
   ##############
 
       - name: slice-status
@@ -799,6 +797,7 @@ spec:
           template: update-order-instance-id
         # in any case, persist instanceId
         arguments:
+          parameters:
           - name: transaction_uuid
             value: "{{workflow.parameters.transaction_uuid}}"
           - name: order_id
