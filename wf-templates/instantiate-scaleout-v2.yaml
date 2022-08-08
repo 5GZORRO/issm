@@ -38,6 +38,7 @@ spec:
       - name: elma_url
       - name: trmf_url
       - name: srsd_url
+      - name: issm_api_url
       - name: kafka_dl
 
       - name: order_id
@@ -64,6 +65,8 @@ spec:
             value: "{{inputs.parameters.trmf_url}}"
           - name: srsd_url
             value: "{{inputs.parameters.srsd_url}}"
+          - name: issm_api_url
+            value: "{{inputs.parameters.issm_api_url}}"
 
           - name: kafka_dl
             value: "{{inputs.parameters.kafka_dl}}"
@@ -79,6 +82,7 @@ spec:
       - name: elma_url
       - name: trmf_url
       - name: srsd_url
+      - name: issm_api_url
       - name: kafka_dl
 
       - name: order_id
@@ -104,6 +108,8 @@ spec:
             value: "{{inputs.parameters.trmf_url}}"
           - name: srsd_url
             value: "{{inputs.parameters.srsd_url}}"
+          - name: issm_api_url
+            value: "{{inputs.parameters.issm_api_url}}"
 
           - name: kafka_dl
             value: "{{inputs.parameters.kafka_dl}}"
@@ -126,6 +132,7 @@ spec:
       - name: catalogue_url
       - name: trmf_url
       - name: srsd_url
+      - name: issm_api_url
       - name: snfvo_data
     steps:
       - - name: event-uuid
@@ -152,6 +159,7 @@ spec:
                   "kafka_dl": "{{inputs.parameters.kafka_dl}}",
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
                   "srsd_url": "{{inputs.parameters.srsd_url}}",
+                  "issm_api_url": "{{inputs.parameters.issm_api_url}}",
                   "snfvo_data": {{inputs.parameters.snfvo_data}}
                 }
             - name: kafka_topic
@@ -169,6 +177,7 @@ spec:
       - name: catalogue_url
       - name: trmf_url
       - name: srsd_url
+      - name: issm_api_url
       - name: snfvo_data
       - name: related_party
     steps:
@@ -194,7 +203,8 @@ spec:
                   "elma_url": "{{inputs.parameters.elma_url}}",
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
-                  "srsd_url": "{{inputs.parameters.srsd_url}}",                  
+                  "srsd_url": "{{inputs.parameters.srsd_url}}",
+                  "issm_api_url": "{{inputs.parameters.issm_api_url}}",
                   "snfvo_data": {{inputs.parameters.snfvo_data}},
                   "related_party": "{{inputs.parameters.related_party}}"
                 }
