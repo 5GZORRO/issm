@@ -11,22 +11,22 @@ echo "Applying templates for domain: $MNO_NAME"
 echo "Orchestrator type: $1"
 echo "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-"
 
-MNO_NAMESPACE=domain-$MNO_NAME
+export MNO_NAMESPACE=domain-$MNO_NAME
 
 kubectl  delete  es --all -n  $MNO_NAMESPACE
 kubectl  delete  workflowtemplate --all -n  $MNO_NAMESPACE
 kubectl  delete  sensor --all -n  $MNO_NAMESPACE
 
-KAFKA_HOST=172.28.3.196
-KAFKA_PORT=9092
+export KAFKA_HOST=172.28.3.196
+export KAFKA_PORT=9092
 
-ISSM_DOMAIN_TOPIC=issm-in-$MNO_NAME
+export ISSM_DOMAIN_TOPIC=issm-in-$MNO_NAME
 envsubst < $SCRIPT_DIR/deploy/kafka-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
 
-SLA_BREACH_DOMAIN_TOPIC=issm-breach-$MNO_NAME
+export SLA_BREACH_DOMAIN_TOPIC=issm-breach-$MNO_NAME
 envsubst < $SCRIPT_DIR/deploy/kafka-domain-sla-breach-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
 
-AUX_DOMAIN_TOPIC=issm-aux-$MNO_NAME
+export AUX_DOMAIN_TOPIC=issm-aux-$MNO_NAME
 envsubst < $SCRIPT_DIR/deploy/kafka-domain-aux-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
 
 kubectl apply -f $SCRIPT_DIR/sensors/issm-domain-sensor-v2.yaml -n $MNO_NAMESPACE
