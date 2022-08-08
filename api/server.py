@@ -590,7 +590,7 @@ class StatusInstance(db.Model):
     __tablename__ = 'status_instance'
     transaction_uuid = db.Column(db.String, db.ForeignKey("composite_product_order_status.transaction_uuid"))
     vsi_id_related_party = db.Column(db.String, primary_key=True)
-    main = db.Column(db.Boolean, nullable=False)
+    main = db.Column(db.String, nullable=False)
     order_id = db.Column(db.String, nullable=False)
 
     def __init__(self, vsi_id_related_party, main, order_id, transaction_uuid):
@@ -942,19 +942,26 @@ def transaction_status_delete(transaction_uuid):
     return response
 
 
-
 @proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance', methods=['POST'])
-def statusInstance(transaction_uuid):
+def status_instance_create(transaction_uuid):
     try:
         value = getMessagePayload()
 
+        # TODO: if not created - then create it
         record = CompositeProductOrderStatus.query.filter_by(
             transaction_uuid=transaction_uuid).first()
+        if not record:
+            record = CompositeProductOrderStatus(transaction_uuid)
+            db.session.add(record)
+            db.session.commit()
 
+        # TODO: remove this additional query
+        record = CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid).first()
         main = value['main']
         vsi_id_related_party = value['vsi_id_related_party']
         order_id = value['order_id']
-        
+
         record.instances.append(StatusInstance(vsi_id_related_party=vsi_id_related_party,
                                 main=main, order_id=order_id, transaction_uuid=transaction_uuid))
         db.session.commit()
@@ -973,6 +980,28 @@ def statusInstance(transaction_uuid):
     sys.stdout.write('Exit /statusInstance %s\n' % str(response))
     return response
 
+
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance/<vsi_id_related_party>', methods=['DELETE'])
+def status_instance_delete(transaction_uuid, vsi_id_related_party):
+    try:
+        # just ensure composite status exists
+        CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid).first()
+
+        record = StatusInstance.query.filter_by(
+            vsi_id_related_party=vsi_id_related_party).first()
+
+        db.session.delete(record)
+        db.session.commit()
+        response = flask.jsonify({'OK': 200})
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit delete /statusInstance %s\n' % str(response))
+    return response
 
 
 def main():
