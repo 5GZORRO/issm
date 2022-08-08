@@ -222,11 +222,11 @@ spec:
                           value: "{{tasks.get-domain-env.outputs.parameters.elma_url}}"
                         - name: trmf_url
                           value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
+                        - name: issm_api_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.issm_api_url}}"
+
                         - name: srsd_url
                           value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
-                        - name: issm_api_url
-                          value: "{{tasks.get-platform-env.outputs.parameters.issm_api_url}}"
-
                         - name: kafka_dl
                           value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
 
@@ -305,11 +305,11 @@ spec:
                           value: "{{tasks.get-domain-env.outputs.parameters.elma_url}}"
                         - name: trmf_url
                           value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
+                        - name: issm_api_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.issm_api_url}}"
+
                         - name: srsd_url
                           value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
-                        - name: issm_api_url
-                          value: "{{tasks.get-platform-env.outputs.parameters.issm_api_url}}"
-
                         - name: kafka_dl
                           value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
 

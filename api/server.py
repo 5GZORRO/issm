@@ -887,11 +887,6 @@ def transaction_status_add(transaction_uuid):
         response = flask.jsonify({'OK': 200})
         response.status_code = 200
 
-    except ApiException as e:
-        response = flask.jsonify({'error': 'Reason: %s. Body: %s'
-                                  % (e.reason, e.body)})
-        response.status_code = e.status
-
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
@@ -911,11 +906,6 @@ def transaction_status_list():
         response = flask.jsonify(result)
         response.status_code = 200
 
-    except ApiException as e:
-        response = flask.jsonify({'error': 'Reason: %s. Body: %s'
-                                  % (e.reason, e.body)})
-        response.status_code = e.status
-
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
@@ -926,6 +916,7 @@ def transaction_status_list():
 
 @proxy.route('/productOrderStatusTransaction/<transaction_uuid>', methods=['DELETE'])
 def transaction_status_delete(transaction_uuid):
+    # TODO: support cascade delete
     try:
         records = CompositeProductOrderStatus.query.filter_by(
             transaction_uuid=transaction_uuid)
@@ -968,10 +959,29 @@ def status_instance_create(transaction_uuid):
         response = flask.jsonify({'OK': 200})
         response.status_code = 200
 
-    except ApiException as e:
-        response = flask.jsonify({'error': 'Reason: %s. Body: %s'
-                                  % (e.reason, e.body)})
-        response.status_code = e.status
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /statusInstance %s\n' % str(response))
+    return response
+
+
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance', methods=['GET'])
+def status_instance_list(transaction_uuid):
+    result = []
+    try:
+        record = CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid).first()
+
+        for i in record.instances:
+            result.append(dict(
+                main=i.main, order_id=i.order_id,
+                vsi_id=i.vsi_id_related_party.split(':')[0],
+                related_party=i.vsi_id_related_party.split(':')[1]))
+
+        response = flask.jsonify(result)
+        response.status_code = 200
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
@@ -981,10 +991,15 @@ def status_instance_create(transaction_uuid):
     return response
 
 
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance/<vsi_id_related_party>', methods=['GET'])
+def status_instance_get(transaction_uuid, vsi_id_related_party):
+    pass
+
+
 @proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance/<vsi_id_related_party>', methods=['DELETE'])
 def status_instance_delete(transaction_uuid, vsi_id_related_party):
     try:
-        # just ensure composite status exists
+        # ensure composite status exists
         CompositeProductOrderStatus.query.filter_by(
             transaction_uuid=transaction_uuid).first()
 
