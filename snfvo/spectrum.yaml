@@ -126,10 +126,16 @@ spec:
         # in any case, persist instanceId
         arguments:
           parameters:
+          - name: transaction_uuid
+            value: "{{workflow.parameters.transaction_uuid}}"
           - name: order_id
             value: "{{workflow.parameters.order_id}}"
+          - name: main
+            value: "true"
           - name: instance_id
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
+          - name: related_party
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
 #########
 
       - name: slice-status

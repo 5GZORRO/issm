@@ -140,10 +140,16 @@ spec:
         # in any case, persist instanceId
         arguments:
           parameters:
+          - name: transaction_uuid
+            value: "{{workflow.parameters.transaction_uuid}}"
           - name: order_id
-            value: "{{workflow.parameters.order_id}}"
+            value: "{{tasks.edge-order-id.outputs.result}}"
+          - name: main
+            value: "false"
           - name: instance_id
             value: "{{tasks.get-edge-instance-id.outputs.result}}"
+          - name: related_party
+            value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.related_party}}"
 ############
 
       - name: edge-status
@@ -300,10 +306,17 @@ spec:
         # in any case, persist instanceId
         arguments:
           parameters:
+          - name: transaction_uuid
+            value: "{{workflow.parameters.transaction_uuid}}"
           - name: order_id
             value: "{{workflow.parameters.order_id}}"
+          - name: main
+            value: "true"
           - name: instance_id
             value: "{{tasks.get-core-instance-id.outputs.result}}"
+          - name: related_party
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
+
 #############
 
       - name: core-status
