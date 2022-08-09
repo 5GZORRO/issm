@@ -1036,13 +1036,17 @@ def status_order_get(order_id):
 
         for r in records:
             # create this transaction entry with the below dict. NOTE: there
-            # could not be different main values for SAME transaction per THIS order id
+            # *could not* be different main values for SAME transaction per THIS
+            # order id, so it is safe to add it inside dict of main entry
             statuses.setdefault(
                 r.transaction_uuid,
                 dict(transaction_uuid=r.transaction_uuid, main=r.main,
                      order_id=r.order_id, instances=[]))
             statuses[r.transaction_uuid]['instances'].append(
-                dict(vsi_id_related_party=r.vsi_id_related_party)) 
+                dict(
+                    vsi_id=r.vsi_id_related_party.split(':')[0],
+                    related_party=r.vsi_id_related_party.split(':')[1])
+                ) 
 
         response = flask.jsonify(statuses)
         response.status_code = 200
