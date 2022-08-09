@@ -585,6 +585,9 @@ class CompositeProductOrderStatus(db.Model):
     def __init__(self, transaction_uuid):
         self.transaction_uuid= transaction_uuid
 
+    def __repr__(self):
+        return self.transaction_uuid
+
 
 class StatusInstance(db.Model):
     __tablename__ = 'status_instance'
@@ -599,6 +602,11 @@ class StatusInstance(db.Model):
         self.order_id = order_id
         self.transaction_uuid = transaction_uuid
 
+    def __repr__(self):
+        # return self.order_id + ", " + self.vsi_id_related_party + ", " + self.main + ", " + \
+        # self.transaction_uuid
+        return ", ".join([self.order_id, self.vsi_id_related_party, self.main,
+                        self.transaction_uuid])
 
 db.create_all(app=proxy)
 
@@ -1016,6 +1024,34 @@ def status_instance_delete(transaction_uuid, vsi_id_related_party):
         response.status_code = 500
 
     sys.stdout.write('Exit delete /statusInstance %s\n' % str(response))
+    return response
+
+
+@proxy.route('/productOrderStatus/<order_id>', methods=['GET'])
+def status_order_get(order_id):
+    statuses = dict()
+    try:
+        records = StatusInstance.query.filter_by(
+            order_id=order_id).order_by(StatusInstance.transaction_uuid)
+
+        for r in records:
+            # create this transaction entry with the below dict. NOTE: there
+            # could not be different main values for SAME transaction per THIS order id
+            statuses.setdefault(
+                r.transaction_uuid,
+                dict(transaction_uuid=r.transaction_uuid, main=r.main,
+                     order_id=r.order_id, instances=[]))
+            statuses[r.transaction_uuid]['instances'].append(
+                dict(vsi_id_related_party=r.vsi_id_related_party)) 
+
+        response = flask.jsonify(statuses)
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /productOrderStatus %s\n' % str(response))
     return response
 
 
