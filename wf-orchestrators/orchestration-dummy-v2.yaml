@@ -176,6 +176,19 @@ spec:
           template: fail
 
 
+  - name: orchestrate-terminate
+    steps:
+    - - name: print-hello
+        templateRef:
+          name: workflow-base
+          template: whalesay
+        arguments:
+          parameters:
+          - name: message
+            value: "DUMMY orchestrate-terminate entry point. InstnceId {{workflow.parameters.vsi_id}}"
+
+
+
   - name: create-descriptor
     # Create a new VSD from the given blueprint name
     #

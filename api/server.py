@@ -643,10 +643,10 @@ def transactions_submit(service_owner, transaction_type):
                      (service_owner, transaction_type))
     try:
         value = getMessagePayload()
-        if transaction_type not in TRANSACTION_TYPES:
-            raise Exception(
-                'transaction_type value does not match: %s' % 
-                TRANSACTION_TYPES)
+#         if transaction_type not in TRANSACTION_TYPES:
+#             raise Exception(
+#                 'transaction_type value does not match: %s' % 
+#                 TRANSACTION_TYPES)
 
         intent = value
         response = flask.jsonify(
@@ -1027,8 +1027,8 @@ def status_instance_delete(transaction_uuid, vsi_id_related_party):
     return response
 
 
-@proxy.route('/productOrderStatus/<order_id>', methods=['GET'])
-def status_order_get(order_id):
+@proxy.route('/<service_owner>/productOrderStatus/<order_id>', methods=['GET'])
+def status_order_get(service_owner, order_id):
     statuses = dict()
     try:
         records = StatusInstance.query.filter_by(

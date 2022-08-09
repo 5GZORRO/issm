@@ -144,7 +144,20 @@ spec:
 
                   - name: vsd_parameters
                     value: OVERRIDE
-                  
+
+                  - name: productOrder
+                    value: OVERRIDE
+
+                  - name: productOrderStatusTransaction
+                    value: OVERRIDE
+
+                  - name: statusInstance
+                    value: OVERRIDE
+
+                  - name: vsi_id
+                    value: OVERRIDE
+
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -156,6 +169,9 @@ spec:
                       when: "{{workflow.parameters.operation}} == \"scaleout\""
                       template: scaleout
 
+                  - - name: terminate
+                      when: "{{workflow.parameters.operation}} == \"terminate\""
+                      template: terminate
 
                 - name: instantiate
                   steps:
@@ -319,13 +335,106 @@ spec:
                           value: "{{tasks.prepare-orders.outputs.parameters.snfvo_data}}"
 
 
+                - name: terminate
+                  steps:
+                  - - name: terminate-from-api
+                      when: "{{workflow.parameters.sub_operation}} == \"API\""
+                      template: terminate-from-api
+
+                  - - name: terminate-orchestrate
+                      when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE_TERMINATE\""
+                      template: orchestrate-terminate
+
+
+                - name: terminate-from-api
+                  steps:
+                  - - name: prepare-terminate
+                      template: prepare-terminate
+                  
+                  - - name: print-hello-productOrder
+                      when: "\"{{steps.prepare-terminate.outputs.result}}\" == \"productOrder\""
+                      templateRef:
+                        name: workflow-base
+                        template: whalesay
+                      arguments:
+                        parameters:
+                        - name: message
+                          value: "productOrder"
+
+                  - - name: print-hello-productOrderStatusTransaction
+                      when: "\"{{steps.prepare-terminate.outputs.result}}\" == \"productOrderStatusTransaction\""
+                      templateRef:
+                        name: workflow-base
+                        template: whalesay
+                      arguments:
+                        parameters:
+                        - name: message
+                          value: "productOrderStatusTransaction"
+
+
+                - name: terminate-status-instance
+                  dag:
+                    tasks:
+                    - name: get-transaction-uuid
+                      templateRef:
+                        name: workflow-base
+                        template: from-key
+                      arguments:
+                        parameters:
+                        - name: key
+                          value: transaction_uuid
+                        - name: json_str
+                          value: |
+                            {{workflow.parameters.statusInstance}}
+
+                    - name: get-vsi-id
+                      templateRef:
+                        name: workflow-base
+                        template: from-key
+                      arguments:
+                        parameters:
+                        - name: key
+                          value: vsi_id
+                        - name: json_str
+                          value: |
+                            {{workflow.parameters.statusInstance}}
+
+                    - name: get-related-party
+                      templateRef:
+                        name: workflow-base
+                        template: from-key
+                      arguments:
+                        parameters:
+                        - name: key
+                          value: related_party
+                        - name: json_str
+                          value: |
+                            {{workflow.parameters.statusInstance}}
+
+                    - name: trigger-orchestration-terminate
+                      dependencies: [get-transaction-uuid, get-vsi-id, get-related-party]
+                      templateRef:
+                        name: workflow-orchestrator
+                        template: trigger-orchestration-terminate
+                      arguments:
+                        parameters:
+                        - name: resource_owner
+                          value: "{{tasks.get-related-party.outputs.result}}"
+                        - name: vsi_id
+                          value: "{{tasks.get-vsi-id.outputs.result}}"
+
+
+
                 - name: orchestrate
                   templateRef:
                     name: orchestrate
                     template: orchestrate
 
+                - name: orchestrate-terminate
+                  templateRef:
+                    name: orchestrate
+                    template: orchestrate-terminate
 
-                  
 
                 - name: instantiate-invoke-snfvo
                   # 
@@ -355,6 +464,25 @@ spec:
                         - name: order_id
                           value: "{{workflow.parameters.order_id}}"
 
+
+                - name: prepare-terminate
+                  script:
+                    image: python:alpine3.6
+                    imagePullPolicy: IfNotPresent
+                    command: [python]
+                    source: |
+                      productOrder = {{workflow.parameters.productOrder}}
+                      productOrderStatusTransaction = {{workflow.parameters.productOrderStatusTransaction}}
+                      statusInstance = {{workflow.parameters.statusInstance}}
+                      if productOrder:
+                          print("productOrder")
+                      elif productOrderStatusTransaction:
+                          print("productOrderStatusTransaction")
+                      elif statusInstance:
+                          print("statusInstance")
+                      else:
+                          print ("wrong value")
+                      
 
           parameters:
             - src:
@@ -533,3 +661,33 @@ spec:
                   {
                   }
               dest: spec.arguments.parameters.24.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.productOrder
+                value: |
+                  {
+                  }
+              dest: spec.arguments.parameters.25.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.productOrderStatusTransaction
+                value: |
+                  {
+                  }
+              dest: spec.arguments.parameters.26.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.statusInstance
+                value: |
+                  {
+                  }
+              dest: spec.arguments.parameters.27.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.vsi_id
+                value: DEFAULT
+              dest: spec.arguments.parameters.28.value
