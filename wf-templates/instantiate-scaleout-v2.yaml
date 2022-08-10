@@ -28,7 +28,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: instantiate-scaleout
+  name: instantiate-scaleout-terminate
 spec:
   templates:
   - name: scaleout
@@ -119,6 +119,32 @@ spec:
           - name: related_party
             value: "{{workflow.parameters.related_party}}"
 
+  - name: terminate
+    inputs:
+      parameters:
+      - name: issm_api_url
+      - name: kafka_dl
+    dag:
+      tasks:
+      - name: trigger-terminate
+        template: trigger-terminate
+        arguments:
+          parameters:
+          - name: service_owner
+            value: "{{workflow.parameters.service_owner}}"
+
+          - name: productOrder
+            value: "{{workflow.parameters.productOrder}}"
+          - name: productOrderStatusTransaction
+            value: "{{workflow.parameters.productOrderStatusTransaction}}"
+          - name: statusInstance
+            value: "{{workflow.parameters.statusInstance}}"
+
+          - name: issm_api_url
+            value: "{{inputs.parameters.issm_api_url}}"
+          - name: kafka_dl
+            value: "{{inputs.parameters.kafka_dl}}"
+
 
   - name: trigger-scaleout
     inputs:
@@ -207,6 +233,42 @@ spec:
                   "issm_api_url": "{{inputs.parameters.issm_api_url}}",
                   "snfvo_data": {{inputs.parameters.snfvo_data}},
                   "related_party": "{{inputs.parameters.related_party}}"
+                }
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.service_owner}}"
+
+  - name: trigger-terminate
+    inputs:
+      parameters:
+      - name: issm_api_url
+      - name: kafka_dl
+      - name: service_owner
+      - name: productOrder
+      - name: productOrderStatusTransaction
+      - name: statusInstance
+
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-scaleout
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              value: |
+                { "event_uuid": "{{steps.event-uuid.outputs.result}}",
+                  "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "operation": "terminate", "sub_operation": "TERMINATE_SERVICE",
+                  "service_owner": "{{inputs.parameters.service_owner}}",
+                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
+                  "issm_api_url": "{{inputs.parameters.issm_api_url}}",
+                  "productOrder": {{workflow.parameters.productOrder}},
+                  "productOrderStatusTransaction": {{workflow.parameters.productOrderStatusTransaction}},
+                  "statusInstance": {{workflow.parameters.statusInstance}},
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"

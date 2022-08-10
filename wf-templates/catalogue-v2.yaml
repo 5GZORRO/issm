@@ -712,3 +712,46 @@ spec:
         error_msg = raise_for_status(r)
         if error_msg:
             raise Exception('%s. %s' % (error_msg, r.text))
+
+
+  - name: delete-status-instance
+    inputs:
+      parameters:
+      - name: transaction_uuid
+      - name: vsi_id
+      - name: related_party
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        def raise_for_status(r):
+            http_error_msg = ''
+            if 400 <= r.status_code < 500:
+                http_error_msg = '%s Client Error: %s' % (r.status_code, r.reason)
+
+            elif 500 <= r.status_code < 600:
+                http_error_msg = '%s Server Error: %s' % (r.status_code, r.reason)
+
+            return http_error_msg
+
+        transaction_uuid = "{{inputs.parameters.transaction_uuid}}"
+        vsi_id = "{{inputs.parameters.vsi_id}}"
+        related_party = "{{inputs.parameters.related_party}}"
+
+        sys.stdout.write(
+            'Input parameters. transaction_uuid: "%s", vsi_id: "%s", related_party: "%s"\n' %
+            (transaction_uuid, vsi_id, related_party))
+
+        headers = {'Content-Type': 'application/json'}
+        r = requests.delete("{{workflow.parameters.issm_api_url}}/productOrderStatusTransaction/%s/statusInstance/%s" %
+            (transaction_uuid, ":".join([vsi_id, related_party])), json={}, headers=headers)
+
+        sys.stdout.write('r.text [%s]\n' % r.text)
+        error_msg = raise_for_status(r)
+        if error_msg:
+            raise Exception('%s. %s' % (error_msg, r.text))

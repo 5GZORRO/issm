@@ -228,7 +228,7 @@ spec:
                     - name: do-instantiate
                       dependencies: [prepare-orders, get-platform-env]
                       templateRef:
-                        name: instantiate-scaleout
+                        name: instantiate-scaleout-terminate
                         template: instantiate
                       arguments:
                         parameters:
@@ -311,7 +311,7 @@ spec:
                     - name: do-scaleout
                       dependencies: [prepare-orders, get-platform-env]
                       templateRef:
-                        name: instantiate-scaleout
+                        name: instantiate-scaleout-terminate
                         template: scaleout
                       arguments:
                         parameters:
@@ -341,16 +341,62 @@ spec:
                       when: "{{workflow.parameters.sub_operation}} == \"API\""
                       template: terminate-from-api
 
+                  - - name: terminate-service
+                      when: "{{workflow.parameters.sub_operation}} == \"TERMINATE_SERVICE\""
+                      template: terminate-service
+
                   - - name: terminate-orchestrate
                       when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE_TERMINATE\""
                       template: orchestrate-terminate
 
 
                 - name: terminate-from-api
+                  #
+                  # Load domain's env first
+                  #
+                  dag:
+                    tasks:
+                    - name: get-domain-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-domain-env
+                      arguments:
+                        parameters:
+                        - name: domain
+                          value: "{{workflow.parameters.service_owner}}"
+
+                    - name: get-platform-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-platform-env
+
+                    - name: do-terminate
+                      dependencies: [get-domain-env]
+                      templateRef:
+                        name: instantiate-scaleout-terminate
+                        template: terminate
+                      arguments:
+                        parameters:
+                        - name: issm_api_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.issm_api_url}}"
+
+                        - name: kafka_dl
+                          value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
+
+
+                - name: terminate-service
                   steps:
                   - - name: prepare-terminate
                       template: prepare-terminate
-                  
+
+                  - - name: terminate-status-instance
+                      when: "\"{{steps.prepare-terminate.outputs.result}}\" == \"statusInstance\""
+                      template: terminate-status-instance
+                      arguments:
+                        parameters:
+                        - name: issm_api_url
+                          value: "{{workflow.parameters.issm_api_url}}"
+
                   - - name: print-hello-productOrder
                       when: "\"{{steps.prepare-terminate.outputs.result}}\" == \"productOrder\""
                       templateRef:
@@ -422,6 +468,20 @@ spec:
                           value: "{{tasks.get-related-party.outputs.result}}"
                         - name: vsi_id
                           value: "{{tasks.get-vsi-id.outputs.result}}"
+
+                    - name: delete-status-instance
+                      dependencies: [trigger-orchestration-terminate]
+                      templateRef:
+                        name: workflow-catalog
+                        template: delete-status-instance
+                      arguments:
+                        parameters:
+                        - name: transaction_uuid
+                          value: "{{tasks.get-transaction-uuid.outputs.result}}"
+                        - name: vsi_id
+                          value: "{{tasks.get-vsi-id.outputs.result}}"
+                        - name: related_party
+                          value: "{{tasks.get-related-party.outputs.result}}"
 
 
 
