@@ -943,6 +943,9 @@ def transaction_status_delete(transaction_uuid):
 
 @proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance', methods=['POST'])
 def status_instance_create(transaction_uuid):
+    """
+    Endpoint used by ISSM instantiate/scaleout transaction
+    """
     try:
         value = getMessagePayload()
 
@@ -999,6 +1002,35 @@ def status_instance_list(transaction_uuid):
     return response
 
 
+@proxy.route('/<order_id>/statusInstance', methods=['GET'])
+def status_instance_list2(order_id):
+    """
+    Endpoint used by ISSM terminate transaction
+    """
+    result = []
+    try:
+        records = StatusInstance.query.filter_by(
+            order_id=order_id)
+
+        for i in records:
+            result.append(dict(
+                transaction_uuid=i.transaction_uuid,
+                main=i.main,
+                order_id=i.order_id,
+                vsi_id=i.vsi_id_related_party.split(':')[0],
+                related_party=i.vsi_id_related_party.split(':')[1]))
+
+        response = flask.jsonify(result)
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /statusInstance %s\n' % str(response))
+    return response
+
+
 @proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance/<vsi_id_related_party>', methods=['GET'])
 def status_instance_get(transaction_uuid, vsi_id_related_party):
     pass
@@ -1006,6 +1038,10 @@ def status_instance_get(transaction_uuid, vsi_id_related_party):
 
 @proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance/<vsi_id_related_party>', methods=['DELETE'])
 def status_instance_delete(transaction_uuid, vsi_id_related_party):
+    """
+    Endpoint used by ISSM terminate transaction
+    """
+    # TODO: if its the last child - delete parent
     try:
         # ensure composite status exists
         CompositeProductOrderStatus.query.filter_by(
@@ -1029,6 +1065,10 @@ def status_instance_delete(transaction_uuid, vsi_id_related_party):
 
 @proxy.route('/<service_owner>/productOrderStatus/<order_id>', methods=['GET'])
 def status_order_get(service_owner, order_id):
+    """
+    This endpoint should be used by the portal to populate Order
+    "Instances" tab.
+    """
     statuses = dict()
     try:
         records = StatusInstance.query.filter_by(

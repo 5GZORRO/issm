@@ -394,18 +394,16 @@ spec:
                       template: terminate-status-instance
                       arguments:
                         parameters:
-                        - name: issm_api_url
-                          value: "{{workflow.parameters.issm_api_url}}"
+                        - name: status_instance
+                          value: "{{workflow.parameters.statusInstance}}"
 
-                  - - name: print-hello-productOrder
+                  - - name: terminate-product-order
                       when: "\"{{steps.prepare-terminate.outputs.result}}\" == \"productOrder\""
-                      templateRef:
-                        name: workflow-base
-                        template: whalesay
+                      template: terminate-product-order
                       arguments:
                         parameters:
-                        - name: message
-                          value: "productOrder"
+                        - name: issm_api_url
+                          value: "{{workflow.parameters.issm_api_url}}"
 
                   - - name: print-hello-productOrderStatusTransaction
                       when: "\"{{steps.prepare-terminate.outputs.result}}\" == \"productOrderStatusTransaction\""
@@ -418,7 +416,111 @@ spec:
                           value: "productOrderStatusTransaction"
 
 
+#                - name: terminate-status-instance
+#                  dag:
+#                    tasks:
+#                    - name: get-transaction-uuid
+#                      templateRef:
+#                        name: workflow-base
+#                        template: from-key
+#                      arguments:
+#                        parameters:
+#                        - name: key
+#                          value: transaction_uuid
+#                        - name: json_str
+#                          value: |
+#                            {{workflow.parameters.statusInstance}}
+#
+#                    - name: get-vsi-id
+#                      templateRef:
+#                        name: workflow-base
+#                        template: from-key
+#                      arguments:
+#                        parameters:
+#                        - name: key
+#                          value: vsi_id
+#                        - name: json_str
+#                          value: |
+#                            {{workflow.parameters.statusInstance}}
+#
+#                    - name: get-related-party
+#                      templateRef:
+#                        name: workflow-base
+#                        template: from-key
+#                      arguments:
+#                        parameters:
+#                        - name: key
+#                          value: related_party
+#                        - name: json_str
+#                          value: |
+#                            {{workflow.parameters.statusInstance}}
+#
+#                    - name: trigger-orchestration-terminate
+#                      dependencies: [get-transaction-uuid, get-vsi-id, get-related-party]
+#                      templateRef:
+#                        name: workflow-orchestrator
+#                        template: trigger-orchestration-terminate
+#                      arguments:
+#                        parameters:
+#                        - name: resource_owner
+#                          value: "{{tasks.get-related-party.outputs.result}}"
+#                        - name: vsi_id
+#                          value: "{{tasks.get-vsi-id.outputs.result}}"
+#
+#                    - name: delete-status-instance
+#                      dependencies: [trigger-orchestration-terminate]
+#                      templateRef:
+#                        name: workflow-catalog
+#                        template: delete-status-instance
+#                      arguments:
+#                        parameters:
+#                        - name: transaction_uuid
+#                          value: "{{tasks.get-transaction-uuid.outputs.result}}"
+#                        - name: vsi_id
+#                          value: "{{tasks.get-vsi-id.outputs.result}}"
+#                        - name: related_party
+#                          value: "{{tasks.get-related-party.outputs.result}}"
+
+
+                - name: terminate-product-order
+                  dag:
+                    tasks:
+                    - name: get-order-id
+                      templateRef:
+                        name: workflow-base
+                        template: from-key
+                      arguments:
+                        parameters:
+                        - name: key
+                          value: order_id
+                        - name: json_str
+                          value: |
+                            {{workflow.parameters.productOrder}}
+
+                    - name: list-status-instance
+                      dependencies: [get-order-id]
+                      templateRef:
+                        name: workflow-catalog
+                        template: list-status-instance
+                      arguments:
+                        parameters:
+                        - name: order_id
+                          value: "{{tasks.get-order-id.outputs.result}}"
+
+                    - name: loop-status-instances
+                      dependencies: [list-status-instance]
+                      template: terminate-status-instance
+                      arguments:
+                        parameters:
+                        - name: status_instance
+                          value: "{{item}}"
+                      withParam: "{{tasks.list-status-instance.outputs.parameters.status_instances}}"
+
+
                 - name: terminate-status-instance
+                  inputs:
+                    parameters:
+                    - name: status_instance
                   dag:
                     tasks:
                     - name: get-transaction-uuid
@@ -431,7 +533,7 @@ spec:
                           value: transaction_uuid
                         - name: json_str
                           value: |
-                            {{workflow.parameters.statusInstance}}
+                            {{inputs.parameters.status_instance}}
 
                     - name: get-vsi-id
                       templateRef:
@@ -443,7 +545,7 @@ spec:
                           value: vsi_id
                         - name: json_str
                           value: |
-                            {{workflow.parameters.statusInstance}}
+                            {{inputs.parameters.status_instance}}
 
                     - name: get-related-party
                       templateRef:
@@ -455,7 +557,7 @@ spec:
                           value: related_party
                         - name: json_str
                           value: |
-                            {{workflow.parameters.statusInstance}}
+                            {{inputs.parameters.status_instance}}
 
                     - name: trigger-orchestration-terminate
                       dependencies: [get-transaction-uuid, get-vsi-id, get-related-party]
@@ -482,6 +584,7 @@ spec:
                           value: "{{tasks.get-vsi-id.outputs.result}}"
                         - name: related_party
                           value: "{{tasks.get-related-party.outputs.result}}"
+
 
 
 
