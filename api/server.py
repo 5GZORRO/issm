@@ -980,6 +980,9 @@ def status_instance_create(transaction_uuid):
 
 @proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance', methods=['GET'])
 def status_instance_list(transaction_uuid):
+    """
+    Endpoint used by ISSM terminate transaction
+    """
     result = []
     try:
         record = CompositeProductOrderStatus.query.filter_by(
@@ -988,6 +991,7 @@ def status_instance_list(transaction_uuid):
         for i in record.instances:
             result.append(dict(
                 main=i.main, order_id=i.order_id,
+                transaction_uuid=i.transaction_uuid,
                 vsi_id=i.vsi_id_related_party.split(':')[0],
                 related_party=i.vsi_id_related_party.split(':')[1]))
 
