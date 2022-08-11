@@ -193,6 +193,31 @@ spec:
           template: fail
 
 
+
+  - name: orchestrate-terminate
+    steps:
+    - - name: get-domain-env
+        templateRef:
+          name: workflow-environment
+          template: get-domain-env
+        arguments:
+          parameters:
+          - name: domain
+            # myself
+            value: "{{workflow.parameters.resource_owner}}"
+    
+    - - name: nsso-terminate-vsi
+        template: terminate-instance
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{steps.get-domain-env.outputs.parameters.vs_url}}"
+          - name: tenant_name
+            value: "{{workflow.parameters.service_owner}}"
+          - name: vsi_id
+            value: "{{workflow.parameters.vsi_id}}"
+    
+
   - name: create-descriptor
     # Create a new VSD from the given blueprint name
     #
@@ -305,6 +330,33 @@ spec:
       - name: vsi_id
         valueFrom:
           path: /tmp/id.txt
+
+
+  - name: terminate-instance
+    # Terminate a VSI
+    #
+    # Parameters:
+    # vs_url: URL to vertical slicer service (str)
+    # tenant_name: the name of the vertical tenant to create (str)
+    # vsi_id: the id the VSI to terminate (str)
+    #
+    inputs:
+      parameters:
+      - name: vs_url
+      - name: tenant_name
+      - name: vsi_id
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+
+        echo "Log in {{inputs.parameters.tenant_name}}.."
+        curl -X POST -d username={{inputs.parameters.tenant_name}} -d password={{inputs.parameters.tenant_name}} -c /tmp/t_c {{inputs.parameters.vs_url}}/login
+
+        echo "Terminate instance.."
+        msg="$(curl -b /tmp/t_c --data '{}' -X POST {{inputs.parameters.vs_url}}/vs/basic/vslcm/vs/{{inputs.parameters.vsi_id}}/terminate --header "Content-Type:application/json" 2>/dev/null)"
+        echo "NSSO termination returned $msg"
 
 
   - name: poll

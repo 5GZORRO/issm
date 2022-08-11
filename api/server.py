@@ -36,6 +36,10 @@ from kubernetes.client import V1ObjectMeta
 from kubernetes.client.rest import ApiException
 
 
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import text
+
+
 KAFKA_API_VERSION = (0, 10, 1)
 KAFKA_TIMEOUT = 10  # seconds
 
@@ -553,6 +557,15 @@ server = None
 
 proxy_server = None
 
+# change to name of your database; add path if necessary
+db_name = 'sockmarket.db'
+
+proxy.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + db_name
+
+proxy.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+
+# this variable, db, will be used for all SQLAlchemy commands
+db = SQLAlchemy(proxy)
 
 def setServer(s):
     global server
@@ -562,6 +575,40 @@ def setServer(s):
 def setProxy(p):
     global proxy_server
     proxy_server = p
+
+
+class CompositeProductOrderStatus(db.Model):
+    __tablename__ = 'composite_product_order_status'
+    transaction_uuid = db.Column(db.String, primary_key=True)
+    instances = db.relationship("StatusInstance")
+
+    def __init__(self, transaction_uuid):
+        self.transaction_uuid= transaction_uuid
+
+    def __repr__(self):
+        return self.transaction_uuid
+
+
+class StatusInstance(db.Model):
+    __tablename__ = 'status_instance'
+    transaction_uuid = db.Column(db.String, db.ForeignKey("composite_product_order_status.transaction_uuid"))
+    vsi_id_related_party = db.Column(db.String, primary_key=True)
+    main = db.Column(db.String, nullable=False)
+    order_id = db.Column(db.String, nullable=False)
+
+    def __init__(self, vsi_id_related_party, main, order_id, transaction_uuid):
+        self.vsi_id_related_party = vsi_id_related_party
+        self.main = main
+        self.order_id = order_id
+        self.transaction_uuid = transaction_uuid
+
+    def __repr__(self):
+        # return self.order_id + ", " + self.vsi_id_related_party + ", " + self.main + ", " + \
+        # self.transaction_uuid
+        return ", ".join([self.order_id, self.vsi_id_related_party, self.main,
+                        self.transaction_uuid])
+
+db.create_all(app=proxy)
 
 
 def getMessagePayload():
@@ -596,10 +643,10 @@ def transactions_submit(service_owner, transaction_type):
                      (service_owner, transaction_type))
     try:
         value = getMessagePayload()
-        if transaction_type not in TRANSACTION_TYPES:
-            raise Exception(
-                'transaction_type value does not match: %s' % 
-                TRANSACTION_TYPES)
+#         if transaction_type not in TRANSACTION_TYPES:
+#             raise Exception(
+#                 'transaction_type value does not match: %s' % 
+#                 TRANSACTION_TYPES)
 
         intent = value
         response = flask.jsonify(
@@ -826,6 +873,276 @@ def aux_submit(service_owner):
     sys.stdout.write('Exit /aux %s\n' % str(response))
     return response
 
+
+@proxy.route('/db')
+def testdb():
+    try:
+        db.session.query(text('1')).from_statement(text('SELECT 1')).all()
+        return '<h1>It works.</h1>'
+    except Exception as e:
+        # e holds description of the error
+        error_text = "<p>The error:<br>" + str(e) + "</p>"
+        hed = '<h1>Something is broken.</h1>'
+        return hed + error_text
+
+
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>', methods=['POST'])
+def transaction_status_add(transaction_uuid):
+    try:
+        record = CompositeProductOrderStatus(transaction_uuid)
+        db.session.add(record)
+        db.session.commit()
+        response = flask.jsonify({'OK': 200})
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /productOrderStatusTransaction %s\n' % str(response))
+    return response
+
+
+@proxy.route('/productOrderStatusTransaction', methods=['GET'])
+def transaction_status_list():
+    result = []
+    try:
+        cos = CompositeProductOrderStatus.query.order_by(
+            CompositeProductOrderStatus.transaction_uuid).all()
+        for e in cos:
+            result.append(e.transaction_uuid)
+        response = flask.jsonify(result)
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /productOrderStatusTransaction %s\n' % str(response))
+    return response
+
+
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>', methods=['DELETE'])
+def transaction_status_delete(transaction_uuid):
+    # TODO: support cascade delete
+    try:
+        record = CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid).first()
+        if not record:
+            response = flask.jsonify(
+                {'error': 'CompositeProductOrderStatus [%s] not found' %
+                 transaction_uuid})
+            response.status_code = 404
+        else:
+            db.session.delete(record)
+            db.session.commit()
+            response = flask.jsonify({'OK': 200})
+            response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit delete /productOrderStatusTransaction %s\n' % str(response))
+    return response
+
+
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance', methods=['POST'])
+def status_instance_create(transaction_uuid):
+    """
+    Endpoint used by ISSM instantiate/scaleout transaction
+    """
+    try:
+        value = getMessagePayload()
+
+        # TODO: if not created - then create it
+        record = CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid).first()
+        if not record:
+            record = CompositeProductOrderStatus(transaction_uuid)
+            db.session.add(record)
+            db.session.commit()
+
+        # TODO: remove this additional query
+        record = CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid).first()
+        main = value['main']
+        vsi_id_related_party = value['vsi_id_related_party']
+        order_id = value['order_id']
+
+        record.instances.append(StatusInstance(vsi_id_related_party=vsi_id_related_party,
+                                main=main, order_id=order_id, transaction_uuid=transaction_uuid))
+        db.session.commit()
+        response = flask.jsonify({'OK': 200})
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /statusInstance %s\n' % str(response))
+    return response
+
+
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance', methods=['GET'])
+def status_instance_list(transaction_uuid):
+    """
+    Endpoint used by ISSM terminate transaction
+    """
+    result = []
+    try:
+        record = CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid).first()
+
+        if not record:
+            response = flask.jsonify(
+                {'error': 'CompositeProductOrderStatus [%s] not found' %
+                 transaction_uuid})
+            response.status_code = 404
+        else:
+            for i in record.instances:
+                result.append(dict(
+                    main=i.main, order_id=i.order_id,
+                    transaction_uuid=i.transaction_uuid,
+                    vsi_id=i.vsi_id_related_party.split(':')[0],
+                    related_party=i.vsi_id_related_party.split(':')[1]))
+    
+            response = flask.jsonify(result)
+            response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /statusInstance %s\n' % str(response))
+    return response
+
+
+@proxy.route('/<order_id>/statusInstance', methods=['GET'])
+def status_instance_list2(order_id):
+    """
+    Endpoint used by ISSM terminate transaction
+    """
+    result = []
+    try:
+        records = StatusInstance.query.filter_by(
+            order_id=order_id)
+
+        for i in records:
+            result.append(dict(
+                transaction_uuid=i.transaction_uuid,
+                main=i.main,
+                order_id=i.order_id,
+                vsi_id=i.vsi_id_related_party.split(':')[0],
+                related_party=i.vsi_id_related_party.split(':')[1]))
+
+        response = flask.jsonify(result)
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /statusInstance %s\n' % str(response))
+    return response
+
+
+@proxy.route('/statusInstance', methods=['GET'])
+def status_instance_list3():
+    result = []
+    try:
+        records = StatusInstance.query.all()
+
+        for i in records:
+            result.append(dict(
+                transaction_uuid=i.transaction_uuid,
+                main=i.main,
+                order_id=i.order_id,
+                vsi_id=i.vsi_id_related_party.split(':')[0],
+                related_party=i.vsi_id_related_party.split(':')[1]))
+
+        response = flask.jsonify(result)
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /statusInstance %s\n' % str(response))
+    return response
+
+
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance/<vsi_id_related_party>', methods=['GET'])
+def status_instance_get(transaction_uuid, vsi_id_related_party):
+    pass
+
+
+@proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance/<vsi_id_related_party>', methods=['DELETE'])
+def status_instance_delete(transaction_uuid, vsi_id_related_party):
+    """
+    Endpoint used by ISSM terminate transaction
+    """
+    # TODO: delete parent in-case last child had been removed
+    try:
+        # ensure composite status exists
+        CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid).first()
+
+        record = StatusInstance.query.filter_by(
+            vsi_id_related_party=vsi_id_related_party).first()
+
+        if not record:
+            response = flask.jsonify({'error': 'StatusInstance [%s] not found' %
+                                      vsi_id_related_party})
+            response.status_code = 404
+        else:
+            db.session.delete(record)
+            db.session.commit()
+            response = flask.jsonify({'OK': 200})
+            response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit delete /statusInstance %s\n' % str(response))
+    return response
+
+
+@proxy.route('/<service_owner>/productOrderStatus/<order_id>', methods=['GET'])
+def status_order_get(service_owner, order_id):
+    """
+    This endpoint should be used by the portal to populate Order
+    "Instances" tab.
+    """
+    statuses = dict()
+    try:
+        records = StatusInstance.query.filter_by(
+            order_id=order_id).order_by(StatusInstance.transaction_uuid)
+
+        for r in records:
+            # create this transaction entry with the below dict. NOTE: there
+            # *could not* be different main values for SAME transaction per THIS
+            # order id, so it is safe to add it inside dict of main entry
+            statuses.setdefault(
+                r.transaction_uuid,
+                dict(transaction_uuid=r.transaction_uuid, main=r.main,
+                     order_id=r.order_id, instances=[]))
+            statuses[r.transaction_uuid]['instances'].append(
+                dict(
+                    vsi_id=r.vsi_id_related_party.split(':')[0],
+                    related_party=r.vsi_id_related_party.split(':')[1])
+                ) 
+
+        response = flask.jsonify(statuses)
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /productOrderStatus %s\n' % str(response))
+    return response
 
 
 def main():

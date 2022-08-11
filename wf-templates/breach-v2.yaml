@@ -131,6 +131,8 @@ spec:
             value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
           - name: trmf_url
             value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
+          - name: issm_api_url
+            value: "{{tasks.get-domain-env.outputs.parameters.issm_api_url}}"
 
           - name: srsd_url
             value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
@@ -153,6 +155,7 @@ spec:
       - name: catalogue_url
       - name: trmf_url
       - name: srsd_url
+      - name: issm_api_url
       - name: snfvo_data
     steps:
       - - name: event-uuid
@@ -180,6 +183,7 @@ spec:
                   "catalogue_url": "{{inputs.parameters.catalogue_url}}",
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
                   "srsd_url": "{{inputs.parameters.srsd_url}}",
+                  "issm_api_url": "{{inputs.parameters.issm_api_url}}",
                   "snfvo_data": {{inputs.parameters.snfvo_data}},
                   "sla_breach": {
                     "applicable": "true",
