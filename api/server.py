@@ -926,12 +926,18 @@ def transaction_status_list():
 def transaction_status_delete(transaction_uuid):
     # TODO: support cascade delete
     try:
-        records = CompositeProductOrderStatus.query.filter_by(
-            transaction_uuid=transaction_uuid)
-        db.session.delete(records[0])
-        db.session.commit()
-        response = flask.jsonify({'OK': 200})
-        response.status_code = 200
+        record = CompositeProductOrderStatus.query.filter_by(
+            transaction_uuid=transaction_uuid).first()
+        if not record:
+            response = flask.jsonify(
+                {'error': 'CompositeProductOrderStatus [%s] not found' %
+                 transaction_uuid})
+            response.status_code = 404
+        else:
+            db.session.delete(record)
+            db.session.commit()
+            response = flask.jsonify({'OK': 200})
+            response.status_code = 200
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
@@ -988,15 +994,21 @@ def status_instance_list(transaction_uuid):
         record = CompositeProductOrderStatus.query.filter_by(
             transaction_uuid=transaction_uuid).first()
 
-        for i in record.instances:
-            result.append(dict(
-                main=i.main, order_id=i.order_id,
-                transaction_uuid=i.transaction_uuid,
-                vsi_id=i.vsi_id_related_party.split(':')[0],
-                related_party=i.vsi_id_related_party.split(':')[1]))
-
-        response = flask.jsonify(result)
-        response.status_code = 200
+        if not record:
+            response = flask.jsonify(
+                {'error': 'CompositeProductOrderStatus [%s] not found' %
+                 transaction_uuid})
+            response.status_code = 404
+        else:
+            for i in record.instances:
+                result.append(dict(
+                    main=i.main, order_id=i.order_id,
+                    transaction_uuid=i.transaction_uuid,
+                    vsi_id=i.vsi_id_related_party.split(':')[0],
+                    related_party=i.vsi_id_related_party.split(':')[1]))
+    
+            response = flask.jsonify(result)
+            response.status_code = 200
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
@@ -1035,6 +1047,31 @@ def status_instance_list2(order_id):
     return response
 
 
+@proxy.route('/statusInstance', methods=['GET'])
+def status_instance_list3():
+    result = []
+    try:
+        records = StatusInstance.query.all()
+
+        for i in records:
+            result.append(dict(
+                transaction_uuid=i.transaction_uuid,
+                main=i.main,
+                order_id=i.order_id,
+                vsi_id=i.vsi_id_related_party.split(':')[0],
+                related_party=i.vsi_id_related_party.split(':')[1]))
+
+        response = flask.jsonify(result)
+        response.status_code = 200
+
+    except Exception as e:
+        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
+        response.status_code = 500
+
+    sys.stdout.write('Exit /statusInstance %s\n' % str(response))
+    return response
+
+
 @proxy.route('/productOrderStatusTransaction/<transaction_uuid>/statusInstance/<vsi_id_related_party>', methods=['GET'])
 def status_instance_get(transaction_uuid, vsi_id_related_party):
     pass
@@ -1045,7 +1082,7 @@ def status_instance_delete(transaction_uuid, vsi_id_related_party):
     """
     Endpoint used by ISSM terminate transaction
     """
-    # TODO: if its the last child - delete parent
+    # TODO: delete parent in-case last child had been removed
     try:
         # ensure composite status exists
         CompositeProductOrderStatus.query.filter_by(
@@ -1054,10 +1091,15 @@ def status_instance_delete(transaction_uuid, vsi_id_related_party):
         record = StatusInstance.query.filter_by(
             vsi_id_related_party=vsi_id_related_party).first()
 
-        db.session.delete(record)
-        db.session.commit()
-        response = flask.jsonify({'OK': 200})
-        response.status_code = 200
+        if not record:
+            response = flask.jsonify({'error': 'StatusInstance [%s] not found' %
+                                      vsi_id_related_party})
+            response.status_code = 404
+        else:
+            db.session.delete(record)
+            db.session.commit()
+            response = flask.jsonify({'OK': 200})
+            response.status_code = 200
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
