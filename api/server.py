@@ -655,12 +655,10 @@ def transactions_submit(service_owner, transaction_type):
                 intent=intent))
 
         response.status_code = 200
-        #response.headers["Access-Control-Allow-Origin"] = "*"
         return response
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
-        #response.headers["Access-Control-Allow-Origin"] = "*"
         response.status_code = 500
 
     sys.stdout.write('Exit /instantiate %s\n' % str(response))
@@ -675,14 +673,12 @@ def transactions_get_all(service_owner):
         flow_json = proxy_server.get_transactions(service_owner)
         response = flask.jsonify(flow_json)
         response.status_code = 200
-        #response.headers["Access-Control-Allow-Origin"] = "*"
         return response
     except HTTPException as e:
         return e
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
-        #response.headers["Access-Control-Allow-Origin"] = "*"
         return response
 
 
@@ -695,14 +691,12 @@ def transactions_get(service_owner, transaction_type):
         flow_json = proxy_server.get_transactions(service_owner, transaction_type)
         response = flask.jsonify(flow_json)
         response.status_code = 200
-        #response.headers["Access-Control-Allow-Origin"] = "*"
         return response
     except HTTPException as e:
         return e
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
-        #response.headers["Access-Control-Allow-Origin"] = "*"
         return response
 
 
@@ -715,14 +709,12 @@ def transactions_delete(service_owner, transaction_uuid):
         proxy_server.delete_transaction(service_owner, transaction_uuid)
         response = flask.jsonify({'OK': 200})
         response.status_code = 200
-        #response.headers["Access-Control-Allow-Origin"] = "*"
         return response
     except HTTPException as e:
         return e
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
         response.status_code = 500
-        #response.headers["Access-Control-Allow-Origin"] = "*"
         return response
 
 
@@ -731,7 +723,6 @@ def transactions_types():
     sys.stdout.write('Received get types\n')
     response = flask.jsonify(TRANSACTION_TYPES)
     response.status_code = 200
-    #response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
 
@@ -862,12 +853,10 @@ def aux_submit(service_owner):
             proxy_server.aux_submit(service_owner=service_owner,intent=intent))
 
         response.status_code = 200
-        #response.headers["Access-Control-Allow-Origin"] = "*"
         return response
 
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
-        #response.headers["Access-Control-Allow-Origin"] = "*"
         response.status_code = 500
 
     sys.stdout.write('Exit /aux %s\n' % str(response))
