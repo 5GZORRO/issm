@@ -87,15 +87,6 @@ spec:
           - name: vsbName
             value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
 
-          - name: product_DID
-            value: ""
-
-          - name: sla_DID
-            value: ""
-
-          - name: place
-            value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.place}}"
-
           - name: userdata
             # slice userdata is at snfvo_data['userdata']
             value: "{{tasks.userdata-slice.outputs.result}}"
@@ -238,12 +229,6 @@ spec:
             value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
           - name: vsbName
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
-          - name: product_DID
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
-          - name: sla_DID
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
-          - name: place
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
           - name: userdata
             value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
 
@@ -584,17 +569,6 @@ spec:
           - name: vsbName
             value: "{{tasks.get-slice-order-from-catalog.outputs.parameters.vsbName}}"
 
-          - name: product_DID
-            # N/A for slice
-            value: ""
-
-          - name: sla_DID
-            # N/A for slice
-            value: ""
-
-          - name: place
-            value: "{{tasks.edge-attributes.outputs.parameters.place}}"
-
           - name: userdata
             value: "{ }"
 
@@ -746,14 +720,10 @@ spec:
           - name: resource_owner
             # domain's orchestrator
             value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
+
           - name: vsbName
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
-          - name: product_DID
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
-          - name: sla_DID
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.sla_did}}"
-          - name: place
-            value: "{{tasks.edge-attributes.outputs.parameters.place}}"
+
           - name: userdata
             value: "{{tasks.add-user-data-vcdn.outputs.parameters.dict}}"
 

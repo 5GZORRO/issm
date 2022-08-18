@@ -88,15 +88,6 @@ spec:
           - name: vsbName
             value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.vsbName}}"
 
-          - name: product_DID
-            value: ""
-
-          - name: sla_DID
-            value: ""
-
-          - name: place
-            value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.place}}"
-
           - name: userdata
             value: "{{tasks.userdata-edge.outputs.result}}"
 
@@ -253,15 +244,6 @@ spec:
 
           - name: vsbName
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
-
-          - name: product_DID
-            value: ""
-
-          - name: sla_DID
-            value: ""
-
-          - name: place
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
 
           - name: userdata
             value: "{{tasks.add-user-data-core.outputs.parameters.dict}}"

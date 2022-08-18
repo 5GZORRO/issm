@@ -23,9 +23,6 @@ spec:
       parameters:
       - name: resource_owner
       - name: vsbName
-      - name: product_DID
-      - name: sla_DID
-      - name: place
       - name: userdata
       - name: vsd_parameters
     steps:
@@ -43,16 +40,12 @@ spec:
               value: |
                 { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                   "operation": "{{workflow.parameters.operation}}", "sub_operation": "ORCHESTRATE",
-                  "place": {{inputs.parameters.place}},
                   "elma_url": "{{workflow.parameters.elma_url}}",
-                  "vsbName": "{{inputs.parameters.vsbName}}", "product_DID": "{{inputs.parameters.product_DID}}",
-                  "sla_DID": "{{inputs.parameters.sla_DID}}",
+                  "vsbName": "{{inputs.parameters.vsbName}}",
                   "service_owner": "{{workflow.parameters.service_owner}}",
                   "resource_owner": "{{inputs.parameters.resource_owner}}",
-                  "sla_breach": {{workflow.parameters.sla_breach}},
                   "userdata": {{inputs.parameters.userdata}},
-                  "vsd_parameters": {{inputs.parameters.vsd_parameters}},
-                  "kafka_dl": "{{workflow.parameters.kafka_dl}}"
+                  "vsd_parameters": {{inputs.parameters.vsd_parameters}}
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.resource_owner}}"

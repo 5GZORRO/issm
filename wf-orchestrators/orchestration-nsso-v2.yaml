@@ -18,15 +18,6 @@
 #
 ################################################################################
 
-#
-# Parameters being used:
-#
-# service_owner: stakeholder name
-# resource_owner: this domain
-# vsbName: blue-print name
-# transaction_uuid: transaction uuid
-#
-#
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
