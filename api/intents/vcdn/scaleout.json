@@ -17,9 +17,13 @@
       }
     },
     "snfvo_data": {
-        "userdata": {},
-        "vsd_parameters": {
-          "users": "1000"
+      "userdata_slice": {
+        "sm.plmn_id": "00103",
+        "sm.imsi_list": "001035432100005,001035432000003",
+        "sm.apn": "Zorro_vCDN"
+       },
+       "vsd_parameters": {
+        "users": "1000"
        }
     }
 }

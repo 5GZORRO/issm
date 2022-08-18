@@ -1,6 +1,5 @@
 {
     "operation": "instantiate",
-    "related_party": "operator-c",
     "snfvo_data": {
       "userdata_slice": {
         "sm.plmn_id": "00103",
