@@ -24,10 +24,10 @@ spec:
       parameters:
       - name: category
       - name: place
-      - name: cpu_max
-      - name: mem_max
+      - name: cpu
+      - name: mem
       - name: mem_unit
-      - name: storage_max
+      - name: storage
       - name: storage_unit
     script:
       image: python:alpine3.6
@@ -40,15 +40,15 @@ spec:
 
         category = str("{{inputs.parameters.category}}")
 
-        cpu_max = str("{{inputs.parameters.cpu_max}}")
+        cpu = str("{{inputs.parameters.cpu}}")
 
-        mem_max = str("{{inputs.parameters.mem_max}}")
+        mem = str("{{inputs.parameters.mem}}")
         mem_unit = str("{{inputs.parameters.mem_unit}}")
 
-        storage_max = str("{{inputs.parameters.storage_max}}")
+        storage = str("{{inputs.parameters.storage}}")
         storage_unit = str("{{inputs.parameters.storage_unit}}")
 
-        sys.stdout.write(cpu_max + " cores" + " storage " + storage_max + " " + storage_unit + " ram " + mem_max + " " + mem_unit + " " + category + " " +  location + " \n")
+        sys.stdout.write(cpu_max + " cores" + " storage " + storage + " " + storage_unit + " ram " + mem + " " + mem_unit + " " + category + " " +  location + " \n")
 
 
   - name: srds-service

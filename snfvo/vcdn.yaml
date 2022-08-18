@@ -423,13 +423,13 @@ spec:
 
           - name: place
             value: "{{workflow.parameters.place}}"
-          - name: cpu_max
+          - name: cpu
             value: "{{tasks.get-order-from-catalog.outputs.parameters.cpu_max}}"
-          - name: mem_max
+          - name: mem
             value: "{{tasks.get-order-from-catalog.outputs.parameters.mem_max}}"
           - name: mem_unit
             value: "{{tasks.get-order-from-catalog.outputs.parameters.mem_unit}}"
-          - name: storage_max
+          - name: storage
             value: "{{tasks.get-order-from-catalog.outputs.parameters.storage_max}}"
           - name: storage_unit
             value: "{{tasks.get-order-from-catalog.outputs.parameters.storage_unit}}"
@@ -469,7 +469,6 @@ spec:
                 "srsd_url": "{{workflow.parameters.srsd_url}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
-                "category": "{{workflow.parameters.category}}",
                 "kafka": "{{workflow.parameters.kafka}}",
                 "kafka_dl": "{{workflow.parameters.kafka_dl}}"
               }
