@@ -121,12 +121,6 @@ spec:
 
                   - name: sla_breach
 
-                  - name: product_DID
-                    value: OVERRIDE
-
-                  - name: sla_DID
-                    value: OVERRIDE
-
                   - name: order_id
                     value: OVERRIDE
 
@@ -732,21 +726,9 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.product_DID
-                value: DEFAULT
-              dest: spec.arguments.parameters.17.value
-
-            - src:
-                dependencyName: test-dep
-                dataKey: body.sla_DID
-                value: DEFAULT
-              dest: spec.arguments.parameters.18.value
-
-            - src:
-                dependencyName: test-dep
                 dataKey: body.order_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.19.value
+              dest: spec.arguments.parameters.17.value
 
             - src:
                 dependencyName: test-dep
@@ -754,13 +736,13 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.20.value
+              dest: spec.arguments.parameters.18.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.category
                 value: DEFAULT
-              dest: spec.arguments.parameters.21.value
+              dest: spec.arguments.parameters.19.value
 
             - src:
                 dependencyName: test-dep
@@ -768,13 +750,13 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.22.value
+              dest: spec.arguments.parameters.20.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.related_party
                 value: DEFAULT
-              dest: spec.arguments.parameters.23.value
+              dest: spec.arguments.parameters.21.value
 
             - src:
                 dependencyName: test-dep
@@ -782,7 +764,7 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.24.value
+              dest: spec.arguments.parameters.22.value
 
             - src:
                 dependencyName: test-dep
@@ -790,7 +772,7 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.25.value
+              dest: spec.arguments.parameters.23.value
 
             - src:
                 dependencyName: test-dep
@@ -798,7 +780,7 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.26.value
+              dest: spec.arguments.parameters.24.value
 
             - src:
                 dependencyName: test-dep
@@ -806,10 +788,10 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.27.value
+              dest: spec.arguments.parameters.25.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.vsi_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.28.value
+              dest: spec.arguments.parameters.26.value

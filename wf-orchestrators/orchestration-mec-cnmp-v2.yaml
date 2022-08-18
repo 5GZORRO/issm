@@ -18,16 +18,6 @@
 #
 ################################################################################
 
-#
-# Parameters being used:
-#
-# service_owner: this domain's name
-# vsbName: blue-print name
-# transaction_uuid: transaction uuid
-# product_DID: PO global ID
-# sla_DID: SLA global ID
-#
-#
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
