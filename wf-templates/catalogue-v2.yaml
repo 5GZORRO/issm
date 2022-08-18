@@ -189,7 +189,7 @@ spec:
         related_party = ""
 
         resourceSpecification = {}
-        serviceSpecification = {}
+        serviceSpecification_resourceSpecification = []
 
         # SLA
         sla_did = po.get('serviceLevelAgreement', {}).get('id', "")
@@ -234,7 +234,11 @@ spec:
             try:
                 href = r.json()['serviceSpecification'][0]['href']
                 r = requests.get(str(href), headers=headers)
-                serviceSpecification = r.json()
+
+                for r_spec in r.json()['resourceSpecification']:
+                    r = requests.get(str(r_spec['href']), headers=headers)
+                    serviceSpecification_resourceSpecification.append(r.json())
+
             except:
                 # return empty serviceSpecification
                 pass
@@ -328,8 +332,10 @@ spec:
             r = requests.get(str(href), headers=headers)
             json.dump(r.json(), sys.stdout)
             sys.stdout.write('\n')
-    
-            rsc_list = r.json()['serviceSpecCharacteristic']
+
+            srv_spec = r.json()
+
+            rsc_list = srv_spec['serviceSpecCharacteristic']
             # 1. vsbName
             element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
             if not element:
@@ -473,8 +479,8 @@ spec:
         with open('/tmp/resourceSpecification.txt', 'w') as f:
             json.dump(resourceSpecification, f)
 
-        with open('/tmp/serviceSpecification.txt', 'w') as f:
-            json.dump(serviceSpecification, f)
+        with open('/tmp/serviceSpecification_resourceSpecification.txt', 'w') as f:
+            json.dump(serviceSpecification_resourceSpecification, f)
 
     outputs:
       parameters:
@@ -539,9 +545,9 @@ spec:
         valueFrom:
           path: /tmp/resourceSpecification.txt
 
-      - name: serviceSpecification
+      - name: serviceSpecification_resourceSpecification
         valueFrom:
-          path: /tmp/serviceSpecification.txt
+          path: /tmp/serviceSpecification_resourceSpecification.txt
 
 
   - name: create-order

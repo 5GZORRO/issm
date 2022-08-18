@@ -157,6 +157,8 @@ spec:
                   - name: vsi_id
                     value: OVERRIDE
 
+                  - name: app_topology
+                    value: OVERRIDE
 
                 templates:
                 - name: handlerequest
@@ -181,6 +183,10 @@ spec:
 
                   - - name: instantiate-invoke-snfvo
                       when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
+                      template: instantiate-invoke-snfvo
+
+                  - - name: instantiate-invoke-snfvo-2
+                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
                       template: instantiate-invoke-snfvo
 
                   - - name: instantiate-orchestrate
@@ -813,3 +819,11 @@ spec:
                 dataKey: body.vsi_id
                 value: DEFAULT
               dest: spec.arguments.parameters.28.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.app_topology
+                value: |
+                  {
+                  }
+              dest: spec.arguments.parameters.29.value

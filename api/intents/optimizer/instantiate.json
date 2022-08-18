@@ -1,0 +1,52 @@
+{
+    "operation": "instantiate",
+    "related_party": "operator-c",
+    "order_id": ["99969444-59ab-4e84-8d7d-24d5528717b0"],
+    "app_topology": {
+      "directed": "true",
+      "multigraph": "false",
+      "graph": [
+        [
+          "name",
+          "AppTopo"
+        ]
+      ],
+      "nodes": [
+        {
+          "id": "U"
+        },
+        {
+          "id": "upf"
+        },
+        {
+          "id": "core"
+        },
+        {
+          "id": "vcache"
+        }
+      ],
+      "adjacency": [
+        [
+          {
+            "shareDemand": 0,
+            "latencyDemand": 2,
+            "id": "UPF"
+          }
+        ],
+        [
+          {
+            "shareDemand": 0,
+            "latencyDemand": 999999,
+            "id": "CORE"
+          },
+          {
+            "shareDemand": 0,
+            "latencyDemand": 2,
+            "id": "vCDN"
+          }
+        ],
+        [],
+        []
+      ]
+    }    
+}
