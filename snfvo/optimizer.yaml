@@ -41,6 +41,7 @@ spec:
         templateRef:
           name: workflow-topology
           template: update-topology
+        arguments:
           parameters:
           - name: app_topology
             value: "{{workflow.parameters.app_topology}}"
@@ -107,3 +108,10 @@ spec:
           - name: kafka_topic
             value: issm-optimizer
 
+  - name: scaleout
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success

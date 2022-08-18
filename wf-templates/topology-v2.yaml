@@ -29,6 +29,7 @@ spec:
       command: [python]
       source: |
         import json
+        import sys
 
         def find(l, predicate):
             """
@@ -117,7 +118,7 @@ spec:
 
             sys.stdout.write('\n\n\n')
 
-        node = find(app_topology['graph']['nodes'], lambda e: e['id'] == name)
+        node = find(app_topology['nodes'], lambda e: e['id'] == name)
         if not node:
             raise Exception('*** Unable to find matching application topology node for %s ***' % name)
 
