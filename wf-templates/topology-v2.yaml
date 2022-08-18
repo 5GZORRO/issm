@@ -118,15 +118,15 @@ spec:
 
             sys.stdout.write('\n\n\n')
 
-        node = find(app_topology['nodes'], lambda e: e['id'] == name)
-        if not node:
-            raise Exception('*** Unable to find matching application topology node for %s ***' % name)
-
-        node['minConfig'] = {
-            'cpu': {'value': cpu_min},
-            'mem': {'value': mem_min, 'units': mem_unit},
-            'storage': {'value': storage_min, 'units': storage_unit},
-        }
+            node = find(app_topology['nodes'], lambda e: e['id'] == name)
+            if not node:
+                raise Exception('*** Unable to find matching application topology node for %s ***' % name)
+    
+            node['minConfig'] = {
+                'cpu': {'value': cpu_min},
+                'mem': {'value': mem_min, 'units': mem_unit},
+                'storage': {'value': storage_min, 'units': storage_unit},
+            }
 
         sys.stdout.write('UPDATED topology: "%s" \n' % app_topology)
         with open('/tmp/app_topology.txt', 'w') as f:

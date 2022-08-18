@@ -58,7 +58,7 @@
           {
             "shareDemand": 0,
             "latencyDemand": 2,
-            "id": "vCDN"
+            "id": "vcache"
           }
         ],
         [],

@@ -61,15 +61,15 @@ spec:
           - name: place
             value: "{{workflow.parameters.place}}"
           - name: cpu_max
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.cpu_max}}"
+            value: ""
           - name: mem_max
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.mem_max}}"
+            value: ""
           - name: mem_unit
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.mem_unit}}"
+            value: ""
           - name: storage_max
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.storage_max}}"
+            value: ""
           - name: storage_unit
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.storage_unit}}"
+            value: ""
   
       - name: discover-edges
         templateRef:
