@@ -400,7 +400,7 @@ spec:
                 - name: terminate-transaction
                   dag:
                     tasks:
-                    - name: get-transaction-id
+                    - name: get-transaction-uuid
                       templateRef:
                         name: workflow-base
                         template: from-key
@@ -413,14 +413,14 @@ spec:
                             {{workflow.parameters.productOrderStatusTransaction}}
 
                     - name: list-status-instance
-                      dependencies: [get-transaction-id]
+                      dependencies: [get-transaction-uuid]
                       templateRef:
                         name: workflow-catalog
                         template: list-status-instance-of-transaction
                       arguments:
                         parameters:
                         - name: transaction_uuid
-                          value: "{{tasks.get-transaction-id.outputs.result}}"
+                          value: "{{tasks.get-transaction-uuid.outputs.result}}"
 
                     - name: loop-status-instances
                       dependencies: [list-status-instance]
@@ -430,6 +430,16 @@ spec:
                         - name: status_instance
                           value: "{{item}}"
                       withParam: "{{tasks.list-status-instance.outputs.parameters.status_instances}}"
+
+                    - name: delete-status-transaction
+                      dependencies: [loop-status-instances]
+                      templateRef:
+                        name: workflow-catalog
+                        template: delete-status-transaction
+                      arguments:
+                        parameters:
+                        - name: transaction_uuid
+                          value: "{{tasks.get-transaction-uuid.outputs.result}}"
 
 
                 - name: terminate-product-order
