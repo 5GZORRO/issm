@@ -133,9 +133,6 @@ spec:
                   - name: snfvo_data
                     value: OVERRIDE
 
-                  - name: related_party
-                    value: OVERRIDE
-
                   - name: vsd_parameters
                     value: OVERRIDE
 
@@ -754,17 +751,11 @@ spec:
 
             - src:
                 dependencyName: test-dep
-                dataKey: body.related_party
-                value: DEFAULT
-              dest: spec.arguments.parameters.21.value
-
-            - src:
-                dependencyName: test-dep
                 dataKey: body.vsd_parameters
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.22.value
+              dest: spec.arguments.parameters.21.value
 
             - src:
                 dependencyName: test-dep
@@ -772,7 +763,7 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.23.value
+              dest: spec.arguments.parameters.22.value
 
             - src:
                 dependencyName: test-dep
@@ -780,7 +771,7 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.24.value
+              dest: spec.arguments.parameters.23.value
 
             - src:
                 dependencyName: test-dep
@@ -788,10 +779,10 @@ spec:
                 value: |
                   {
                   }
-              dest: spec.arguments.parameters.25.value
+              dest: spec.arguments.parameters.24.value
 
             - src:
                 dependencyName: test-dep
                 dataKey: body.vsi_id
                 value: DEFAULT
-              dest: spec.arguments.parameters.26.value
+              dest: spec.arguments.parameters.25.value

@@ -231,8 +231,7 @@ spec:
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
                   "srsd_url": "{{inputs.parameters.srsd_url}}",
                   "issm_api_url": "{{inputs.parameters.issm_api_url}}",
-                  "snfvo_data": {{inputs.parameters.snfvo_data}},
-                  "related_party": "{{inputs.parameters.related_party}}"
+                  "snfvo_data": {{inputs.parameters.snfvo_data}}
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"
