@@ -44,25 +44,26 @@
       "adjacency": [
         [
           {
-            "shareDemand": 0,
-            "latencyDemand": 2,
-            "id": "UPF"
+            "bw": {"value": "200", "units": "Mbps"},
+            "latency": {"value": "20", "units": "ms"},
+            "id": "upf"
           }
         ],
         [
           {
-            "shareDemand": 0,
-            "latencyDemand": 999999,
-            "id": "CORE"
+            "bw": {"value": "200", "units": "Mbps"},
+            "latency": {"value": "999999", "units": "ms"},
+            "id": "core"
           },
           {
-            "shareDemand": 0,
-            "latencyDemand": 2,
+            "bw": {"value": "200", "units": "Mbps"},
+            "latency": {"value": "20", "units": "ms"},
             "id": "vcache"
           }
         ],
         [],
         []
-      ]
-    }    
+      ],
+      "global_demand": "1000"
+    }
 }
