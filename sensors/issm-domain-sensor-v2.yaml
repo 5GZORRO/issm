@@ -160,6 +160,12 @@ spec:
                   - name: app_topology
                     value: OVERRIDE
 
+                  - name: optimizer_output
+                    value: OVERRIDE
+
+                  - name: serviceSpecification_resourceSpecification
+                    value: OVERRIDE
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -827,3 +833,19 @@ spec:
                   {
                   }
               dest: spec.arguments.parameters.29.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.optimizer_output
+                value: |
+                  {
+                  }
+              dest: spec.arguments.parameters.30.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.serviceSpecification_resourceSpecification
+                value: |
+                  {
+                  }
+              dest: spec.arguments.parameters.31.value
