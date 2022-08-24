@@ -137,3 +137,41 @@ spec:
       - name: app_topology
         valueFrom:
           path: /tmp/app_topology.txt
+
+#########################################
+#
+# MOCKED
+  - name: mock-optimizer-output
+    inputs:
+      parameters:
+      - name: resources
+      - name: app_topology
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import sys
+
+        resources = {{inputs.parameters.resources}}
+        app_topology = {{inputs.parameters.app_topology}}
+
+        optimizer_output = []
+        
+        for i, n in enumerate(app_topology['nodes']):
+            print(i, n)
+            optimizer_output.append(dict(selected_offer=resources[i], mapped_function=n['id']))
+
+        with open('/tmp/optimizer_output.txt', 'w') as f:
+            f.write(str(optimizer_output))
+            #json.dump(optimizer_output, f)
+
+    outputs:
+      parameters:
+      - name: optimizer_output
+        valueFrom:
+          path: /tmp/optimizer_output.txt
+#
+#
+#########################################

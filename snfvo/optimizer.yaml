@@ -86,8 +86,22 @@ spec:
           - name: intent_query
             value: "{{tasks.build-discovery-query.outputs.result}}"
   
-      - name: send-edges-to-optimizer
+  
+      - name: mock-optimizer-output
         dependencies: [discover-edges, update-topology]
+        templateRef:
+          name: workflow-topology
+          template: mock-optimizer-output
+        arguments:
+          parameters:
+          - name: resources
+            value: "{{tasks.discover-edges.outputs.result}}"
+          - name: app_topology
+            value: "{{tasks.update-topology.outputs.parameters.app_topology}}"
+  
+      - name: send-edges-to-optimizer
+        # simulates interaction with ISSM-O
+        dependencies: [mock-optimizer-output]
         templateRef:
           name: workflow-base
           template: publish-on-kafka
@@ -107,11 +121,13 @@ spec:
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
                 "kafka": "{{workflow.parameters.kafka}}",
                 "app_topology": {{tasks.update-topology.outputs.parameters.app_topology}},
-                "serviceSpecification_resourceSpecification": {{tasks.get-order-from-catalog.outputs.parameters.serviceSpecification_resourceSpecification}}
+                "serviceSpecification_resourceSpecification": {{tasks.get-order-from-catalog.outputs.parameters.serviceSpecification_resourceSpecification}},
+                "optimizer_output": {{tasks.mock-optimizer-output.outputs.parameters.optimizer_output}}
               }
           - name: kafka_topic
             value: issm-optimizer
 
+# optimizer_output:
 # [{'selected_offer': 'PB2bpkWNKnVVY8MFYermER', 'mapped_function': 'UPF'}, {'selected_offer': 'PB2bpkWNKnVVY8MFYermER', 'mapped_function': 'CORE'}]
   - name: optimizer-response
     dag:
@@ -122,7 +138,7 @@ spec:
           parameters:
           - name: entry
             value: "{{item}}"
-        withParam: "{{workflow.parameters.resources}}"
+        withParam: "{{workflow.parameters.optimizer_output}}"
 
   - name: loop-best-offers
     inputs:
