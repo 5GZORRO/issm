@@ -161,9 +161,25 @@ spec:
         
         for i, n in enumerate(app_topology['nodes']):
             print(i, n)
-            optimizer_output.append(dict(selected_offer=resources[i], mapped_function=n['id']))
+            s_o_rp = resources[i]['offer_object']['productSpecification']['relatedParty'][0]['name']
+            s_o = {
+                # mock only needed fields
+                'offer_object': {
+                  'name': resources[i]['offer_object']['name'],
+                  'id': resources[i]['offer_object']['id'],
+                  'place': [resources[i]['offer_object']['place'][0]],
+                  'productSpecification': {'relatedParty': [{'name': s_o_rp}]}
+                },
+                'offer_did': resources[i]['offer_did']
+              }
+
+            sys.stdout.write('APPENDING: %s \n' % s_o)
+
+            optimizer_output.append(dict(selected_offer=s_o, mapped_function=n['id']))
 
         with open('/tmp/optimizer_output.txt', 'w') as f:
+            # flatten it (like print) since it's going to be published on
+            # kafka
             f.write(str(optimizer_output))
             #json.dump(optimizer_output, f)
 

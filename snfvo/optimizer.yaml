@@ -178,7 +178,8 @@ spec:
           - name: name
             value: "{{tasks.mapped-function.outputs.result}}"
           - name: resource_specs
-            value: "{{workflow.parameters.serviceSpecification_resourceSpecification}}"
+            value: |
+              {{workflow.parameters.serviceSpecification_resourceSpecification}}
 
       - name: print-selected-offer
         dependencies: [selected-offer]
@@ -286,6 +287,13 @@ spec:
         name = "{{inputs.parameters.name}}"
 
         vsbName = ""
+
+        def find(l, predicate):
+            """
+            util method
+            """
+            results = [x for x in l if predicate(x)]
+            return results[0] if len(results) > 0 else None
 
         for r in resource_specs:
             n = r[0]['name']
