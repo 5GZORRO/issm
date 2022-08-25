@@ -1,7 +1,6 @@
 {
     "operation": "instantiate",
     "related_party": "operator-c",
-    "order_id": ["99969444-59ab-4e84-8d7d-24d5528717b0"],
     "place": {
       "city": "Barcelona",
       "country": "Spain",
