@@ -141,15 +141,14 @@ spec:
         withParam: "{{workflow.parameters.optimizer_output}}"
 
   - name: loop-best-offers
+    # Note: these are 'flattened JSON': true, null, ..
     inputs:
       parameters:
       - name: entry
     dag:
       tasks:
       - name: selected-offer
-        templateRef:
-          name: workflow-base
-          template: from-key
+        template: from-key-flatten
         arguments:
           parameters:
           - name: key
@@ -171,6 +170,7 @@ spec:
               {{inputs.parameters.entry}}
 
       - name: resource-spec-by-name
+        # return vsbName
         dependencies: [mapped-function]
         template: resource-spec-by-name
         arguments:
@@ -348,3 +348,20 @@ spec:
             parameters:
             - name: resource_did
               value: "{{inputs.parameters.resource_did}}"
+
+
+  - name: from-key-flatten
+    # Temporary step to return a flattened JSON rather than a python dictionary
+    # Note: it works only when result is a json
+    inputs:
+      parameters:
+      - name: key
+      - name: json_str
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+
+        print(json.dumps({{inputs.parameters.json_str}}['{{inputs.parameters.key}}']))
