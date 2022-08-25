@@ -161,6 +161,11 @@ spec:
         
         for i, n in enumerate(app_topology['nodes']):
             print(i, n)
+            # special case. Ignore UE
+            # NOTE: It is assumed UE is marked as 'U'
+            if n['id'] == 'U':
+                continue
+
             s_o_rp = resources[i]['offer_object']['productSpecification']['relatedParty'][0]['name']
             s_o = {
                 # mock only needed fields

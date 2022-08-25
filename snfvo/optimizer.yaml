@@ -87,7 +87,7 @@ spec:
             value: "{{tasks.build-discovery-query.outputs.result}}"
   
   
-      - name: mock-optimizer-output
+      - name: prepare-request-to-optimizer
         dependencies: [discover-edges, update-topology]
         templateRef:
           name: workflow-topology
@@ -101,7 +101,7 @@ spec:
   
       - name: send-edges-to-optimizer
         # simulates interaction with ISSM-O
-        dependencies: [mock-optimizer-output]
+        dependencies: [prepare-request-to-optimizer]
         templateRef:
           name: workflow-base
           template: publish-on-kafka
@@ -117,12 +117,13 @@ spec:
                 "service_owner": "{{workflow.parameters.service_owner}}",
                 "order_id": "{{workflow.parameters.order_id}}",
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",
+                "trmf_url": "{{workflow.parameters.trmf_url}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
                 "kafka": "{{workflow.parameters.kafka}}",
                 "app_topology": {{tasks.update-topology.outputs.parameters.app_topology}},
                 "serviceSpecification_resourceSpecification": {{tasks.get-order-from-catalog.outputs.parameters.serviceSpecification_resourceSpecification}},
-                "optimizer_output": {{tasks.mock-optimizer-output.outputs.parameters.optimizer_output}}
+                "optimizer_output": {{tasks.prepare-request-to-optimizer.outputs.parameters.optimizer_output}}
               }
           - name: kafka_topic
             value: issm-optimizer
@@ -246,7 +247,7 @@ spec:
             value: "{ }"
 
           - name: vsd_parameters
-            value: "{{tasks.vsd-parameters.outputs.result}}"
+            value: "{ }"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration]
