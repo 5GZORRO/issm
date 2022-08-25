@@ -27,7 +27,7 @@ spec:
     #
     # Parameters:
     # catalogue_url: url to the catalogue (str)
-    # order_id: order uuids (list of str in json)
+    # order_id: list of json elements {'uuid': <uuid>, 'main': <boolean>}
     # category: the category of the main order as being provided in input intent (string)
     # snfvo_data: snvfo data as being provided in input intent (json)
     #
@@ -64,8 +64,10 @@ spec:
         found = False
         headers = {'Content-Type': 'application/json'}
         for o_id in order_ids:
-            sys.stdout.write('Retrieve Order ID: %s\n' % o_id)
-            r = requests.get("{{inputs.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/productOrder/%s" % o_id,
+            main_value = o_id.get('main', 'false')
+            uuid_value = o_id['uuid']
+            sys.stdout.write('Retrieve Order ID: %s, Main: %s\n' % (uuid_value, main_value))
+            r = requests.get("{{inputs.parameters.catalogue_url}}/tmf-api/productOrderingManagement/v4/productOrder/%s" % uuid_value,
                 headers=headers)
             json.dump(r.json(), sys.stdout)
             sys.stdout.write('\n\n')
@@ -82,14 +84,13 @@ spec:
             po_c = r.json()['category'][0]['name']
             if po_c not in categories:
                 raise Exception('*** Illegal PO category "%s" must be: %s ***' % (po_c, categories))
-            if po_c == category and not found:
-                # mark the first one as MAIN
+            if main_value is "true":
                 found = True
-                sys.stdout.write('Main order_id: %s\n' % o_id)
-                order_id = o_id
+                sys.stdout.write('Main order_id: %s\n' % uuid_value)
+                order_id = uuid_value
             else:
                 o_ids = category_sub_order.setdefault(po_c.lower().replace(" ", ""), [])
-                o_ids.append(o_id)
+                o_ids.append(uuid_value)
 
         sys.stdout.write('caterogy to orders: %s\n' % category_sub_order)
         for k in category_sub_order:
