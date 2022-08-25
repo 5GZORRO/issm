@@ -119,6 +119,11 @@ spec:
           - name: related_party
             value: "{{workflow.parameters.related_party}}"
 
+          - name: place
+            value: "{{workflow.parameters.place}}"
+          - name: app_topology
+            value: "{{workflow.parameters.app_topology}}"
+
   - name: terminate
     inputs:
       parameters:
@@ -206,6 +211,9 @@ spec:
       - name: issm_api_url
       - name: snfvo_data
       - name: related_party
+
+      - name: place
+      - name: app_topology
     steps:
       - - name: event-uuid
           templateRef:
@@ -231,7 +239,10 @@ spec:
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
                   "srsd_url": "{{inputs.parameters.srsd_url}}",
                   "issm_api_url": "{{inputs.parameters.issm_api_url}}",
-                  "snfvo_data": {{inputs.parameters.snfvo_data}}
+                  "snfvo_data": {{inputs.parameters.snfvo_data}},
+                  "related_party": "{{inputs.parameters.related_party}}",
+                  "place": {{inputs.parameters.place}},
+                  "app_topology": {{inputs.parameters.app_topology}}
                 }
             - name: kafka_topic
               value: "issm-in-{{inputs.parameters.service_owner}}"

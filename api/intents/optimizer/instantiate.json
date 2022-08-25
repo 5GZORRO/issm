@@ -1,0 +1,69 @@
+{
+    "operation": "instantiate",
+    "related_party": "operator-c",
+    "order_id": ["99969444-59ab-4e84-8d7d-24d5528717b0"],
+    "place": {
+      "city": "Barcelona",
+      "country": "Spain",
+      "locality": "Barcelona",
+      "geographicLocation": {
+        "name": "Barcelona i2CAT Area, Spain ",
+        "geometryType": "string",
+        "geometry": [
+          {
+            "x": "41.3879",
+            "y": "2.1699",
+            "z": "3388.0"
+          }
+        ]
+      }
+    },
+    "app_topology": {
+      "directed": "true",
+      "multigraph": "false",
+      "graph": [
+        [
+          "name",
+          "AppTopo"
+        ]
+      ],
+      "nodes": [
+        {
+          "id": "U"
+        },
+        {
+          "id": "upf"
+        },
+        {
+          "id": "core"
+        },
+        {
+          "id": "vcache"
+        }
+      ],
+      "adjacency": [
+        [
+          {
+            "bw": {"value": "200", "units": "Mbps"},
+            "latency": {"value": "20", "units": "ms"},
+            "id": "upf"
+          }
+        ],
+        [
+          {
+            "bw": {"value": "200", "units": "Mbps"},
+            "latency": {"value": "999999", "units": "ms"},
+            "id": "core"
+          },
+          {
+            "bw": {"value": "200", "units": "Mbps"},
+            "latency": {"value": "20", "units": "ms"},
+            "id": "vcache"
+          }
+        ],
+        [],
+        []
+      ],
+      "global_demand": "1000"
+    }
+}

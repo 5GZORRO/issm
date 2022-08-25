@@ -48,7 +48,17 @@ spec:
         storage = str("{{inputs.parameters.storage}}")
         storage_unit = str("{{inputs.parameters.storage_unit}}")
 
-        sys.stdout.write(cpu + " cores" + " storage " + storage + " " + storage_unit + " ram " + mem + " " + mem_unit + " " + category + " " +  location + " \n")
+        query_str = ""
+        if cpu != "":
+            query_str += " " + cpu + " cores"
+        if mem != "":
+            query_str += " ram " + mem + " " + mem_unit
+        if storage != "":
+            query_str += " storage " + storage + " " + storage_unit
+
+        query_str += " " + category + " " + location
+
+        sys.stdout.write(query_str + "\n")
 
 
   - name: srds-service
