@@ -116,8 +116,6 @@ spec:
 
           - name: snfvo_data
             value: "{{inputs.parameters.snfvo_data}}"
-          - name: related_party
-            value: "{{workflow.parameters.related_party}}"
 
   - name: terminate
     inputs:
@@ -205,7 +203,6 @@ spec:
       - name: srsd_url
       - name: issm_api_url
       - name: snfvo_data
-      - name: related_party
     steps:
       - - name: event-uuid
           templateRef:
