@@ -1,12 +1,12 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "free5gc UPF",
-  "description": "free5gc UPF - resource specification",
+  "name": "upf",
+  "description": "upf - resource specification",
   "relatedParty": [],
   "resourceSpecCharacteristic": [
     {
-      "description": "vCPU requirements for free5gc UPF",
+      "description": "vCPU requirements for upf",
       "name": "vCPU Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "description": "Memory requirements for free5gc UPF",
+      "description": "Memory requirements for upf",
       "name": "Virtual Memory Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "description": "Storage requirements for free5gc UPF",
+      "description": "Storage requirements for upf",
       "name": "Storage Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
