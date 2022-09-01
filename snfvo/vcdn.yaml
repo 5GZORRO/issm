@@ -452,6 +452,7 @@ spec:
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                 "trmf_url": "{{workflow.parameters.trmf_url}}",
                 "srsd_url": "{{workflow.parameters.srsd_url}}",
+                "issm_api_url": "{{workflow.parameters.issm_api_url}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
                 "kafka": "{{workflow.parameters.kafka}}",
