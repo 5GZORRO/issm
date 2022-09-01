@@ -159,6 +159,11 @@ spec:
       imagePullPolicy: IfNotPresent
       command: [sh]
       source: |
+        # works with flatten json:
+        # echo '{"name": true}' | jq .
+        # {
+        #   "name": true
+        # }
         echo '{{inputs.parameters.json_str}}' | jq -r {{inputs.parameters.jq_query}}
 
   - name: fail

@@ -1,0 +1,357 @@
+# Copyright 2020 - 2022 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: snfvo-optimizer
+spec:
+  templates:
+  - name: instantiate
+    steps:
+    - - name: instantiate-service
+        when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
+        template: instantiate-service
+    - - name: optimizer-response
+        when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
+        template: optimizer-response
+
+  - name: instantiate-service
+    dag:
+      tasks:
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: update-topology
+        dependencies: [get-order-from-catalog]      
+        templateRef:
+          name: workflow-topology
+          template: update-topology
+        arguments:
+          parameters:
+          - name: app_topology
+            value: "{{workflow.parameters.app_topology}}"
+          - name: resource_specs
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.serviceSpecification_resourceSpecification}}"
+
+      - name: build-discovery-query
+        dependencies: [get-order-from-catalog]
+        templateRef:
+          name: workflow-discovery
+          template: build-intent-query
+        arguments:
+          parameters:
+          - name: category
+            value: Edge
+
+          - name: place
+            value: "{{workflow.parameters.place}}"
+          - name: cpu
+            value: ""
+          - name: mem
+            value: ""
+          - name: mem_unit
+            value: ""
+          - name: storage
+            value: ""
+          - name: storage_unit
+            value: ""
+  
+      - name: discover-edges
+        templateRef:
+          name: workflow-discovery
+          template: srds-service
+        dependencies: [build-discovery-query]
+        arguments:
+          parameters:
+          - name: srsd_url
+            value: "{{workflow.parameters.srsd_url}}"
+          - name: intent_query
+            value: "{{tasks.build-discovery-query.outputs.result}}"
+  
+  
+      - name: prepare-request-to-optimizer
+        dependencies: [discover-edges, update-topology]
+        templateRef:
+          name: workflow-topology
+          template: mock-optimizer-output
+        arguments:
+          parameters:
+          - name: resources
+            value: "{{tasks.discover-edges.outputs.result}}"
+          - name: app_topology
+            value: "{{tasks.update-topology.outputs.parameters.app_topology}}"
+  
+      - name: send-edges-to-optimizer
+        # simulates interaction with ISSM-O
+        dependencies: [prepare-request-to-optimizer]
+        templateRef:
+          name: workflow-base
+          template: publish-on-kafka
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                "topic": "issm-in-{{workflow.parameters.service_owner}}", 
+                "category": "{{workflow.parameters.category}}",
+                "resources": {{tasks.discover-edges.outputs.result}},
+                "operation": "instantiate", "sub_operation": "BEST_OFFER_SELECTION",
+                "service_owner": "{{workflow.parameters.service_owner}}",
+                "order_id": "{{workflow.parameters.order_id}}",
+                "catalogue_url": "{{workflow.parameters.catalogue_url}}",
+                "trmf_url": "{{workflow.parameters.trmf_url}}",
+                "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
+                "snfvo_data": {{workflow.parameters.snfvo_data}},
+                "kafka": "{{workflow.parameters.kafka}}",
+                "app_topology": {{tasks.update-topology.outputs.parameters.app_topology}},
+                "serviceSpecification_resourceSpecification": {{tasks.get-order-from-catalog.outputs.parameters.serviceSpecification_resourceSpecification}},
+                "optimizer_output": {{tasks.prepare-request-to-optimizer.outputs.parameters.optimizer_output}}
+              }
+          - name: kafka_topic
+            value: issm-optimizer
+
+# optimizer_output:
+# [{'selected_offer': 'PB2bpkWNKnVVY8MFYermER', 'mapped_function': 'UPF'}, {'selected_offer': 'PB2bpkWNKnVVY8MFYermER', 'mapped_function': 'CORE'}]
+  - name: optimizer-response
+    dag:
+      tasks:
+      - name: loop-edges
+        template: loop-best-offers
+        arguments:
+          parameters:
+          - name: entry
+            value: "{{item}}"
+        withParam: "{{workflow.parameters.optimizer_output}}"
+
+  - name: loop-best-offers
+    # Note: these are 'flattened JSON': true, null, ..
+    inputs:
+      parameters:
+      - name: entry
+    dag:
+      tasks:
+      - name: selected-offer
+        template: from-key-flatten
+        arguments:
+          parameters:
+          - name: key
+            value: selected_offer
+          - name: json_str
+            value: |
+              {{inputs.parameters.entry}}
+
+      - name: mapped-function
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: mapped_function
+          - name: json_str
+            value: |
+              {{inputs.parameters.entry}}
+
+      - name: resource-spec-by-name
+        # return vsbName
+        dependencies: [mapped-function]
+        template: resource-spec-by-name
+        arguments:
+          parameters:
+          - name: name
+            value: "{{tasks.mapped-function.outputs.result}}"
+          - name: resource_specs
+            value: |
+              {{workflow.parameters.serviceSpecification_resourceSpecification}}
+
+      - name: print-selected-offer
+        dependencies: [selected-offer]
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{tasks.selected-offer.outputs.result}}"
+          - name: jq_query
+            value: '.'
+
+      - name: selected-offer-attributes
+        dependencies: [selected-offer]
+        templateRef:
+          name: workflow-discovery
+          template: resource-attributes
+        arguments:
+          parameters:
+          - name: resource
+            value: "{{tasks.selected-offer.outputs.result}}"
+        
+      - name: acquire
+        dependencies: [selected-offer-attributes, print-selected-offer]
+        template: acquire
+        arguments:
+          parameters:
+          - name: resource_id
+            value: "{{tasks.selected-offer-attributes.outputs.parameters.id}}"
+          - name: operator_id_seller
+            value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party}}"
+          - name: operator_id_buyer
+            value: "{{workflow.parameters.service_owner}}"
+          - name: resource_did
+            value: "{{tasks.selected-offer-attributes.outputs.parameters.did}}"
+
+      - name: trigger-orchestration
+        dependencies: [acquire, resource-spec-by-name]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party}}"
+
+          - name: vsbName
+            value: "{{tasks.resource-spec-by-name.outputs.parameters.vsbName}}"
+
+          - name: userdata
+            value: "{ }"
+
+          - name: vsd_parameters
+            value: "{ }"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration.outputs.parameters.event_uuid}}"
+
+  - name: scaleout
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
+
+  - name: resource-spec-by-name
+    inputs:
+      parameters:
+      - name: name
+      - name: resource_specs
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import sys
+
+        resource_specs = {{inputs.parameters.resource_specs}}
+        name = "{{inputs.parameters.name}}"
+
+        vsbName = ""
+
+        def find(l, predicate):
+            """
+            util method
+            """
+            results = [x for x in l if predicate(x)]
+            return results[0] if len(results) > 0 else None
+
+        for r in resource_specs:
+            n = r[0]['name']
+            if n == name:
+                rsc_list = r[0]['resourceSpecCharacteristic']
+                # 1. vsbName
+                element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
+                if not element:
+                    raise Exception("*** Unable to find 'vsbName' ***")
+        
+                vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
+                sys.stdout.write('vsbName: "%s" \n' % vsbName)
+
+
+                with open('/tmp/vsbName.txt', 'w') as f:
+                    f.write(str(vsbName))
+                break
+
+    outputs:
+      parameters:
+      - name: vsbName
+        valueFrom:
+          path: /tmp/vsbName.txt
+
+
+  - name: acquire
+    inputs:
+      parameters:
+      - name: resource_id
+      - name: operator_id_seller
+      - name: operator_id_buyer
+      - name: resource_did
+    steps:
+      - - name: acquire-resource
+          templateRef:
+            name: workflow-catalog
+            template: create-order
+          arguments:
+            parameters:
+            - name: resource_id
+              value: "{{inputs.parameters.resource_id}}"
+            - name: operator_id_seller
+              value: "{{inputs.parameters.operator_id_seller}}"
+            - name: operator_id_buyer
+              value: "{{workflow.parameters.service_owner}}"
+
+      - - name: notify-reputation-manager
+          templateRef:
+            name: workflow-catalog
+            template: notify-trmf
+          arguments:
+            parameters:
+            - name: resource_did
+              value: "{{inputs.parameters.resource_did}}"
+
+
+  - name: from-key-flatten
+    # Temporary step to return a flattened JSON rather than a python dictionary
+    # Note: it works only when result is a json
+    inputs:
+      parameters:
+      - name: key
+      - name: json_str
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+
+        print(json.dumps({{inputs.parameters.json_str}}['{{inputs.parameters.key}}']))
