@@ -94,6 +94,28 @@ spec:
           - name: timeout
             value: 120
 
+      - name: create-vsi-fail
+        dependencies: [poll]
+        template: create-vsi-fail
+        when: "{{tasks.poll.outputs.parameters.status}} == \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
+
+      - name: create-vsi-success
+        dependencies: [poll]
+        template: create-vsi-success
+        when: "{{tasks.poll.outputs.parameters.status}} != \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
+
 
   - name: create-slice-vsi
     inputs:
@@ -131,6 +153,65 @@ spec:
             value: "Succeeded"
           - name: timeout
             value: 120
+
+
+  - name: create-vsi-success
+    inputs:
+      parameters:
+      - name: vsi_id
+      - name: vsi_info
+    dag:
+      tasks:
+      - name: publish-status
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+
+          - name: data
+            value: |
+              { "msg_id": "{{workflow.name}}",
+                "vsi_id": "{{inputs.parameters.vsi_id}}",
+                "status": "SUCCESS"
+              }
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+
+
+  - name: create-vsi-fail
+    inputs:
+      parameters:
+      - name: vsi_id
+      - name: vsi_info
+    dag:
+      tasks:
+      - name: publish-status
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+
+          - name: data
+            value: |
+              { "msg_id": "{{workflow.name}}",
+                "vsi_id": "{{inputs.parameters.vsi_id}}",
+                "status": "FAIL"
+              }
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+
+      - name: fail
+        dependencies: [publish-status]
+        templateRef:
+          name: workflow-base
+          template: fail
+
 
 
   - name: orchestrate-terminate
@@ -202,9 +283,6 @@ spec:
         with open('/tmp/id.txt', 'w') as f:
             f.write(str(name))
 
-#        vsi_id="$(curl --data "$(generate_post_instance_create)" -X POST {{inputs.parameters.vs_url}}/core --header "Content-Type:application/json" 2>/dev/null | jq -r .name)"
-#        echo "Instance: $vsi_id being created.."
-#        echo $vsi_id > /tmp/id.txt
     outputs:
       parameters:
       - name: vsi_id
@@ -302,6 +380,7 @@ spec:
           i=0
           until [ "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
              echo "Poll wait for vsi_id: {{inputs.parameters.vsi_id}}.. (1 sec)"
+             echo "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
              sleep 1
              i=$((i+1))
           done
@@ -310,12 +389,18 @@ spec:
             echo "TIMEOUT" > /tmp/status.txt
           else
             echo "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+            echo "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
           fi
         else  
           echo "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+          echo "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
         fi
     outputs:
       parameters:
       - name: status
         valueFrom:
           path: /tmp/status.txt
+
+      - name: vsi_info
+        valueFrom:
+          path: /tmp/vsi_info.txt
