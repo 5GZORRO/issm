@@ -1,5 +1,22 @@
 {
     "operation": "instantiate",
+    "order_id": [{"uuid": "99969444-59ab-4e84-8d7d-24d5528717b0", "main": "true"}],
+    "place": {
+      "city": "Barcelona",
+      "country": "Spain",
+      "locality": "Barcelona",
+      "geographicLocation": {
+        "name": "Barcelona i2CAT Area, Spain ",
+        "geometryType": "string",
+        "geometry": [
+          {
+            "x": "41.3879",
+            "y": "2.1699",
+            "z": "3388.0"
+          }
+        ]
+      }
+    },
     "snfvo_data": {
         "core": {
             "networks": [
@@ -22,7 +39,6 @@
         "upf": {
             "sst": "1",
             "sd": "010203",
-            "connectedFrom": "gNB1",
             "networks": [
                 {
                     "name": "sbi",

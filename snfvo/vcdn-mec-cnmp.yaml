@@ -121,7 +121,7 @@ spec:
     dag:
       tasks:
       - name: core-entry
-        template: core_entry
+        template: core-entry
         arguments:
           parameters:
           - name: entries
@@ -129,23 +129,23 @@ spec:
 
       - name: handle-core
         dependencies: [core-entry]
-        template: handle_placement_entry
+        template: handle-placement-entry
         arguments:
           parameters:
           - name: entry
             value: "{{tasks.core-entry.outputs.parameters.entry}}"
 
       - name: loop-edges
-        # without core
+        # deploy in parallel (loop) all other functions excluding core
         dependencies: [handle-core]
-        template: handle_placement_entry
+        template: handle-placement-entry
         arguments:
           parameters:
           - name: entry
             value: "{{item}}"
         withParam: "{{tasks.core-entry.outputs.parameters.entries}}"
 
-  - name: handle_placement_entry
+  - name: handle-placement-entry
     # Note: these are 'flattened JSON': true, null, ..
     inputs:
       parameters:
@@ -234,7 +234,6 @@ spec:
           - name: json_str
             value: |
               {{workflow.parameters.snfvo_data}}
-
 
       - name: trigger-orchestration
         dependencies: [acquire, resource-spec-by-name, userdata]
@@ -414,5 +413,6 @@ spec:
         valueFrom:
           path: /tmp/entry.txt
       - name: entries
+        # placement entries without the core
         valueFrom:
           path: /tmp/entries.txt

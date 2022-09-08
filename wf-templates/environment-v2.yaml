@@ -101,14 +101,14 @@ spec:
                   "catalogue_url": "http://172.28.3.15:32080",
                   "elma_url": "http://172.28.3.15:31880",
                   "trmf_url": "http://172.28.3.15:31114",
-                  "vs_url": "http://10.0.4.10:8082",
+                  "vs_url": "http://10.4.2.206:30080",
                   "issm_api_url": "http://172.28.3.15:30080"
                 },
                 "operator-c": {
                   "catalogue_url": "http://172.28.3.15:32180",
                   "elma_url": "http://172.28.3.15:32880",
                   "trmf_url": "http://172.28.3.15:31115",
-                  "vs_url": "http://172.28.3.15:33082",
+                  "vs_url": "http://10.4.2.206:30080",
                   "issm_api_url": "http://172.28.3.15:30080"
                 }
               }
