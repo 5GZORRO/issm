@@ -180,7 +180,7 @@ spec:
 
             sys.stdout.write('APPENDING: %s \n' % s_o)
 
-            optimizer_output.append(dict(selected_offer=s_o, mapped_function=n['id']))
+            optimizer_output.append(dict(index=i, selected_offer=s_o, mapped_function=n['id']))
 
         with open('/tmp/optimizer_output.txt', 'w') as f:
             # flatten it (like print) since it's going to be published on

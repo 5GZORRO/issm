@@ -56,6 +56,19 @@ spec:
           - name: vs_url
             value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
 
+      - name: create-vcache-vsi
+        dependencies: [get-domain-env]
+        # TODO: make this 'when' more generic
+        when: "{{workflow.parameters.vsbName}} == \"vcache\""
+        template: create-vsi-success
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "000"
+          - name: vsi_info
+            value: |
+              { }
+
 
   - name: create-core-vsi
     inputs:
@@ -153,6 +166,28 @@ spec:
             value: "Succeeded"
           - name: timeout
             value: 120
+
+      - name: create-vsi-fail
+        dependencies: [poll]
+        template: create-vsi-fail
+        when: "{{tasks.poll.outputs.parameters.status}} == \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
+
+      - name: create-vsi-success
+        dependencies: [poll]
+        template: create-vsi-success
+        when: "{{tasks.poll.outputs.parameters.status}} != \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
 
 
   - name: create-vsi-success

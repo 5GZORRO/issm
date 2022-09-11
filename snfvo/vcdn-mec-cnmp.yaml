@@ -115,8 +115,12 @@ spec:
           - name: kafka_topic
             value: issm-optimizer
 
-# optimizer_output:
-# [{'selected_offer': 'PB2bpkWNKnVVY8MFYermER', 'mapped_function': 'UPF'}, {'selected_offer': 'PB2bpkWNKnVVY8MFYermER', 'mapped_function': 'CORE'}]
+# optimizer_output e.g.:
+# [{'index': 0, 'selected_offer': '...', 'mapped_function': 'upf'},
+# {'index':  1, 'selected_offer': '...', 'mapped_function': 'core'},
+# {'index':  2, 'selected_offer': '...', 'mapped_function': 'upf'},
+# {'index':  3, 'selected_offer': '...', 'mapped_function': 'vcache'},
+# {'index':  4, 'selected_offer': '...', 'mapped_function': 'vcache'}]
   - name: optimizer-response
     dag:
       tasks:
@@ -162,6 +166,16 @@ spec:
             value: |
               {{inputs.parameters.entry}}
 
+      - name: index
+        template: from-key-flatten
+        arguments:
+          parameters:
+          - name: key
+            value: index
+          - name: json_str
+            value: |
+              {{inputs.parameters.entry}}
+
       - name: mapped-function
         templateRef:
           name: workflow-base
@@ -174,17 +188,17 @@ spec:
             value: |
               {{inputs.parameters.entry}}
 
-      - name: resource-spec-by-name
-        # return vsbName
-        dependencies: [mapped-function]
-        template: resource-spec-by-name
-        arguments:
-          parameters:
-          - name: name
-            value: "{{tasks.mapped-function.outputs.result}}"
-          - name: resource_specs
-            value: |
-              {{workflow.parameters.serviceSpecification_resourceSpecification}}
+#      - name: resource-spec-by-name
+#        # return vsbName
+#        dependencies: [mapped-function]
+#        template: resource-spec-by-name
+#        arguments:
+#          parameters:
+#          - name: name
+#            value: "{{tasks.mapped-function.outputs.result}}"
+#          - name: resource_specs
+#            value: |
+#              {{workflow.parameters.serviceSpecification_resourceSpecification}}
 
       - name: print-selected-offer
         dependencies: [selected-offer]
@@ -223,20 +237,21 @@ spec:
             value: "{{tasks.selected-offer-attributes.outputs.parameters.did}}"
 
       - name: userdata
-        dependencies: [mapped-function]
-        templateRef:
-          name: workflow-base
-          template: from-key
+        dependencies: [mapped-function, index]
+        template: userdata
         arguments:
           parameters:
-          - name: key
+          - name: mapped_function
             value: "{{tasks.mapped-function.outputs.result}}"
-          - name: json_str
+          - name: index
+            value: "{{tasks.index.outputs.result}}"
+          - name: snfvo_data
             value: |
               {{workflow.parameters.snfvo_data}}
 
+
       - name: trigger-orchestration
-        dependencies: [acquire, resource-spec-by-name, userdata]
+        dependencies: [acquire, userdata]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -251,7 +266,7 @@ spec:
             value: "{{tasks.mapped-function.outputs.result}}"
 
           - name: userdata
-            value: "{{tasks.userdata.outputs.result}}"
+            value: "{{tasks.userdata.outputs.parameters.userdata}}"
 
           - name: vsd_parameters
             value: "{ }"
@@ -278,54 +293,53 @@ spec:
           name: workflow-base
           template: success
 
-  - name: resource-spec-by-name
-    inputs:
-      parameters:
-      - name: name
-      - name: resource_specs
-    script:
-      image: python:alpine3.6
-      imagePullPolicy: IfNotPresent
-      command: [python]
-      source: |
-        import json
-        import sys
-
-        resource_specs = {{inputs.parameters.resource_specs}}
-        name = "{{inputs.parameters.name}}"
-
-        vsbName = ""
-
-        def find(l, predicate):
-            """
-            util method
-            """
-            results = [x for x in l if predicate(x)]
-            return results[0] if len(results) > 0 else None
-
-        for r in resource_specs:
-            n = r[0]['name']
-            if n == name:
-                rsc_list = r[0]['resourceSpecCharacteristic']
-                # 1. vsbName
-                element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
-                if not element:
-                    raise Exception("*** Unable to find 'vsbName' ***")
-        
-                vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
-                sys.stdout.write('vsbName: "%s" \n' % vsbName)
-
-
-                with open('/tmp/vsbName.txt', 'w') as f:
-                    f.write(str(vsbName))
-                break
-
-    outputs:
-      parameters:
-      - name: vsbName
-        valueFrom:
-          path: /tmp/vsbName.txt
-
+#  - name: resource-spec-by-name
+#    inputs:
+#      parameters:
+#      - name: name
+#      - name: resource_specs
+#    script:
+#      image: python:alpine3.6
+#      imagePullPolicy: IfNotPresent
+#      command: [python]
+#      source: |
+#        import json
+#        import sys
+#
+#        resource_specs = {{inputs.parameters.resource_specs}}
+#        name = "{{inputs.parameters.name}}"
+#
+#        vsbName = ""
+#
+#        def find(l, predicate):
+#            """
+#            util method
+#            """
+#            results = [x for x in l if predicate(x)]
+#            return results[0] if len(results) > 0 else None
+#
+#        for r in resource_specs:
+#            n = r[0]['name']
+#            if n == name:
+#                rsc_list = r[0]['resourceSpecCharacteristic']
+#                # 1. vsbName
+#                element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
+#                if not element:
+#                    raise Exception("*** Unable to find 'vsbName' ***")
+#        
+#                vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
+#                sys.stdout.write('vsbName: "%s" \n' % vsbName)
+#
+#
+#                with open('/tmp/vsbName.txt', 'w') as f:
+#                    f.write(str(vsbName))
+#                break
+#
+#    outputs:
+#      parameters:
+#      - name: vsbName
+#        valueFrom:
+#          path: /tmp/vsbName.txt
 
   - name: acquire
     inputs:
@@ -376,6 +390,8 @@ spec:
 
 
   - name: core-entry
+    # Retrieve 'core' placement entry from the placement list, returning back
+    # the list excluding that
     inputs:
       parameters:
       - name: entries
@@ -416,3 +432,39 @@ spec:
         # placement entries without the core
         valueFrom:
           path: /tmp/entries.txt
+
+  - name: userdata
+    inputs:
+      parameters:
+      - name: mapped_function
+      - name: index
+      - name: snfvo_data
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import sys
+
+        mapped_function = "{{inputs.parameters.mapped_function}}"
+        sys.stdout.write('mapped_function: "%s" \n' % mapped_function)
+
+        index = int("{{inputs.parameters.index}}")
+        sys.stdout.write('index: %d \n' % index)
+
+        snfvo_data = {{inputs.parameters.snfvo_data}}
+        sys.stdout.write('snfvo_data: %s \n' % snfvo_data)
+
+        userdata = snfvo_data[mapped_function]
+        userdata['pool'] = snfvo_data['upf_pools'][index]
+        sys.stdout.write('userdata: %s \n' % userdata)
+
+        with open('/tmp/userdata.txt', 'w') as f:
+            json.dump(userdata, f)
+
+    outputs:
+      parameters:
+      - name: userdata
+        valueFrom:
+          path: /tmp/userdata.txt
