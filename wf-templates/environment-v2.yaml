@@ -117,6 +117,7 @@ spec:
                   "trmf_url": "http://0.0.0.0:0000",
                   "vs_url": "http://10.4.2.206:30055",
                   "issm_api_url": "http://0.0.0.0:0000"
+                }
               }
 
       - name: catalogue-url

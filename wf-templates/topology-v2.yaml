@@ -173,7 +173,8 @@ spec:
                   'name': resources[i]['offer_object']['name'],
                   'id': resources[i]['offer_object']['id'],
                   'place': [resources[i]['offer_object']['place'][0]],
-                  'productSpecification': {'relatedParty': [{'name': s_o_rp}]}
+                  'productSpecification': {'relatedParty': [{'name': 'operator-e'}]}
+                  # 'productSpecification': {'relatedParty': [{'name': s_o_rp}]}
                 },
                 'offer_did': resources[i]['offer_did']
               }
