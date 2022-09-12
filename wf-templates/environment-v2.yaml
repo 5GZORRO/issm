@@ -110,7 +110,13 @@ spec:
                   "trmf_url": "http://172.28.3.15:31115",
                   "vs_url": "http://172.28.3.15:33082",
                   "issm_api_url": "http://172.28.3.15:30080"
-                }
+                },
+                "operator-e": {
+                  "catalogue_url": "http://0.0.0.0:0000",
+                  "elma_url": "http://0.0.0.0:0000",
+                  "trmf_url": "http://0.0.0.0:0000",
+                  "vs_url": "http://10.4.2.206:30055",
+                  "issm_api_url": "http://0.0.0.0:0000"
               }
 
       - name: catalogue-url
