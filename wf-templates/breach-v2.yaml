@@ -110,10 +110,24 @@ spec:
           - name: snfvo_data
             value: "{{tasks.transaction-data.outputs.parameters.snfvo_data}}"
 
+      - name: update-snfvo
+        # update snfvo with scaleout type and specific parameters to be used
+        # in scaleout
+        dependencies: [prepare-orders]
+        # prepare-orders works on snfvo_data so synch
+        template: update-snfvo
+        arguments:
+          parameters:
+          - name: snfvo_data
+            value: "{{tasks.transaction-data.outputs.parameters.snfvo_data}}"
+          - name: opaque_parameters
+            value: "{{workflow.parameters.opaque_params}}"
+          - name: operationType
+            value: "{{workflow.parameters.operationType}}"
 
       - name: trigger-scaleout
         template: trigger-scaleout
-        dependencies: [prepare-orders, get-platform-env]
+        dependencies: [update-snfvo, get-platform-env]
         arguments:
           parameters:
           - name: service_owner
@@ -121,9 +135,8 @@ spec:
           - name: place
             value: "{{workflow.parameters.place}}"
           - name: order_id
-            value: "{{tasks.prepare-orders.outputs.parameters.order_id}}"
+            value: "{{tasks.update-snfvo.outputs.parameters.order_id}}"
           - name: instance_id
-            # TODO: inside the transaction
             value: "{{workflow.parameters.instance_id}}"
           - name: elma_url
             value: "{{tasks.get-domain-env.outputs.parameters.elma_url}}"
@@ -141,7 +154,7 @@ spec:
             value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
 
           - name: snfvo_data
-            value: "{{tasks.prepare-orders.outputs.parameters.snfvo_data}}"
+            value: "{{tasks.update-snfvo.outputs.parameters.snfvo_data}}"
 
   - name: trigger-scaleout
     inputs:

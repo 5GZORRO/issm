@@ -63,7 +63,10 @@ spec:
               }
             ]
           }
-        }        
+        }
+    - name: opaque_params
+      value: |
+        { }
 
   templates:
   - name: handle
@@ -84,7 +87,9 @@ spec:
                   "transactionID": "operator-a:{{workflow.parameters.transaction_id}}",
                   "productID": "{{workflow.parameters.product_DID}}",
                   "instanceID": "{{workflow.parameters.instance_id}}",
-                  "place": {{workflow.parameters.place}}
+                  "place": {{workflow.parameters.place}},
+                  "opaque_params" : {{workflow.parameters.opaque_params}},
+                  "operationType": "a"
                 }
               }
           - name: kafka_topic

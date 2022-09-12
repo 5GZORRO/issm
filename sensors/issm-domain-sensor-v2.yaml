@@ -157,6 +157,9 @@ spec:
                   - name: serviceSpecification_resourceSpecification
                     value: OVERRIDE
 
+                  - name: resources_ran
+                    value: OVERRIDE
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -832,3 +835,9 @@ spec:
                   {
                   }
               dest: spec.arguments.parameters.28.value
+
+            - src:
+                dependencyName: test-dep
+                dataKey: body.resources_ran
+                value: DEFAULT
+              dest: spec.arguments.parameters.29.value

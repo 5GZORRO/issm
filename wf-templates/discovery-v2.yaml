@@ -136,6 +136,17 @@ spec:
         # DID
         did = po_json['offer_did']
 
+        # vsbName is applicable to RAN offers..
+        vsbName = ""
+        rsc_list = r.json()[0]['resourceSpecCharacteristic']
+        # 1. vsbName
+        element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
+        if not element:
+            pass
+        else:
+            vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
+            sys.stdout.write('vsbName: "%s" \n' % vsbName)
+
         with open('/tmp/did.txt', 'w') as f:
             f.write(str(did))
 
@@ -150,6 +161,9 @@ spec:
 
         with open('/tmp/id.txt', 'w') as f:
             f.write(po_id)
+
+        with open('/tmp/vsbName.txt', 'w') as f:
+            f.write(vsbName)
 
     outputs:
       parameters:
@@ -172,3 +186,49 @@ spec:
       - name: id
         valueFrom:
           path: /tmp/id.txt
+
+      - name: vsbName
+        valueFrom:
+          path: /tmp/vsbName.txt
+
+
+  - name: best-offers-ran
+    inputs:
+      parameters:
+      - name: resources_ran
+      - name: related_party
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import sys
+
+        # po is an element received from sensor which is a flattened json
+        # none-pythonic json (null, true, false, ..)
+        resources_ran = '{{inputs.parameters.resources_ran}}'
+        related_party = "{{inputs.parameters.related_party}}"
+        resources_ran_json = json.loads(resources_ran)
+        sys.stdout.write('resources_ran: "%s"\nrelated_party: "%s"\nresources_ran_json: %s\n' %
+                          (resources_ran, related_party, resources_ran_json))
+
+        best_offer = {}
+        for r in resources_ran_json:
+            # relatedParty
+            r_p = r['offer_object']['productSpecification']['relatedParty'][0]['name']
+            r_p = r_p.replace('_','-').lower()
+            sys.stdout.write('r_p: "%s" \n' % r_p)
+            if r_p == related_party:
+                best_offer = r
+                break
+
+        with open('/tmp/best_offer.txt', 'w') as f:
+            json.dump(best_offer, f)
+
+    outputs:
+      parameters:
+      - name: best_offer
+        valueFrom:
+          path: /tmp/best_offer.txt
+  

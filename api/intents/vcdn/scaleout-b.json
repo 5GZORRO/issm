@@ -17,11 +17,14 @@
       }
     },
     "snfvo_data": {
-      "scaleout_type": "a",
+      "scaleout_type": "b",
       "userdata_slice": {
         "sm.plmn_id": "00103",
         "sm.imsi_list": "001035432100005,001035432000003",
-        "sm.apn": "Zorro_vCDN"
+        "sm.apn": "Zorro_vCDN",
+        "sm.core_address": "172.16.1.10",
+        "sm.core_port": "38412",
+        "sm.core_vlan": "140"
        },
        "vsd_parameters": {
         "users": "1000"
