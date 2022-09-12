@@ -1,0 +1,110 @@
+{
+    "operation": "instantiate",
+    "order_id": [{"uuid": "99969444-59ab-4e84-8d7d-24d5528717b0", "main": "true"}],
+    "place": {
+      "city": "Barcelona",
+      "country": "Spain",
+      "locality": "Barcelona",
+      "geographicLocation": {
+        "name": "Barcelona i2CAT Area, Spain ",
+        "geometryType": "string",
+        "geometry": [
+          {
+            "x": "41.3879",
+            "y": "2.1699",
+            "z": "3388.0"
+          }
+        ]
+      }
+    },
+    "snfvo_data": {
+        "core": {
+            "networks": [
+                {
+                    "name": "sbi",
+                    "master": "ens3",
+                    "range": "10.100.200.0/24",
+                    "start": "10.100.200.2",
+                    "end": "10.100.200.20"
+                },
+                {
+                    "name": "ngap",
+                    "master": "ens3",
+                    "range": "10.4.2.0/24",
+                    "start": "10.4.2.250",
+                    "end": "10.4.2.250"
+                }
+            ]
+        },
+        "upf": {
+            "sst": "1",
+            "sd": "010203",
+            "networks": [
+                {
+                    "name": "sbi",
+                    "master": "ens3",
+                    "range": "10.100.200.0/24",
+                    "start": "10.100.200.21",
+                    "end": "10.100.200.40"
+                },
+                {
+                    "name": "up",
+                    "master": "ens3",
+                    "range": "10.4.2.0/24",
+                    "start": "10.4.2.251",
+                    "end": "10.4.2.253"
+                }
+            ]
+        },
+        "vcache": {},
+        "upf_pools": ["60.61.0.0/16", "60.62.0.0/16", "60.63.0.0/16", "60.64.0.0/16", "60.65.0.0/16", "60.66.0.0/16", "60.67.0.0/16", "60.68.0.0/16"]
+    },
+    "app_topology": {
+      "directed": "true",
+      "multigraph": "false",
+      "graph": [
+        [
+          "name",
+          "AppTopo"
+        ]
+      ],
+      "nodes": [
+        {
+          "id": "U"
+        },
+        {
+          "id": "upf"
+        },
+        {
+          "id": "core"
+        },
+        {
+          "id": "vcache"
+        }
+      ],
+      "adjacency": [
+        [
+          {
+            "bw": {"value": "200", "units": "Mbps"},
+            "latency": {"value": "20", "units": "ms"},
+            "id": "upf"
+          }
+        ],
+        [
+          {
+            "bw": {"value": "200", "units": "Mbps"},
+            "latency": {"value": "999999", "units": "ms"},
+            "id": "core"
+          },
+          {
+            "bw": {"value": "200", "units": "Mbps"},
+            "latency": {"value": "20", "units": "ms"},
+            "id": "vcache"
+          }
+        ],
+        [],
+        []
+      ],
+      "global_demand": "1000"
+    }
+}

@@ -22,8 +22,420 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   # Note: this name must be identical accross all domain operators
-  name: orchestration
+  name: orchestrate
 spec:
   templates:
+  - name: orchestrate
+    dag:
+      tasks:
+      - name: get-domain-env
+        templateRef:
+          name: workflow-environment
+          template: get-domain-env
+        arguments:
+          parameters:
+          - name: domain
+            # myself
+            value: "{{workflow.parameters.resource_owner}}"
+
+      - name: create-core-vsi
+        dependencies: [get-domain-env]
+        when: "{{workflow.parameters.vsbName}} == \"core\""
+        template: create-core-vsi
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
+        
+      - name: create-slice-vsi
+        dependencies: [get-domain-env]
+        when: "{{workflow.parameters.vsbName}} == \"upf\""
+        template: create-slice-vsi
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
+
+      - name: create-vcache-vsi
+        dependencies: [get-domain-env]
+        # TODO: make this 'when' more generic
+        when: "{{workflow.parameters.vsbName}} == \"vcache\""
+        template: create-vsi-success
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "000"
+          - name: vsi_info
+            value: |
+              { }
 
 
+  - name: create-core-vsi
+    inputs:
+      parameters:
+      - name: vs_url
+    dag:
+      tasks:
+      - name: deploy
+        template: core
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{inputs.parameters.vs_url}}"
+          - name: namespace
+            value: "domain-{{workflow.parameters.service_owner}}"
+          - name: userdata
+            value: "{{workflow.parameters.userdata}}"
+
+      - name: poll
+        dependencies: [deploy]
+        template: poll
+        arguments:
+          parameters:
+          - name: poll
+            value: "true"
+          - name: vs_url
+            value: "{{inputs.parameters.vs_url}}"
+          - name: namespace
+            value: "domain-{{workflow.parameters.service_owner}}"
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: jq_query
+            value: ".phase"
+          - name: jq_query_value
+            value: "Succeeded"
+          - name: timeout
+            value: 120
+
+      - name: create-vsi-fail
+        dependencies: [poll]
+        template: create-vsi-fail
+        when: "{{tasks.poll.outputs.parameters.status}} == \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
+
+      - name: create-vsi-success
+        dependencies: [poll]
+        template: create-vsi-success
+        when: "{{tasks.poll.outputs.parameters.status}} != \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
+
+
+  - name: create-slice-vsi
+    inputs:
+      parameters:
+      - name: vs_url
+    dag:
+      tasks:
+      - name: deploy
+        template: subnetslice
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{inputs.parameters.vs_url}}"
+          - name: namespace
+            value: "domain-{{workflow.parameters.service_owner}}"
+          - name: userdata
+            value: "{{workflow.parameters.userdata}}"
+      
+      - name: poll
+        dependencies: [deploy]
+        template: poll
+        arguments:
+          parameters:
+          - name: poll
+            value: "true"
+          - name: vs_url
+            value: "{{inputs.parameters.vs_url}}"
+          - name: namespace
+            value: "domain-{{workflow.parameters.service_owner}}"
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: jq_query
+            value: ".phase"
+          - name: jq_query_value
+            value: "Succeeded"
+          - name: timeout
+            value: 120
+
+      - name: create-vsi-fail
+        dependencies: [poll]
+        template: create-vsi-fail
+        when: "{{tasks.poll.outputs.parameters.status}} == \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
+
+      - name: create-vsi-success
+        dependencies: [poll]
+        template: create-vsi-success
+        when: "{{tasks.poll.outputs.parameters.status}} != \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
+
+
+  - name: create-vsi-success
+    inputs:
+      parameters:
+      - name: vsi_id
+      - name: vsi_info
+    dag:
+      tasks:
+      - name: publish-status
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+
+          - name: data
+            value: |
+              { "msg_id": "{{workflow.name}}",
+                "vsi_id": "{{inputs.parameters.vsi_id}}",
+                "status": "SUCCESS"
+              }
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+
+
+  - name: create-vsi-fail
+    inputs:
+      parameters:
+      - name: vsi_id
+      - name: vsi_info
+    dag:
+      tasks:
+      - name: publish-status
+        templateRef:
+          name: workflow-base
+          template: produce
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+
+          - name: data
+            value: |
+              { "msg_id": "{{workflow.name}}",
+                "vsi_id": "{{inputs.parameters.vsi_id}}",
+                "status": "FAIL"
+              }
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+
+      - name: fail
+        dependencies: [publish-status]
+        templateRef:
+          name: workflow-base
+          template: fail
+
+
+
+  - name: orchestrate-terminate
+    steps:
+    - - name: get-domain-env
+        templateRef:
+          name: workflow-environment
+          template: get-domain-env
+        arguments:
+          parameters:
+          - name: domain
+            # myself
+            value: "{{workflow.parameters.resource_owner}}"
+
+
+  - name: core
+    inputs:
+      parameters:
+      - name: userdata
+      - name: namespace
+      - name: vs_url
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        def raise_for_status(r):
+            http_error_msg = ''
+            if 400 <= r.status_code < 500:
+                http_error_msg = '%s Client Error: %s' % (r.status_code, r.reason)
+
+            elif 500 <= r.status_code < 600:
+                http_error_msg = '%s Server Error: %s' % (r.status_code, r.reason)
+
+            return http_error_msg
+
+        vs_url = "{{inputs.parameters.vs_url}}"
+        userdata = {{inputs.parameters.userdata}}
+        namespace = "{{inputs.parameters.namespace}}"
+
+        sys.stdout.write('vs_url: "%s"\nuserdata: %s\nnamespace: "%s"'
+            % (vs_url, userdata, namespace))
+
+        headers = {'Content-Type': 'application/json'}
+        payload = {
+            "cluster": "cluster-1",
+            "namespace": namespace,
+            "networks": userdata['networks']
+        }
+
+        sys.stdout.write('Create instance..\n')
+        r = requests.post("{{inputs.parameters.vs_url}}/core",
+            json=payload, headers=headers)
+
+        sys.stdout.write('r.text [%s]\n' % r.text)
+
+        error_msg = raise_for_status(r)
+
+        if error_msg:
+            raise Exception('%s. %s' % (error_msg, r.text))
+
+        name  = r.json()['name']
+        sys.stdout.write('vsi_id: "%s" \n' % name)
+
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(str(name))
+
+    outputs:
+      parameters:
+      - name: vsi_id
+        valueFrom:
+          path: /tmp/id.txt
+
+
+  - name: subnetslice
+    inputs:
+      parameters:
+      - name: userdata
+      - name: namespace
+      - name: vs_url
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        def raise_for_status(r):
+            http_error_msg = ''
+            if 400 <= r.status_code < 500:
+                http_error_msg = '%s Client Error: %s' % (r.status_code, r.reason)
+
+            elif 500 <= r.status_code < 600:
+                http_error_msg = '%s Server Error: %s' % (r.status_code, r.reason)
+
+            return http_error_msg
+
+        vs_url = "{{inputs.parameters.vs_url}}"
+        userdata = {{inputs.parameters.userdata}}
+        namespace = "{{inputs.parameters.namespace}}"
+        core_namespace = "{{inputs.parameters.namespace}}"
+
+        sys.stdout.write('vs_url: "%s"\nuserdata: %s\nnamespace: "%s"'
+            % (vs_url, userdata, namespace))
+
+        headers = {'Content-Type': 'application/json'}
+        payload = {
+            "cluster": "cluster-2",
+            "namespace": namespace,
+
+            "cluster_core": "cluster-1",
+            "core_namespace": core_namespace,
+            "sst": userdata['sst'],
+            "sd": userdata['sd'],
+            "connectedFrom": "gNB1",
+            "networks": userdata['networks'],
+            "pool": userdata['pool']
+        }
+
+        sys.stdout.write('Create instance..\n')
+        r = requests.post("{{inputs.parameters.vs_url}}/subnetslice",
+            json=payload, headers=headers)
+
+        sys.stdout.write('r.text [%s]\n' % r.text)
+
+        error_msg = raise_for_status(r)
+
+        if error_msg:
+            raise Exception('%s. %s' % (error_msg, r.text))
+
+        name  = r.json()['name']
+        sys.stdout.write('vsi_id: "%s" \n' % name)
+
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(str(name))
+
+    outputs:
+      parameters:
+      - name: vsi_id
+        valueFrom:
+          path: /tmp/id.txt
+
+
+  - name: poll
+    inputs:
+      parameters:
+      - name: poll
+      - name: vs_url
+      - name: namespace
+      - name: vsi_id
+      - name: jq_query
+      - name: jq_query_value
+      - name: timeout
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [sh]
+      source: |
+        if [ {{inputs.parameters.poll}} = "true" ]; then
+          i=0
+          until [ "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" == "{{inputs.parameters.jq_query_value}}" -o $i -gt {{inputs.parameters.timeout}} ]; do
+             echo "Poll wait for vsi_id: {{inputs.parameters.vsi_id}}.. (1 sec)"
+             echo "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
+             sleep 1
+             i=$((i+1))
+          done
+          if [ $i -gt {{inputs.parameters.timeout}} ]; then
+            echo "TIMEOUT"
+            echo "TIMEOUT" > /tmp/status.txt
+          else
+            echo "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+            echo "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
+          fi
+        else  
+          echo "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}} | jq -r {{inputs.parameters.jq_query}})" > /tmp/status.txt
+          echo "$(curl {{inputs.parameters.vs_url}}/core_subnetslice/{{inputs.parameters.namespace}}/{{inputs.parameters.vsi_id}})" > /tmp/vsi_info.txt
+        fi
+    outputs:
+      parameters:
+      - name: status
+        valueFrom:
+          path: /tmp/status.txt
+
+      - name: vsi_info
+        valueFrom:
+          path: /tmp/vsi_info.txt
