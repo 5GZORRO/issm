@@ -224,7 +224,9 @@ spec:
         
       - name: acquire
         dependencies: [selected-offer-attributes, print-selected-offer]
-        template: acquire
+        templateRef:
+          name: workflow-catalog
+          template: acquire
         arguments:
           parameters:
           - name: resource_id
@@ -292,85 +294,6 @@ spec:
         templateRef:
           name: workflow-base
           template: success
-
-#  - name: resource-spec-by-name
-#    inputs:
-#      parameters:
-#      - name: name
-#      - name: resource_specs
-#    script:
-#      image: python:alpine3.6
-#      imagePullPolicy: IfNotPresent
-#      command: [python]
-#      source: |
-#        import json
-#        import sys
-#
-#        resource_specs = {{inputs.parameters.resource_specs}}
-#        name = "{{inputs.parameters.name}}"
-#
-#        vsbName = ""
-#
-#        def find(l, predicate):
-#            """
-#            util method
-#            """
-#            results = [x for x in l if predicate(x)]
-#            return results[0] if len(results) > 0 else None
-#
-#        for r in resource_specs:
-#            n = r[0]['name']
-#            if n == name:
-#                rsc_list = r[0]['resourceSpecCharacteristic']
-#                # 1. vsbName
-#                element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
-#                if not element:
-#                    raise Exception("*** Unable to find 'vsbName' ***")
-#        
-#                vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
-#                sys.stdout.write('vsbName: "%s" \n' % vsbName)
-#
-#
-#                with open('/tmp/vsbName.txt', 'w') as f:
-#                    f.write(str(vsbName))
-#                break
-#
-#    outputs:
-#      parameters:
-#      - name: vsbName
-#        valueFrom:
-#          path: /tmp/vsbName.txt
-
-  - name: acquire
-    inputs:
-      parameters:
-      - name: resource_id
-      - name: operator_id_seller
-      - name: operator_id_buyer
-      - name: resource_did
-    steps:
-      - - name: acquire-resource
-          templateRef:
-            name: workflow-catalog
-            template: create-order
-          arguments:
-            parameters:
-            - name: resource_id
-              value: "{{inputs.parameters.resource_id}}"
-            - name: operator_id_seller
-              value: "{{inputs.parameters.operator_id_seller}}"
-            - name: operator_id_buyer
-              value: "{{workflow.parameters.service_owner}}"
-
-      - - name: notify-reputation-manager
-          templateRef:
-            name: workflow-catalog
-            template: notify-trmf
-          arguments:
-            parameters:
-            - name: resource_did
-              value: "{{inputs.parameters.resource_did}}"
-
 
   - name: from-key-flatten
     # Temporary step to return a flattened JSON rather than a python dictionary

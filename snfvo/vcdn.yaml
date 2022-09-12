@@ -504,7 +504,9 @@ spec:
         
       - name: acquire
         dependencies: [edge-attributes, print-edge]
-        template: acquire
+        templateRef:
+          name: workflow-catalog
+          template: acquire
         arguments:
           parameters:
           - name: resource_id
@@ -865,33 +867,3 @@ spec:
           name: workflow-base
           template: fail
 
-
-  - name: acquire
-    inputs:
-      parameters:
-      - name: resource_id
-      - name: operator_id_seller
-      - name: operator_id_buyer
-      - name: resource_did
-    steps:
-      - - name: acquire-resource
-          templateRef:
-            name: workflow-catalog
-            template: create-order
-          arguments:
-            parameters:
-            - name: resource_id
-              value: "{{inputs.parameters.resource_id}}"
-            - name: operator_id_seller
-              value: "{{inputs.parameters.operator_id_seller}}"
-            - name: operator_id_buyer
-              value: "{{workflow.parameters.service_owner}}"
-
-      - - name: notify-reputation-manager
-          templateRef:
-            name: workflow-catalog
-            template: notify-trmf
-          arguments:
-            parameters:
-            - name: resource_did
-              value: "{{inputs.parameters.resource_did}}"
