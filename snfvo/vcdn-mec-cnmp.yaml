@@ -287,6 +287,39 @@ spec:
           - name: msg_id
             value: "{{tasks.trigger-orchestration.outputs.parameters.event_uuid}}"
 
+      - name: get-instance-id
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: update-order
+        dependencies: [get-instance-id]
+        templateRef:
+          name: workflow-catalog
+          template: update-order-instance-id
+        # in any case, persist instanceId
+        arguments:
+          parameters:
+          - name: transaction_uuid
+            value: "{{workflow.parameters.transaction_uuid}}"
+          - name: order_id
+            # the main NetworkService order
+            value: "{{workflow.parameters.order_id}}"
+          - name: main
+            value: "true"
+          - name: instance_id
+            value: "{{tasks.get-instance-id.outputs.result}}"
+          - name: related_party
+            value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party}}"
+
   - name: scaleout
     dag:
       tasks:

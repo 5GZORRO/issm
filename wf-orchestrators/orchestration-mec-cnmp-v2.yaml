@@ -60,11 +60,37 @@ spec:
         dependencies: [get-domain-env]
         # TODO: make this 'when' more generic
         when: "{{workflow.parameters.vsbName}} == \"vcache\""
+        template: create-app-vsi
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
+
+
+  - name: create-app-vsi
+    inputs:
+      parameters:
+      - name: vs_url
+    dag:
+      tasks:
+      - name: vsi-id
+        templateRef:
+          name: workflow-base
+          template: rand
+        arguments:
+          parameters:
+          - name: from
+            value: "1"
+          - name: to
+            value: "10000"
+
+      - name: create-vsi-success
         template: create-vsi-success
+        dependencies: [vsi-id]
         arguments:
           parameters:
           - name: vsi_id
-            value: "000"
+            value: "{{tasks.vsi-id.outputs.parameters.result}}"
           - name: vsi_info
             value: |
               { }

@@ -149,6 +149,38 @@ spec:
 
         print({{inputs.parameters.json_str}}['{{inputs.parameters.key}}'])
 
+
+  - name: rand
+    inputs:
+      parameters:
+      - name: from
+      - name: to
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import random
+        import sys
+
+        start = "{{inputs.parameters.from}}"
+        end = "{{inputs.parameters.to}}"
+
+        sys.stdout.write('start: "%s"\nend: "%s"\n' % (start, end))
+
+        result = str(random.randint(int(start), int(end)))
+        sys.stdout.write('result: "%s"\n' % result)
+
+        with open('/tmp/result.txt', 'w') as f:
+            f.write(str(result))
+
+    outputs:
+      parameters:
+      - name: result
+        valueFrom:
+          path: /tmp/result.txt
+
+
   - name: jq-script
     inputs:
       parameters:
