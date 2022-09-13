@@ -625,43 +625,39 @@ spec:
         template: best-edge-selection-ran
 
 
-
   - name: best-edge-selection-slice
     dag:
       tasks:
-      - name: loop-edges
-        template: loop-best-offers
+      - name: best-offer-edge
+        templateRef:
+          name: workflow-discovery
+          template: best-offer-edge
         arguments:
           parameters:
-          - name: best_offer
-            value: "{{item}}"
-        withParam: "{{workflow.parameters.resources}}"
+          - name: resources
+            value: "{{workflow.parameters.resources}}"
 
-  - name: loop-best-offers
-    inputs:
-      parameters:
-      - name: best_offer
-    dag:
-      tasks:
       - name: print-edge
+        dependencies: [best-offer-edge]
         templateRef:
           name: workflow-base
           template: jq-script
         arguments:
           parameters:
           - name: json_str
-            value: "{{inputs.parameters.best_offer}}"
+            value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
           - name: jq_query
             value: '.'
       
       - name: edge-attributes
+        dependencies: [best-offer-edge]
         templateRef:
           name: workflow-discovery
           template: resource-attributes
         arguments:
           parameters:
           - name: resource
-            value: "{{inputs.parameters.best_offer}}"
+            value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
         
       - name: acquire
         dependencies: [edge-attributes, print-edge]
@@ -817,36 +813,41 @@ spec:
         template: slice-status-fail-sa
         when: "{{tasks.slice-status.outputs.result}} == \"FAIL\""
 
+###
 
-
-
-  # TODO: branch
   - name: best-edge-selection-ran
     dag:
       tasks:
-      - name: loop-edges
-        template: loop-best-offers-with-ran
+      - name: best-offer-edge
+        templateRef:
+          name: workflow-discovery
+          template: best-offer-edge
         arguments:
           parameters:
-          - name: best_offer
-            value: "{{item}}"
-        withParam: "{{workflow.parameters.resources}}"
+          - name: resources
+            value: "{{workflow.parameters.resources}}"
 
+      - name: print-edge
+        dependencies: [best-offer-edge]
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.'
 
-  - name: loop-best-offers-with-ran
-    inputs:
-      parameters:
-      - name: best_offer
-    dag:
-      tasks:
       - name: edge-attributes
+        dependencies: [best-offer-edge]
         templateRef:
           name: workflow-discovery
           template: resource-attributes
         arguments:
           parameters:
           - name: resource
-            value: "{{inputs.parameters.best_offer}}"
+            value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
       
       - name: best-offer-ran
         dependencies: [edge-attributes]
@@ -859,17 +860,6 @@ spec:
             value: "{{workflow.parameters.resources_ran}}"
           - name: related_party
             value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
-
-      - name: print-edge
-        templateRef:
-          name: workflow-base
-          template: jq-script
-        arguments:
-          parameters:
-          - name: json_str
-            value: "{{inputs.parameters.best_offer}}"
-          - name: jq_query
-            value: '.'
 
       - name: print-ran
         dependencies: [best-offer-ran]
@@ -926,7 +916,7 @@ spec:
             value: "{{tasks.ran-attributes.outputs.parameters.did}}"
 
       - name: slice-order-id
-        #dependencies: [acquire, acquire-ran]
+        dependencies: [acquire, acquire-ran]
         templateRef:
           name: workflow-base
           template: from-key
@@ -949,6 +939,7 @@ spec:
             value: "{{tasks.slice-order-id.outputs.result}}"
 
       - name: userdata-slice
+        dependencies: [get-slice-order-from-catalog]
         # should contain *all* required sm attributes, either filled by issm-isbp
         # or, explicit intent
         templateRef:
@@ -963,6 +954,7 @@ spec:
               {{workflow.parameters.snfvo_data}}
 
       - name: vsd-parameters
+        dependencies: [get-slice-order-from-catalog]
         templateRef:
           name: workflow-base
           template: from-key
@@ -978,7 +970,7 @@ spec:
 #=========== Scaleout: Slice
 
       - name: trigger-orchestration-slice-ran
-        dependencies: [ran-attributes, userdata-slice, vsd-parameters]
+        dependencies: [vsd-parameters, userdata-slice]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -986,7 +978,7 @@ spec:
           parameters:
           - name: resource_owner
             # domain's orchestrator
-            value: "{{tasks.ran-attributes.outputs.parameters.related_party}}"
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
 
           - name: vsbName
             # of RAN
@@ -1069,7 +1061,7 @@ spec:
           - name: instance_id
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
           - name: best_offer
-            value: "{{inputs.parameters.best_offer}}"
+            value: "{{tasks.best-offer-ran.outputs.parameters.best_offer}}"
           
 
       - name: slice-status-fail

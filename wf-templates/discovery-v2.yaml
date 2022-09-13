@@ -95,6 +95,7 @@ spec:
 
 
   - name: resource-attributes
+    # Return various resource offer attributes neede by the transaction flows
     inputs:
       parameters:
       - name: resource
@@ -205,6 +206,7 @@ spec:
 
 
   - name: best-offer-ran
+    # Returns the first ran offer that matches given related_party
     inputs:
       parameters:
       - name: resources_ran
@@ -234,6 +236,35 @@ spec:
             if r_p == related_party:
                 best_offer = r
                 break
+
+        with open('/tmp/best_offer.txt', 'w') as f:
+            json.dump(best_offer, f)
+
+    outputs:
+      parameters:
+      - name: best_offer
+        valueFrom:
+          path: /tmp/best_offer.txt
+
+  - name: best-offer-edge
+    # Returns the first edge resource
+    inputs:
+      parameters:
+      - name: resources
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import sys
+
+        # po is an element received from sensor which is a flattened json
+        # none-pythonic json (null, true, false, ..)
+        resources = '{{inputs.parameters.resources}}'
+        resources_json = json.loads(resources)
+
+        best_offer = resources_json[0]
 
         with open('/tmp/best_offer.txt', 'w') as f:
             json.dump(best_offer, f)
