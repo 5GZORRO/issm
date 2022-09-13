@@ -282,7 +282,7 @@ spec:
         sys.stdout.write('duplexMode: "%s" \n' % duplexMode)
 
         spectrum_parameters = {
-            "sm.operation_band": str(operationBand),
+            "sm.operating_band": str(operationBand),
 
             "sm.ful_low": float(startFreqUl),
             "sm.ful_high": float(endFreqUl),
