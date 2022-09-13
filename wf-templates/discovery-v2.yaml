@@ -105,6 +105,14 @@ spec:
       source: |
         import json
         import sys
+
+        def find(l, predicate):
+            """
+            util method
+            """
+            results = [x for x in l if predicate(x)]
+            return results[0] if len(results) > 0 else None
+
         # po is an element received from sensor which is a flattened json
         # none-pythonic json (null, true, false, ..)
         po = '{{inputs.parameters.resource}}'
@@ -138,14 +146,18 @@ spec:
 
         # vsbName is applicable to RAN offers..
         vsbName = ""
-        rsc_list = r.json()[0]['resourceSpecCharacteristic']
-        # 1. vsbName
-        element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
-        if not element:
-            pass
-        else:
-            vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
-            sys.stdout.write('vsbName: "%s" \n' % vsbName)
+        try:
+            rsc_list = po_json['offer_object']['productSpecification']['resourceSpecification'][0]['resourceSpecCharacteristic']
+            # r.json()[0]['resourceSpecCharacteristic']
+            # 1. vsbName
+            element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
+            if not element:
+                pass
+            else:
+                vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
+                sys.stdout.write('vsbName: "%s" \n' % vsbName)
+        except Exception as e:
+            sys.stdout.write('*** WARN ***: %s\n' % str(e))
 
         with open('/tmp/did.txt', 'w') as f:
             f.write(str(did))

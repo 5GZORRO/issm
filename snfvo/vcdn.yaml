@@ -567,7 +567,7 @@ spec:
           - name: intent_query
             value: "{{tasks.build-discovery-query.outputs.result}}"
 
-      - name: discover-ran
+      - name: discover-rans
         templateRef:
           name: workflow-discovery
           template: srds-service
@@ -580,7 +580,7 @@ spec:
             value: "{{tasks.build-discovery-ran-query.outputs.result}}"
   
       - name: send-edges-to-optimizer
-        dependencies: [discover-edges]
+        dependencies: [discover-edges, discover-rans]
         templateRef:
           name: workflow-base
           template: publish-on-kafka
@@ -592,7 +592,7 @@ spec:
                 "topic": "issm-in-{{workflow.parameters.service_owner}}", 
                 "category": "{{workflow.parameters.category}}",
                 "resources": {{tasks.discover-edges.outputs.result}},
-                "resources_ran": {{tasks.discover-ran.outputs.result}},
+                "resources_ran": {{tasks.discover-rans.outputs.result}},
                 "operation": "scaleout", "sub_operation": "BEST_OFFER_SELECTION",
                 "service_owner": "{{workflow.parameters.service_owner}}",
                 "sla_breach": {{workflow.parameters.sla_breach}},
@@ -872,14 +872,14 @@ spec:
             value: '.'
 
       - name: print-ran
-        dependencies: [best-offers-ran]
+        dependencies: [best-offer-ran]
         templateRef:
           name: workflow-base
           template: jq-script
         arguments:
           parameters:
           - name: json_str
-            value: "{{tasks.best-offers-ran.outputs.parameters.best_offer}}"
+            value: "{{tasks.best-offer-ran.outputs.parameters.best_offer}}"
           - name: jq_query
             value: '.'
 
