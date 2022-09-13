@@ -94,14 +94,14 @@ spec:
                   "catalogue_url": "http://172.28.3.15:31080",
                   "elma_url": "http://172.28.3.15:30880",
                   "trmf_url": "http://172.28.3.15:31113",
-                  "vs_url": "http://10.4.2.206:30055",
+                  "vs_url": "http://172.28.3.15:31082",
                   "issm_api_url": "http://172.28.3.15:30080"
                 },
                 "operator-b": {
                   "catalogue_url": "http://172.28.3.15:32080",
                   "elma_url": "http://172.28.3.15:31880",
                   "trmf_url": "http://172.28.3.15:31114",
-                  "vs_url": "http://10.4.2.206:30055",
+                  "vs_url": "http://172.28.3.15:32082",
                   "issm_api_url": "http://172.28.3.15:30080"
                 },
                 "operator-c": {

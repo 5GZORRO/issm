@@ -1,5 +1,6 @@
 {
     "operation": "instantiate",
+    "order_id": [{"uuid": "c49c2bea-b8dc-4136-b7ed-d308b949b440", "main": "true"}, {"uuid": "c6cfe503-b6a6-4678-a3f7-13761bb1cd74"}],
     "snfvo_data": {
         "userdata_slice": {
             "sm.plmn_id": "00103",  
