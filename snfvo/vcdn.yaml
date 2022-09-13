@@ -388,19 +388,36 @@ spec:
           - name: json_str
             value: |
               {{workflow.parameters.snfvo_data}}
-  
-    steps:
+
     - - name: scaleout-service
         when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
         template: scaleout-service
+        arguments:
+          parameters:
+          - name: scaleout_type
+            value: "{{steps.scaleout-type.outputs.result}}"
+
     - - name: best-edge-selection
         when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
         template: best-edge-selection
-
+        arguments:
+          parameters:
+          - name: scaleout_type
+            value: "{{steps.scaleout-type.outputs.result}}"
 
 ###
+  - name: scaleout-service
+    inputs:
+      parameters:
+      - name: scaleout_type
+    steps:
+    - - name: scaleout-service-slice
+        when: "{{inputs.parameters.scaleout_type}} == \"a\""
+        template: scaleout-service-slice
+    - - name: scaleout-service-slice-ran
+        when: "{{inputs.parameters.scaleout_type}} == \"b\""
+        template: scaleout-service-slice-ran
 
-    # TODO: branch
   - name: scaleout-service-slice
     dag:
       tasks:
@@ -478,8 +495,8 @@ spec:
           - name: kafka_topic
             value: issm-optimizer
 
+################## RAN #####################
 
-# TODO: branch
   - name: scaleout-service-slice-ran
     dag:
       tasks:
@@ -595,9 +612,21 @@ spec:
 
 
 ###
-
-  # TODO: branch
   - name: best-edge-selection
+    inputs:
+      parameters:
+      - name: scaleout_type
+    steps:
+    - - name: best-edge-selection-slice
+        when: "{{inputs.parameters.scaleout_type}} == \"a\""
+        template: best-edge-selection-slice
+    - - name: best-edge-selection-ran
+        when: "{{inputs.parameters.scaleout_type}} == \"b\""
+        template: best-edge-selection-ran
+
+
+
+  - name: best-edge-selection-slice
     dag:
       tasks:
       - name: loop-edges
@@ -791,15 +820,12 @@ spec:
 
 
 
-
-
-
   # TODO: branch
   - name: best-edge-selection-ran
     dag:
       tasks:
       - name: loop-edges
-        template: loop-best-offers-ran
+        template: loop-best-offers-with-ran
         arguments:
           parameters:
           - name: best_offer
@@ -807,7 +833,7 @@ spec:
         withParam: "{{workflow.parameters.resources}}"
 
 
-  - name: loop-best-offers-ran
+  - name: loop-best-offers-with-ran
     inputs:
       parameters:
       - name: best_offer
@@ -822,11 +848,11 @@ spec:
           - name: resource
             value: "{{inputs.parameters.best_offer}}"
       
-      - name: best-offers-ran
+      - name: best-offer-ran
         dependencies: [edge-attributes]
         templateRef:
           name: workflow-discovery
-          template: best-offers-ran
+          template: best-offer-ran
         arguments:
           parameters:
           - name: resources_ran
@@ -858,14 +884,14 @@ spec:
             value: '.'
 
       - name: ran-attributes
-        dependencies: [best-offers-ran]
+        dependencies: [best-offer-ran]
         templateRef:
           name: workflow-discovery
           template: resource-attributes
         arguments:
           parameters:
           - name: resource
-            value: "{{tasks.best-offers-ran.outputs.parameters.best_offer}}"
+            value: "{{tasks.best-offer-ran.outputs.parameters.best_offer}}"
         
       - name: acquire
         dependencies: [edge-attributes, print-edge]
@@ -923,7 +949,8 @@ spec:
             value: "{{tasks.slice-order-id.outputs.result}}"
 
       - name: userdata-slice
-        # should contain *all* required sm attributes
+        # should contain *all* required sm attributes, either filled by issm-isbp
+        # or, explicit intent
         templateRef:
           name: workflow-base
           template: from-key
@@ -962,6 +989,7 @@ spec:
             value: "{{tasks.ran-attributes.outputs.parameters.related_party}}"
 
           - name: vsbName
+            # of RAN
             value: "{{tasks.ran-attributes.outputs.parameters.vsbName}}"
 
           - name: userdata
@@ -1020,7 +1048,7 @@ spec:
 ############
 
       - name: slice-status
-        dependencies: [get-slice-instance-id]
+        dependencies: [wait-for-status]
         templateRef:
           name: workflow-base
           template: from-key

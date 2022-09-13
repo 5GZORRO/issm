@@ -192,7 +192,7 @@ spec:
           path: /tmp/vsbName.txt
 
 
-  - name: best-offers-ran
+  - name: best-offer-ran
     inputs:
       parameters:
       - name: resources_ran
