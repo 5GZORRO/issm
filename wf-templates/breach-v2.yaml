@@ -119,7 +119,7 @@ spec:
         arguments:
           parameters:
           - name: snfvo_data
-            value: "{{tasks.transaction-data.outputs.parameters.snfvo_data}}"
+            value: "{{tasks.prepare-orders.outputs.parameters.snfvo_data}}"
           - name: opaque_parameters
             value: "{{workflow.parameters.opaque_params}}"
           - name: operationType
@@ -135,7 +135,8 @@ spec:
           - name: place
             value: "{{workflow.parameters.place}}"
           - name: order_id
-            value: "{{tasks.transaction-data.outputs.parameters.order_id}}"
+            # main order id
+            value: "{{tasks.prepare-orders.outputs.parameters.order_id}}"
           - name: instance_id
             value: "{{workflow.parameters.instance_id}}"
           - name: elma_url
@@ -154,6 +155,7 @@ spec:
             value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
 
           - name: snfvo_data
+            # customized snfvo_data along with sub order ids
             value: "{{tasks.update-snfvo.outputs.parameters.snfvo_data}}"
 
   - name: update-snfvo
@@ -177,7 +179,9 @@ spec:
         sys.stdout.write('snfvo_data: %s\noperationType: "%s"\nopaque_parameters: %s\n' %
                           (snfvo_data, operationType, opaque_parameters))
 
-
+        snfvo_data['scaleout_type'] = operationType
+        # TODO: maybe put under subkey core_info dedicated to network extend
+        snfvo_data.setdefault('userdata_slice', {}).update(opaque_parameters)
         with open('/tmp/snfvo_data.txt', 'w') as f:
             # flatten it (like print) since it's going to be published on
             # kafka
