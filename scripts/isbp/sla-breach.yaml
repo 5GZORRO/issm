@@ -41,11 +41,11 @@ spec:
       value: "31-01-2022T05:55"
 
     - name: transaction_id
-      value: f4e04bcc9d824dd9bc9a4971a8d4dcb3
+      value: c333b5ef9df94b419106e41665024cb1
     - name: product_DID
-      value: MjTShRh41FHFsw3bcdutT3
+      value: 6tdMn9TLgtPfPyS9wfRivK
     - name: instance_id
-      value: "012"
+      value: "3054"
     - name: place
       value: |
         {
@@ -64,9 +64,30 @@ spec:
             ]
           }
         }
+    - name: operationType
+      value: a
     - name: opaque_params
       value: |
-        { }
+        {
+            "msg_id": "17ccbf03bed54d19adde3c54798fb5cf",
+            "vsi_id": "3054",
+            "status": "SUCCESS",
+            "vsi_info": {
+              "name": "vCDN_cache",
+              "description": "vCDN_cache",
+              "vsiId": "3054",
+              "vsdId": 15,
+              "status": "INSTANTIATED",
+              "externalGwAddress": "10.30.6.36",
+              "internalVpnSubnets": [
+                "192.168.161.16/28"
+              ],
+              "allocatedVlSubnets": {
+                "app_net": "192.168.161.16/28",
+                "vpn_net": "192.168.161.0/28"
+              }
+            }
+        }        
 
   templates:
   - name: handle
@@ -84,12 +105,12 @@ spec:
                   "metric": "{{workflow.parameters.metric}}",
                   "datatimeViolation": "{{workflow.parameters.datatime_violation}}",
                   "datatimePrediction": "{{workflow.parameters.datatime_prediction}}",
-                  "transactionID": "operator-a:{{workflow.parameters.transaction_id}}",
+                  "transactionID": "operator-c:{{workflow.parameters.transaction_id}}",
                   "productID": "{{workflow.parameters.product_DID}}",
                   "instanceID": "{{workflow.parameters.instance_id}}",
                   "place": {{workflow.parameters.place}},
                   "opaque_params" : {{workflow.parameters.opaque_params}},
-                  "operationType": "a"
+                  "operationType": "{{workflow.parameters.operationType}}"
                 }
               }
           - name: kafka_topic
