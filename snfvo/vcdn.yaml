@@ -805,7 +805,7 @@ spec:
           - name: instance_id
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
           - name: best_offer
-            value: "{{inputs.parameters.best_offer}}"
+            value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
           
 
       - name: slice-status-fail
@@ -813,7 +813,7 @@ spec:
         template: slice-status-fail-sa
         when: "{{tasks.slice-status.outputs.result}} == \"FAIL\""
 
-###
+################## RAN #####################
 
   - name: best-edge-selection-ran
     dag:
@@ -1040,7 +1040,7 @@ spec:
 ############
 
       - name: slice-status
-        dependencies: [wait-for-status]
+        dependencies: [wait-for-status, get-slice-instance-id]
         templateRef:
           name: workflow-base
           template: from-key
