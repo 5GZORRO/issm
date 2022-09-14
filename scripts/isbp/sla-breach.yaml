@@ -65,7 +65,7 @@ spec:
           }
         }
     - name: operationType
-      value: a
+      value: b
     - name: opaque_params
       value: |
         {
@@ -78,14 +78,9 @@ spec:
               "vsiId": "3054",
               "vsdId": 15,
               "status": "INSTANTIATED",
-              "externalGwAddress": "10.30.6.36",
-              "internalVpnSubnets": [
-                "192.168.161.16/28"
-              ],
-              "allocatedVlSubnets": {
-                "app_net": "192.168.161.16/28",
-                "vpn_net": "192.168.161.0/28"
-              }
+              "sm.core_address": "172.16.1.10",
+              "sm.core_port": "38412",
+              "sm.core_vlan":  "140"
             }
         }        
 

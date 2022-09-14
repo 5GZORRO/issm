@@ -103,7 +103,7 @@ spec:
           - name: catalogue_url
             value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
           - name: order_id
-            # NOTE: here it is an ARRAY
+            # NOTE: here it is an ARRAY of <uuid, main>
             value: "{{tasks.transaction-data.outputs.parameters.order_id}}"
           - name: category
             value: "{{tasks.transaction-data.outputs.parameters.category}}"
@@ -120,7 +120,7 @@ spec:
           parameters:
           - name: snfvo_data
             value: "{{tasks.prepare-orders.outputs.parameters.snfvo_data}}"
-          - name: opaque_parameters
+          - name: opaque_params
             value: "{{workflow.parameters.opaque_params}}"
           - name: operationType
             value: "{{workflow.parameters.operationType}}"
@@ -135,7 +135,7 @@ spec:
           - name: place
             value: "{{workflow.parameters.place}}"
           - name: order_id
-            # main order id
+            # main order id (str)
             value: "{{tasks.prepare-orders.outputs.parameters.order_id}}"
           - name: instance_id
             value: "{{workflow.parameters.instance_id}}"
@@ -163,7 +163,7 @@ spec:
       parameters:
       - name: snfvo_data
       - name: operationType
-      - name: opaque_parameters
+      - name: opaque_params
     script:
       image: python:alpine3.6
       imagePullPolicy: IfNotPresent
@@ -174,20 +174,21 @@ spec:
 
         snfvo_data = {{inputs.parameters.snfvo_data}}
         operationType = "{{inputs.parameters.operationType}}"
-        opaque_parameters = {{inputs.parameters.opaque_parameters}}
+        opaque_params = {{inputs.parameters.opaque_params}}
 
-        sys.stdout.write('snfvo_data: %s\noperationType: "%s"\nopaque_parameters: %s\n' %
-                          (snfvo_data, operationType, opaque_parameters))
+        sys.stdout.write('snfvo_data: %s\noperationType: "%s"\nopaque_params: %s\n' %
+                          (snfvo_data, operationType, opaque_params))
 
         snfvo_data['scaleout_type'] = operationType
-        # TODO: maybe put under subkey core_info dedicated to network extend
-        snfvo_data.setdefault('userdata_slice', {}).update(opaque_parameters)
+        # NOTE: extension_info should match same key name supplied in the intent
+        # for explicit scaleout
+        snfvo_data.setdefault('extension_info', {}).update(opaque_params)
         with open('/tmp/snfvo_data.txt', 'w') as f:
             # flatten it (like print) since it's going to be published on
             # kafka
             f.write(str(snfvo_data))
             #json.dump(snfvo_data, f)
-        
+
     outputs:
       parameters:
       - name: snfvo_data

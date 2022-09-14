@@ -928,33 +928,89 @@ spec:
             value: |
               {{workflow.parameters.snfvo_data}}
 
-      - name: get-slice-order-from-catalog
+      - name: userdata-slice1
         dependencies: [slice-order-id]
-        templateRef:
-          name: workflow-catalog
-          template: get-order-from-catalog
-        arguments:
-          parameters:
-          - name: order_id
-            value: "{{tasks.slice-order-id.outputs.result}}"
-
-      - name: userdata-slice
-        dependencies: [get-slice-order-from-catalog]
-        # should contain *all* required sm attributes, either filled by issm-isbp
-        # or, explicit intent
         templateRef:
           name: workflow-base
           template: from-key
         arguments:
           parameters:
           - name: key
-            value: userdata_slice
+            value: extension_info
           - name: json_str
             value: |
               {{workflow.parameters.snfvo_data}}
 
+      - name: userdata-slice2
+        dependencies: [userdata-slice1]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_info
+          - name: json_str
+            value: "{{tasks.userdata-slice1.outputs.result}}"
+
+############ RETRIEVE THREE CORE ATTRIBUTES TO CONNECT RAN INTO
+      - name: sm-core-address
+        dependencies: [userdata-slice2]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: "sm.core_address"
+          - name: json_str
+            value: "{{tasks.userdata-slice2.outputs.result}}"
+      - name: sm-core-port
+        dependencies: [userdata-slice2]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: "sm.core_port"
+          - name: json_str
+            value: "{{tasks.userdata-slice2.outputs.result}}"
+      - name: sm-core-vlan
+        dependencies: [userdata-slice2]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: "sm.core_vlan"
+          - name: json_str
+            value: "{{tasks.userdata-slice2.outputs.result}}"
+
+############ END CORE ATTRIBUTES
+
+      - name: add-user-data-ran
+        dependencies: [sm-core-address, sm-core-port, sm-core-vlan]
+        templateRef:
+          name: workflow-base
+          template: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: |
+              { }
+          - name: dict2
+            value: |
+              {
+                "sm.core_address": "{{tasks.sm-core-address.outputs.result}}",
+                "sm.core_port": "{{tasks.sm-core-port.outputs.result}}",
+                "sm.core_vlan": "{{tasks.sm-core-vlan.outputs.result}}"
+              }
+
+
       - name: vsd-parameters
-        dependencies: [get-slice-order-from-catalog]
+        dependencies: [add-user-data-ran]
         templateRef:
           name: workflow-base
           template: from-key
@@ -970,7 +1026,7 @@ spec:
 #=========== Scaleout: Slice
 
       - name: trigger-orchestration-slice-ran
-        dependencies: [vsd-parameters, userdata-slice]
+        dependencies: [vsd-parameters]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -985,7 +1041,7 @@ spec:
             value: "{{tasks.ran-attributes.outputs.parameters.vsbName}}"
 
           - name: userdata
-            value: "{{tasks.userdata-slice.outputs.result}}"
+            value: "{{tasks.add-user-data-ran.outputs.parameters.dict}}"
 
           - name: vsd_parameters
             value: "{{tasks.vsd-parameters.outputs.result}}"
