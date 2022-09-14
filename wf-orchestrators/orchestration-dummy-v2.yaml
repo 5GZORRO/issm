@@ -247,7 +247,7 @@ spec:
         import sys
 
         sys.stdout.write('Create instance..\n')
-        vsi_id = str(random.randint(1, 1000))
+        vsi_id = str(random.randint(1, 10000))
         sys.stdout.write('Creating service instance with vsi_id: %s \n' % vsi_id)
 
         with open('/tmp/id.txt', 'w') as f:
@@ -296,6 +296,8 @@ spec:
         name = "{{workflow.parameters.vsbName}}"
         status = "INSTANTIATED"
 
+        vsi_id = "{{inputs.parameters.vsi_id}}"
+
         sys.stdout.write('Waiting: %s \n' % str(timeout))
         time.sleep(int(timeout))
 
@@ -307,7 +309,7 @@ spec:
         vsi_info = {
             "name": name,
             "description": name,
-            "vsiId": 17,
+            "vsiId": vsi_id,
             "vsdId": 15,
             "status": "INSTANTIATED",
             "externalGwAddress": "10.30.6.36",
