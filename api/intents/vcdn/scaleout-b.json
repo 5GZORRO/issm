@@ -28,7 +28,8 @@
         "vsi_info": {
           "sm.core_address": "172.16.1.10",
           "sm.core_port": "38412",
-          "sm.core_vlan": "140"
+          "sm.core_vlan": "140",
+          "sm.plmn_id": "00103"
         }
       },
       "vsd_parameters": {

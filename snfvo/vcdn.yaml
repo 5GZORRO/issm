@@ -987,11 +987,22 @@ spec:
             value: "sm.core_vlan"
           - name: json_str
             value: "{{tasks.userdata-slice2.outputs.result}}"
+      - name: sm-plmn-id
+        dependencies: [userdata-slice2]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: "sm.plmn_id"
+          - name: json_str
+            value: "{{tasks.userdata-slice2.outputs.result}}"
 
 ############ END CORE ATTRIBUTES
 
       - name: add-user-data-ran
-        dependencies: [sm-core-address, sm-core-port, sm-core-vlan]
+        dependencies: [sm-core-address, sm-core-port, sm-core-vlan, sm-plmn-id]
         templateRef:
           name: workflow-base
           template: add-to-dict
@@ -1005,7 +1016,8 @@ spec:
               {
                 "sm.core_address": "{{tasks.sm-core-address.outputs.result}}",
                 "sm.core_port": "{{tasks.sm-core-port.outputs.result}}",
-                "sm.core_vlan": "{{tasks.sm-core-vlan.outputs.result}}"
+                "sm.core_vlan": "{{tasks.sm-core-vlan.outputs.result}}",
+                "sm.plmn_id": "{{tasks.sm-plmn-id.outputs.result}}"
               }
 
 
