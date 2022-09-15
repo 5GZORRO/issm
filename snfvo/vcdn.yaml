@@ -311,6 +311,8 @@ spec:
             value: "{{tasks.get-order-from-catalog.outputs.parameters.place}}"
           - name: instance_id
             value: "{{tasks.get-vcdn-instance-id.outputs.result}}"
+          - name: vsi_info
+            value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
 
       - name: vcdn-status-fail
         dependencies: [vcdn-status]
@@ -334,6 +336,7 @@ spec:
       - name: sla_DID
       - name: place
       - name: instance_id
+      - name: vsi_info
     dag:
       tasks:
       - name: sla-event
@@ -351,6 +354,7 @@ spec:
                 "instanceID": "{{inputs.parameters.instance_id}}",
                 "place": {{inputs.parameters.place}},
                 "kafka": "{{workflow.parameters.kafka}}",
+                "opaque_params": {{inputs.parameters.vsi_info}},
                 "topic": "isbp-topic-out"
               }
           - name: kafka_topic
@@ -373,18 +377,48 @@ spec:
 
   - name: scaleout
     steps:
+    - - name: scaleout-type
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: scaleout_type
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
     - - name: scaleout-service
         when: "{{workflow.parameters.sub_operation}} == \"SCALEOUT_SERVICE\""
         template: scaleout-service
+        arguments:
+          parameters:
+          - name: scaleout_type
+            value: "{{steps.scaleout-type.outputs.result}}"
+
     - - name: best-edge-selection
         when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
         template: best-edge-selection
-
+        arguments:
+          parameters:
+          - name: scaleout_type
+            value: "{{steps.scaleout-type.outputs.result}}"
 
 ###
-
-
   - name: scaleout-service
+    inputs:
+      parameters:
+      - name: scaleout_type
+    steps:
+    - - name: scaleout-service-slice
+        when: "{{inputs.parameters.scaleout_type}} == \"a\""
+        template: scaleout-service-slice
+    - - name: scaleout-service-slice-ran
+        when: "{{inputs.parameters.scaleout_type}} == \"b\""
+        template: scaleout-service-slice-ran
+
+  - name: scaleout-service-slice
     dag:
       tasks:
       - name: get-order-from-catalog
@@ -461,46 +495,169 @@ spec:
           - name: kafka_topic
             value: issm-optimizer
 
+################## RAN #####################
 
-###
-
-
-  - name: best-edge-selection
+  - name: scaleout-service-slice-ran
     dag:
       tasks:
-      - name: loop-edges
-        template: loop-best-offers
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
         arguments:
           parameters:
-          - name: best_offer
-            value: "{{item}}"
-        withParam: "{{workflow.parameters.resources}}"
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
 
-  - name: loop-best-offers
+      - name: build-discovery-query
+        dependencies: [get-order-from-catalog]
+        templateRef:
+          name: workflow-discovery
+          template: build-intent-query
+        arguments:
+          parameters:
+          - name: category
+            value: Edge
+
+          - name: place
+            value: "{{workflow.parameters.place}}"
+          - name: cpu
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.cpu_max}}"
+          - name: mem
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.mem_max}}"
+          - name: mem_unit
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.mem_unit}}"
+          - name: storage
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.storage_max}}"
+          - name: storage_unit
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.storage_unit}}"
+
+      - name: build-discovery-ran-query
+        dependencies: [get-order-from-catalog]
+        templateRef:
+          name: workflow-discovery
+          template: build-intent-query
+        arguments:
+          parameters:
+          - name: category
+            value: RAN
+
+          - name: place
+            value: "{{workflow.parameters.place}}"
+          - name: cpu
+            value: ""
+          - name: mem
+            value: ""
+          - name: mem_unit
+            value: ""
+          - name: storage
+            value: ""
+          - name: storage_unit
+            value: ""
+  
+      - name: discover-edges
+        templateRef:
+          name: workflow-discovery
+          template: srds-service
+        dependencies: [build-discovery-query]
+        arguments:
+          parameters:
+          - name: srsd_url
+            value: "{{workflow.parameters.srsd_url}}"
+          - name: intent_query
+            value: "{{tasks.build-discovery-query.outputs.result}}"
+
+      - name: discover-rans
+        templateRef:
+          name: workflow-discovery
+          template: srds-service
+        dependencies: [build-discovery-ran-query]
+        arguments:
+          parameters:
+          - name: srsd_url
+            value: "{{workflow.parameters.srsd_url}}"
+          - name: intent_query
+            value: "{{tasks.build-discovery-ran-query.outputs.result}}"
+  
+      - name: send-edges-to-optimizer
+        dependencies: [discover-edges, discover-rans]
+        templateRef:
+          name: workflow-base
+          template: publish-on-kafka
+        arguments:
+          parameters:
+          - name: data
+            value: |
+              { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                "topic": "issm-in-{{workflow.parameters.service_owner}}", 
+                "category": "{{workflow.parameters.category}}",
+                "resources": {{tasks.discover-edges.outputs.result}},
+                "resources_ran": {{tasks.discover-rans.outputs.result}},
+                "operation": "scaleout", "sub_operation": "BEST_OFFER_SELECTION",
+                "service_owner": "{{workflow.parameters.service_owner}}",
+                "sla_breach": {{workflow.parameters.sla_breach}},
+                "elma_url": "{{workflow.parameters.elma_url}}",
+                "order_id": "{{workflow.parameters.order_id}}",
+                "catalogue_url": "{{workflow.parameters.catalogue_url}}",
+                "trmf_url": "{{workflow.parameters.trmf_url}}",
+                "srsd_url": "{{workflow.parameters.srsd_url}}",
+                "issm_api_url": "{{workflow.parameters.issm_api_url}}",
+                "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
+                "snfvo_data": {{workflow.parameters.snfvo_data}},
+                "kafka": "{{workflow.parameters.kafka}}",
+                "kafka_dl": "{{workflow.parameters.kafka_dl}}"
+              }
+          - name: kafka_topic
+            value: issm-optimizer
+
+
+###
+  - name: best-edge-selection
     inputs:
       parameters:
-      - name: best_offer
+      - name: scaleout_type
+    steps:
+    - - name: best-edge-selection-slice
+        when: "{{inputs.parameters.scaleout_type}} == \"a\""
+        template: best-edge-selection-slice
+    - - name: best-edge-selection-ran
+        when: "{{inputs.parameters.scaleout_type}} == \"b\""
+        template: best-edge-selection-ran
+
+
+  - name: best-edge-selection-slice
     dag:
       tasks:
+      - name: best-offer-edge
+        templateRef:
+          name: workflow-discovery
+          template: best-offer-edge
+        arguments:
+          parameters:
+          - name: resources
+            value: "{{workflow.parameters.resources}}"
+
       - name: print-edge
+        dependencies: [best-offer-edge]
         templateRef:
           name: workflow-base
           template: jq-script
         arguments:
           parameters:
           - name: json_str
-            value: "{{inputs.parameters.best_offer}}"
+            value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
           - name: jq_query
             value: '.'
       
       - name: edge-attributes
+        dependencies: [best-offer-edge]
         templateRef:
           name: workflow-discovery
           template: resource-attributes
         arguments:
           parameters:
           - name: resource
-            value: "{{inputs.parameters.best_offer}}"
+            value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
         
       - name: acquire
         dependencies: [edge-attributes, print-edge]
@@ -648,7 +805,331 @@ spec:
           - name: instance_id
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
           - name: best_offer
-            value: "{{inputs.parameters.best_offer}}"
+            value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
+          
+
+      - name: slice-status-fail
+        dependencies: [slice-status]
+        template: slice-status-fail-sa
+        when: "{{tasks.slice-status.outputs.result}} == \"FAIL\""
+
+################## RAN #####################
+
+  - name: best-edge-selection-ran
+    dag:
+      tasks:
+      - name: best-offer-edge
+        templateRef:
+          name: workflow-discovery
+          template: best-offer-edge
+        arguments:
+          parameters:
+          - name: resources
+            value: "{{workflow.parameters.resources}}"
+
+      - name: print-edge
+        dependencies: [best-offer-edge]
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.'
+
+      - name: edge-attributes
+        dependencies: [best-offer-edge]
+        templateRef:
+          name: workflow-discovery
+          template: resource-attributes
+        arguments:
+          parameters:
+          - name: resource
+            value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
+      
+      - name: best-offer-ran
+        dependencies: [edge-attributes]
+        templateRef:
+          name: workflow-discovery
+          template: best-offer-ran
+        arguments:
+          parameters:
+          - name: resources_ran
+            value: "{{workflow.parameters.resources_ran}}"
+          - name: related_party
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
+
+      - name: print-ran
+        dependencies: [best-offer-ran]
+        templateRef:
+          name: workflow-base
+          template: jq-script
+        arguments:
+          parameters:
+          - name: json_str
+            value: "{{tasks.best-offer-ran.outputs.parameters.best_offer}}"
+          - name: jq_query
+            value: '.'
+
+      - name: ran-attributes
+        dependencies: [best-offer-ran]
+        templateRef:
+          name: workflow-discovery
+          template: resource-attributes
+        arguments:
+          parameters:
+          - name: resource
+            value: "{{tasks.best-offer-ran.outputs.parameters.best_offer}}"
+        
+      - name: acquire
+        dependencies: [edge-attributes, print-edge]
+        templateRef:
+          name: workflow-catalog
+          template: acquire
+        arguments:
+          parameters:
+          - name: resource_id
+            value: "{{tasks.edge-attributes.outputs.parameters.id}}"
+          - name: operator_id_seller
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
+          - name: operator_id_buyer
+            value: "{{workflow.parameters.service_owner}}"
+          - name: resource_did
+            value: "{{tasks.edge-attributes.outputs.parameters.did}}"
+
+      - name: acquire-ran
+        dependencies: [ran-attributes, print-ran]
+        templateRef:
+          name: workflow-catalog
+          template: acquire
+        arguments:
+          parameters:
+          - name: resource_id
+            value: "{{tasks.ran-attributes.outputs.parameters.id}}"
+          - name: operator_id_seller
+            value: "{{tasks.ran-attributes.outputs.parameters.related_party}}"
+          - name: operator_id_buyer
+            value: "{{workflow.parameters.service_owner}}"
+          - name: resource_did
+            value: "{{tasks.ran-attributes.outputs.parameters.did}}"
+
+      - name: slice-order-id
+        dependencies: [acquire, acquire-ran]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: slice_order_id_0
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: userdata-slice1
+        dependencies: [slice-order-id]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: extension_info
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+      - name: userdata-slice2
+        dependencies: [userdata-slice1]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_info
+          - name: json_str
+            value: "{{tasks.userdata-slice1.outputs.result}}"
+
+############ RETRIEVE THREE CORE ATTRIBUTES TO CONNECT RAN INTO
+      - name: sm-core-address
+        dependencies: [userdata-slice2]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: "sm.core_address"
+          - name: json_str
+            value: "{{tasks.userdata-slice2.outputs.result}}"
+      - name: sm-core-port
+        dependencies: [userdata-slice2]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: "sm.core_port"
+          - name: json_str
+            value: "{{tasks.userdata-slice2.outputs.result}}"
+      - name: sm-core-vlan
+        dependencies: [userdata-slice2]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: "sm.core_vlan"
+          - name: json_str
+            value: "{{tasks.userdata-slice2.outputs.result}}"
+      - name: sm-plmn-id
+        dependencies: [userdata-slice2]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: "sm.plmn_id"
+          - name: json_str
+            value: "{{tasks.userdata-slice2.outputs.result}}"
+
+############ END CORE ATTRIBUTES
+
+      - name: add-user-data-ran
+        dependencies: [sm-core-address, sm-core-port, sm-core-vlan, sm-plmn-id]
+        templateRef:
+          name: workflow-base
+          template: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: |
+              { }
+          - name: dict2
+            value: |
+              {
+                "sm.core_address": "{{tasks.sm-core-address.outputs.result}}",
+                "sm.core_port": "{{tasks.sm-core-port.outputs.result}}",
+                "sm.core_vlan": "{{tasks.sm-core-vlan.outputs.result}}",
+                "sm.plmn_id": "{{tasks.sm-plmn-id.outputs.result}}"
+              }
+
+
+      - name: vsd-parameters
+        dependencies: [add-user-data-ran]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsd_parameters
+          - name: json_str
+            value: |
+              {{workflow.parameters.snfvo_data}}
+
+
+#=========== Scaleout: Slice
+
+      - name: trigger-orchestration-slice-ran
+        dependencies: [vsd-parameters]
+        templateRef:
+          name: workflow-orchestrator
+          template: trigger-orchestration
+        arguments:
+          parameters:
+          - name: resource_owner
+            # domain's orchestrator
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
+
+          - name: vsbName
+            # of RAN
+            value: "{{tasks.ran-attributes.outputs.parameters.vsbName}}"
+
+          - name: userdata
+            value: "{{tasks.add-user-data-ran.outputs.parameters.dict}}"
+
+          - name: vsd_parameters
+            value: "{{tasks.vsd-parameters.outputs.result}}"
+
+      - name: wait-for-status
+        dependencies: [trigger-orchestration-slice-ran]
+        templateRef:
+          name: workflow-base
+          template: consume
+        arguments:
+          parameters:
+          - name: kafka
+            value: "{{workflow.parameters.kafka}}"
+          - name: kafka_topic
+            value: "issm-in-{{workflow.parameters.service_owner}}"
+          - name: msg_id
+            value: "{{tasks.trigger-orchestration-slice-ran.outputs.parameters.event_uuid}}"
+
+############
+      - name: get-slice-instance-id
+        dependencies: [wait-for-status]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: vsi_id
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: update-order
+        dependencies: [get-slice-instance-id]
+        templateRef:
+          name: workflow-catalog
+          template: update-order-instance-id
+        # in any case, persist instanceId
+        arguments:
+          parameters:
+          - name: transaction_uuid
+            value: "{{workflow.parameters.transaction_uuid}}"
+          - name: order_id
+            # TODO: replace with RAN order id
+            value: "{{tasks.slice-order-id.outputs.result}}"
+          - name: main
+            value: "false"
+          - name: instance_id
+            value: "{{tasks.get-slice-instance-id.outputs.result}}"
+          - name: related_party
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
+############
+
+      - name: slice-status
+        dependencies: [wait-for-status, get-slice-instance-id]
+        templateRef:
+          name: workflow-base
+          template: from-key
+        arguments:
+          parameters:
+          - name: key
+            value: status
+          - name: json_str
+            value: |
+              {{tasks.wait-for-status.outputs.parameters.payload}}
+
+      - name: slice-status-success
+        dependencies: [slice-status]
+        template: slice-status-success-sa
+        when: "{{tasks.slice-status.outputs.result}} == \"SUCCESS\""
+        arguments:
+          parameters:
+          - name: instance_id
+            value: "{{tasks.get-slice-instance-id.outputs.result}}"
+          - name: best_offer
+            value: "{{tasks.best-offer-ran.outputs.parameters.best_offer}}"
           
 
       - name: slice-status-fail
@@ -657,7 +1138,23 @@ spec:
         when: "{{tasks.slice-status.outputs.result}} == \"FAIL\""
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   - name: slice-status-success-sa
+    # deploy the vCache (common to a, b)
     inputs:
       parameters:
       - name: instance_id

@@ -63,18 +63,19 @@ spec:
               }
             ]
           }
-        }        
+        }
+    - name: opaque_params
+      value: |
+        { }
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # metadata attributes:
-    # issm kafka ip, port and topic
+    # issm kafka and topic
     # of where to send breach
     # notifications
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    - name: kafka_ip
-      value: 172.28.3.196
-    - name: kafka_port
-      value: 9092
+    - name: kafka
+      value: 172.28.3.196:9092
     - name: kafka_topic
       # must match issm sla-breach es
       value: isbp-topic-out
@@ -97,9 +98,9 @@ spec:
                 "SLAID": "{{workflow.parameters.sla_DID}}",
                 "instanceID": "{{workflow.parameters.instance_id}}",
                 "place": {{workflow.parameters.place}},
-                "kafka_ip": "{{workflow.parameters.kafka_ip}}",
-                "kafka_port": "{{workflow.parameters.kafka_port}}",
-                "topic": "{{workflow.parameters.kafka_topic}}"
+                "opaque_params": {{workflow.parameters.opaque_params}},
+                "kafka": "{{workflow.parameters.kafka}}",
+                "topic": "{{workflow.parameters.kafka_topic}}",
               }
           - name: kafka_topic
             value: "{{workflow.parameters.kafka_dl_topic}}"

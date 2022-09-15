@@ -77,6 +77,8 @@ spec:
                   - name: place
                   - name: instance_id
                   - name: product_DID
+                  - name: operationType
+                  - name: opaque_params
 
                 templates:
                 - name: handlerequest
@@ -111,3 +113,13 @@ spec:
                 dependencyName: breach-dep
                 dataKey: body.breachPredictionNotification.productID
               dest: spec.arguments.parameters.5.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification.operationType
+              dest: spec.arguments.parameters.6.value
+
+            - src:
+                dependencyName: breach-dep
+                dataKey: body.breachPredictionNotification.opaque_params
+              dest: spec.arguments.parameters.7.value
