@@ -165,6 +165,8 @@ spec:
           parameters:
           - name: payload
             value: "{{tasks.wait-for-status.outputs.parameters.payload}}"
+          - name: vsd_parameters
+            value: "{{tasks.vsd-parameters.outputs.result}}"
 
       - name: edge-status-fail
         dependencies: [edge-status]
@@ -176,6 +178,7 @@ spec:
     inputs:
       parameters:
       - name: payload
+      - name: vsd_parameters
     dag:
       tasks:
       - name: status-attributes
@@ -194,18 +197,6 @@ spec:
           parameters:
           - name: key
             value: userdata_core
-          - name: json_str
-            value: |
-              {{workflow.parameters.snfvo_data}}
-
-      - name: vsd-parameters
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: vsd_parameters
           - name: json_str
             value: |
               {{workflow.parameters.snfvo_data}}
@@ -232,7 +223,7 @@ spec:
             value: "{{workflow.parameters.order_id}}"
 
       - name: trigger-orchestration-core
-        dependencies: [add-user-data-core, get-order-from-catalog, vsd-parameters]
+        dependencies: [add-user-data-core, get-order-from-catalog]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -250,7 +241,7 @@ spec:
 
           - name: vsd_parameters
             # snfvo_data['vsd_parameters']
-            value: "{{tasks.vsd-parameters.outputs.result}}"
+            value: "{{inputs.parameters.vsd_parameters}}"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-core]

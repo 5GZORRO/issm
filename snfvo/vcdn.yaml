@@ -164,6 +164,8 @@ spec:
           parameters:
           - name: instance_id
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
+          - name: vsd_parameters
+            value: "{{tasks.vsd-parameters.outputs.result}}"
 
       - name: slice-status-fail
         dependencies: [slice-status]
@@ -175,6 +177,7 @@ spec:
     inputs:
       parameters:
       - name: instance_id
+      - name: vsd_parameters
     dag:
       tasks:
       - name: get-order-from-catalog
@@ -204,21 +207,8 @@ spec:
                 "edge_resource_instance": "{{inputs.parameters.instance_id}}"
               }
 
-      - name: vsd-parameters
-        dependencies: [add-user-data-vcdn]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: vsd_parameters
-          - name: json_str
-            value: |
-              {{workflow.parameters.snfvo_data}}
-
       - name: trigger-orchestration-vcdn-service
-        dependencies: [add-user-data-vcdn, vsd-parameters]
+        dependencies: [add-user-data-vcdn]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -234,7 +224,7 @@ spec:
 
           - name: vsd_parameters
             # snfvo_data['vsd_parameters']
-            value: "{{tasks.vsd-parameters.outputs.result}}"
+            value: "{{inputs.parameters.vsd_parameters}}"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-vcdn-service]
@@ -806,7 +796,9 @@ spec:
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
           - name: best_offer
             value: "{{tasks.best-offer-edge.outputs.parameters.best_offer}}"
-          
+          - name: vsd_parameters
+            value: "{{tasks.vsd-parameters.outputs.result}}"
+
 
       - name: slice-status-fail
         dependencies: [slice-status]
@@ -1130,7 +1122,8 @@ spec:
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
           - name: best_offer
             value: "{{tasks.best-offer-ran.outputs.parameters.best_offer}}"
-          
+          - name: vsd_parameters
+            value: "{{tasks.vsd-parameters.outputs.result}}"
 
       - name: slice-status-fail
         dependencies: [slice-status]
@@ -1159,6 +1152,7 @@ spec:
       parameters:
       - name: instance_id
       - name: best_offer
+      - name: vsd_parameters
     dag:
       tasks:
       - name: edge-attributes
@@ -1197,21 +1191,8 @@ spec:
                 "edge_resource_instance": "{{inputs.parameters.instance_id}}"
               }
 
-      - name: vsd-parameters
-        dependencies: [add-user-data-vcdn]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: vsd_parameters
-          - name: json_str
-            value: |
-              {{workflow.parameters.snfvo_data}}
-
       - name: trigger-orchestration-vcdn-service
-        dependencies: [edge-attributes, add-user-data-vcdn, vsd-parameters]
+        dependencies: [edge-attributes, add-user-data-vcdn]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -1229,7 +1210,7 @@ spec:
 
           - name: vsd_parameters
             # snfvo_data['vsd_parameters']
-            value: "{{tasks.vsd-parameters.outputs.result}}"
+            value: "{{inputs.parameters.vsd_parameters}}"
 
       - name: wait-for-status
         dependencies: [trigger-orchestration-vcdn-service]

@@ -18,182 +18,109 @@ metadata:
 spec:
   templates:
   - name: get-platform-env
-    dag:
-      tasks:
-      - name: platform-env
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: platform
-          - name: json_str
-            value: |
-              {
-                "platform": {
-                  "srsd_url": "http://172.28.3.15:32068",
-                  "kafka_dl": "172.28.3.196:9092"
-                }
-              }
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
 
-      - name: srsd-url
-        dependencies: [platform-env]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: srsd_url
-          - name: json_str
-            value: "{{tasks.platform-env.outputs.result}}"
+        platform = {
+          "srsd_url": "http://172.28.3.15:32068",
+          "kafka_dl": "172.28.3.196:9092"
+        }
 
-      - name: kafka-dl
-        dependencies: [platform-env]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: kafka_dl
-          - name: json_str
-            value: "{{tasks.platform-env.outputs.result}}"
+        with open('/tmp/srsd_url.txt', 'w') as f:
+            f.write(str(platform['srsd_url']))
 
+        with open('/tmp/kafka_dl.txt', 'w') as f:
+            f.write(str(platform['kafka_dl']))
 
     outputs:
       parameters:
       - name: srsd_url
         valueFrom:
-          parameter: "{{tasks.srsd-url.outputs.result}}"
-
+          path: /tmp/srsd_url.txt
       - name: kafka_dl
         valueFrom:
-          parameter: "{{tasks.kafka-dl.outputs.result}}"
-
-
+          path: /tmp/kafka_dl.txt
+  
+  
   - name: get-domain-env
     inputs:
       parameters:
       - name: domain
-    dag:
-      tasks:
-      - name: domain-envs
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: "{{inputs.parameters.domain}}"
-          - name: json_str
-            value: |
-              {
-                "operator-a": {
-                  "catalogue_url": "http://172.28.3.15:31080",
-                  "elma_url": "http://172.28.3.15:30880",
-                  "trmf_url": "http://172.28.3.15:31113",
-                  "vs_url": "http://172.28.3.15:31082",
-                  "issm_api_url": "http://172.28.3.15:30080"
-                },
-                "operator-b": {
-                  "catalogue_url": "http://172.28.3.15:32080",
-                  "elma_url": "http://172.28.3.15:31880",
-                  "trmf_url": "http://172.28.3.15:31114",
-                  "vs_url": "http://172.28.3.15:32082",
-                  "issm_api_url": "http://172.28.3.15:30080"
-                },
-                "operator-c": {
-                  "catalogue_url": "http://172.28.3.15:32180",
-                  "elma_url": "http://172.28.3.15:32880",
-                  "trmf_url": "http://172.28.3.15:31115",
-                  "vs_url": "http://10.4.2.206:30055",
-                  "issm_api_url": "http://172.28.3.15:30080"
-                },
-                "operator-e": {
-                  "catalogue_url": "http://0.0.0.0:0000",
-                  "elma_url": "http://0.0.0.0:0000",
-                  "trmf_url": "http://0.0.0.0:0000",
-                  "vs_url": "http://10.4.2.206:30055",
-                  "issm_api_url": "http://0.0.0.0:0000"
-                }
-              }
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import sys
 
-      - name: catalogue-url
-        dependencies: [domain-envs]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: catalogue_url
-          - name: json_str
-            value: "{{tasks.domain-envs.outputs.result}}"
+        domain = "{{inputs.parameters.domain}}"
 
-      - name: elma-url
-        dependencies: [domain-envs]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: elma_url
-          - name: json_str
-            value: "{{tasks.domain-envs.outputs.result}}"
+        sys.stdout.write('domain: "%s"\n' % domain)
 
-      - name: trmf-url
-        dependencies: [domain-envs]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: trmf_url
-          - name: json_str
-            value: "{{tasks.domain-envs.outputs.result}}"
+        domains_envs = {
+            "operator-a": {
+              "catalogue_url": "http://172.28.3.15:31080",
+              "elma_url": "http://172.28.3.15:30880",
+              "trmf_url": "http://172.28.3.15:31113",
+              "vs_url": "http://172.28.3.15:31082",
+              "issm_api_url": "http://172.28.3.15:30080"
+            },
+            "operator-b": {
+              "catalogue_url": "http://172.28.3.15:32080",
+              "elma_url": "http://172.28.3.15:31880",
+              "trmf_url": "http://172.28.3.15:31114",
+              "vs_url": "http://172.28.3.15:32082",
+              "issm_api_url": "http://172.28.3.15:30080"
+            },
+            "operator-c": {
+              "catalogue_url": "http://172.28.3.15:32180",
+              "elma_url": "http://172.28.3.15:32880",
+              "trmf_url": "http://172.28.3.15:31115",
+              "vs_url": "http://10.4.2.206:30055",
+              "issm_api_url": "http://172.28.3.15:30080"
+            },
+            "operator-e": {
+              "catalogue_url": "http://0.0.0.0:0000",
+              "elma_url": "http://0.0.0.0:0000",
+              "trmf_url": "http://0.0.0.0:0000",
+              "vs_url": "http://10.4.2.206:30055",
+              "issm_api_url": "http://0.0.0.0:0000"
+            }
+        }
 
-      - name: vs-url
-        dependencies: [domain-envs]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: vs_url
-          - name: json_str
-            value: "{{tasks.domain-envs.outputs.result}}"
+        with open('/tmp/catalogue_url.txt', 'w') as f:
+            f.write(str(domains_envs[domain]['catalogue_url']))
 
-      - name: issm-api-url
-        dependencies: [domain-envs]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: issm_api_url
-          - name: json_str
-            value: "{{tasks.domain-envs.outputs.result}}"
+        with open('/tmp/elma_url.txt', 'w') as f:
+            f.write(str(domains_envs[domain]['elma_url']))
+
+        with open('/tmp/trmf_url.txt', 'w') as f:
+            f.write(str(domains_envs[domain]['trmf_url']))
+
+        with open('/tmp/vs_url.txt', 'w') as f:
+            f.write(str(domains_envs[domain]['vs_url']))
+
+        with open('/tmp/issm_api_url.txt', 'w') as f:
+            f.write(str(domains_envs[domain]['issm_api_url']))
 
     outputs:
       parameters:
       - name: catalogue_url
         valueFrom:
-          parameter: "{{tasks.catalogue-url.outputs.result}}"
+          path: /tmp/catalogue_url.txt
       - name: elma_url
         valueFrom:
-          parameter: "{{tasks.elma-url.outputs.result}}"
+          path: /tmp/elma_url.txt
       - name: trmf_url
         valueFrom:
-          parameter: "{{tasks.trmf-url.outputs.result}}"
+          path: /tmp/trmf_url.txt
       - name: vs_url
         valueFrom:
-          parameter: "{{tasks.vs-url.outputs.result}}"
+          path: /tmp/vs_url.txt
       - name: issm_api_url
         valueFrom:
-          parameter: "{{tasks.issm-api-url.outputs.result}}"
+          path: /tmp/issm_api_url.txt
