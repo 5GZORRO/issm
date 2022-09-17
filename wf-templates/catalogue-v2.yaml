@@ -187,6 +187,7 @@ spec:
 
         place = {}
         related_party = ""
+        related_party_did = ""
 
         resourceSpecification = {}
         serviceSpecification_resourceSpecification = []
@@ -220,6 +221,9 @@ spec:
             related_party = r.json()['relatedParty'][0]['name']
             related_party = related_party.replace('_','-').lower()
             sys.stdout.write('related_party: "%s" \n' % related_party)
+
+            related_party_did = r.json()['relatedParty'][0]['extendedInfo']
+            sys.stdout.write('related_party_did: "%s" \n' % related_party_did)
 
             # resourceSpecification
             try:
@@ -473,6 +477,9 @@ spec:
         with open('/tmp/related_party.txt', 'w') as f:
             f.write(related_party)
 
+        with open('/tmp/related_party_did.txt', 'w') as f:
+            f.write(related_party_did)
+
         with open('/tmp/name.txt', 'w') as f:
             f.write(name)
 
@@ -533,6 +540,10 @@ spec:
         valueFrom:
           path: /tmp/related_party.txt
 
+      - name: related_party_did
+        valueFrom:
+          path: /tmp/related_party_did.txt
+
       - name: did
         valueFrom:
           path: /tmp/did.txt
@@ -554,15 +565,24 @@ spec:
     # Step to create an order object.
     #
     # Parameters:
+    # resource_category: product offer category (e.g. Edge, RAN)
     # resource_id: product offer uuid (str)
-    # operator_id_seller: operator name that owns this product offer (str)
-    # operator_id_buyer: operator name. Usually service owner (str)
+    # related_party_seller: operator name that owns this product offer (str)
+    # related_party_did_seller: operator DID (str)
+    # related_party_buyer: operator name. Usually service owner (str)
+    # related_party_did_buyer: operator DID (str)
     #
     inputs:
       parameters:
+      - name: resource_category      
       - name: resource_id
-      - name: operator_id_seller
-      - name: operator_id_buyer
+      - name: resource_name
+
+      - name: related_party_seller
+      - name: related_party_did_seller
+
+      - name: related_party_buyer
+      - name: related_party_did_buyer
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
       imagePullPolicy: IfNotPresent
@@ -584,6 +604,7 @@ spec:
 
         transaction_uuid = "{{workflow.parameters.transaction_uuid}}"
         payload = {
+           "category": "{{inputs.parameters.resource_category}}",
            "description": "Product Order by ISSM Transaction ID: %s" % transaction_uuid,
            "requestedStartDate": "2022-01-01T08:00:00.000Z",
            "requestedCompletionDate": "2023-12-31T08:00:00.000Z",
@@ -592,18 +613,21 @@ spec:
                  "quantity": 1,
                  "action": "add",
                  "productOffering": {
-                    "id": "{{inputs.parameters.resource_id}}"
+                    "id": "{{inputs.parameters.resource_id}}",
+                    "name": "{{inputs.parameters.resource_name}}"
                  }
               }
            ],
            "relatedParty": [
               {
-                 "name": "{{inputs.parameters.operator_id_seller}}",
-                 "role": "Seller"
+                 "name": "{{inputs.parameters.related_party_seller}}",
+                 "role": "Seller",
+                 "extendedInfo": "{{inputs.parameters.related_party_did_seller}}"
               },
               {
-                 "name": "{{inputs.parameters.operator_id_buyer}}",
-                 "role": "Buyer"
+                 "name": "{{inputs.parameters.related_party_buyer}}",
+                 "role": "Buyer",
+                 "extendedInfo": "{{inputs.parameters.related_party_did_buyer}}"
               }
            ]
         }
@@ -663,21 +687,34 @@ spec:
   - name: acquire
     inputs:
       parameters:
+      - name: resource_name
+      - name: resource_category
       - name: resource_id
-      - name: operator_id_seller
-      - name: operator_id_buyer
+      - name: related_party_buyer
+      - name: related_party_did_buyer
+
+      - name: related_party_seller
+      - name: related_party_did_seller
       - name: resource_did
     steps:
       - - name: acquire-resource
           template: create-order
           arguments:
             parameters:
+            - name: resource_category
+              value: "{{inputs.parameters.resource_category}}"
+            - name: resource_name
+              value: "{{inputs.parameters.resource_name}}"
             - name: resource_id
               value: "{{inputs.parameters.resource_id}}"
-            - name: operator_id_seller
-              value: "{{inputs.parameters.operator_id_seller}}"
-            - name: operator_id_buyer
-              value: "{{workflow.parameters.service_owner}}"
+            - name: related_party_seller
+              value: "{{inputs.parameters.related_party_seller}}"
+            - name: related_party_did_seller
+              value: "{{inputs.parameters.related_party_did_seller}}"
+            - name: related_party_buyer
+              value: "{{inputs.parameters.related_party_buyer}}"
+            - name: related_party_did_buyer
+              value: "{{inputs.parameters.related_party_did_buyer}}"
 
       - - name: notify-reputation-manager
           template: notify-trmf

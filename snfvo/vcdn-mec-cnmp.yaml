@@ -94,6 +94,8 @@ spec:
         arguments:
           parameters:
           - name: data
+            # Note: service_owner_did is being sent as domain_related_party_did
+            # for consistency pupose
             value: |
               { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                 "topic": "issm-in-{{workflow.parameters.service_owner}}", 
@@ -105,6 +107,7 @@ spec:
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",
                 "trmf_url": "{{workflow.parameters.trmf_url}}",
                 "issm_api_url": "{{workflow.parameters.issm_api_url}}",
+                "domain_related_party_did": "{{workflow.parameters.service_owner_did}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
                 "kafka": "{{workflow.parameters.kafka}}",
@@ -229,12 +232,22 @@ spec:
           template: acquire
         arguments:
           parameters:
+          - name: resource_name
+            value: "{{tasks.selected-offer-attributes.outputs.parameters.name}}"
+          - name: resource_category
+            value: "{{tasks.selected-offer-attributes.outputs.parameters.category}}"
           - name: resource_id
             value: "{{tasks.selected-offer-attributes.outputs.parameters.id}}"
           - name: operator_id_seller
             value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party}}"
+          - name: operator_id_did_seller
+            value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party_did}}"
+
           - name: operator_id_buyer
             value: "{{workflow.parameters.service_owner}}"
+          - name: operator_id_did_buyer
+            value: "{{workflow.parameters.service_owner_did}}"
+
           - name: resource_did
             value: "{{tasks.selected-offer-attributes.outputs.parameters.did}}"
 

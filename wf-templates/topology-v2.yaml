@@ -167,14 +167,15 @@ spec:
                 continue
 
             s_o_rp = resources[i]['offer_object']['productSpecification']['relatedParty'][0]['name']
+            s_o_rp_did = resources[i]['offer_object']['productSpecification']['relatedParty'][0]['extendedInfo']
             s_o = {
                 # mock only needed fields
                 'offer_object': {
                   'name': resources[i]['offer_object']['name'],
                   'id': resources[i]['offer_object']['id'],
                   'place': [resources[i]['offer_object']['place'][0]],
-                  'productSpecification': {'relatedParty': [{'name': 'operator-e'}]}
-                  # 'productSpecification': {'relatedParty': [{'name': s_o_rp}]}
+                  'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'GwvbsTg539xMqYraTQiZa5'}]}
+                  # 'productSpecification': {'relatedParty': [{'name': s_o_rp, 'extendedInfo': s_o_rp_did}]}
                 },
                 'offer_did': resources[i]['offer_did']
               }

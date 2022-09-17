@@ -67,28 +67,32 @@ spec:
               "elma_url": "http://172.28.3.15:30880",
               "trmf_url": "http://172.28.3.15:31113",
               "vs_url": "http://172.28.3.15:31082",
-              "issm_api_url": "http://172.28.3.15:30080"
+              "issm_api_url": "http://172.28.3.15:30080",
+              "related_party_did": "OD1ndI3xw0Pi6Sl4rgoa6F"
             },
             "operator-b": {
               "catalogue_url": "http://172.28.3.15:32080",
               "elma_url": "http://172.28.3.15:31880",
               "trmf_url": "http://172.28.3.15:31114",
               "vs_url": "http://172.28.3.15:32082",
-              "issm_api_url": "http://172.28.3.15:30080"
+              "issm_api_url": "http://172.28.3.15:30080",
+              "related_party_did": "V7GMvKbYXujtJhZwiBdxCu"
             },
             "operator-c": {
               "catalogue_url": "http://172.28.3.15:32180",
               "elma_url": "http://172.28.3.15:32880",
               "trmf_url": "http://172.28.3.15:31115",
               "vs_url": "http://10.4.2.206:30055",
-              "issm_api_url": "http://172.28.3.15:30080"
+              "issm_api_url": "http://172.28.3.15:30080",
+              "related_party_did": "X4a1JBQh1xYH3vi756N2P3"
             },
             "operator-e": {
               "catalogue_url": "http://0.0.0.0:0000",
               "elma_url": "http://0.0.0.0:0000",
               "trmf_url": "http://0.0.0.0:0000",
               "vs_url": "http://10.4.2.206:30055",
-              "issm_api_url": "http://0.0.0.0:0000"
+              "issm_api_url": "http://0.0.0.0:0000",
+              "related_party_did": "GwvbsTg539xMqYraTQiZa5"
             }
         }
 
@@ -107,6 +111,9 @@ spec:
         with open('/tmp/issm_api_url.txt', 'w') as f:
             f.write(str(domains_envs[domain]['issm_api_url']))
 
+        with open('/tmp/related_party_did.txt', 'w') as f:
+            f.write(str(domains_envs[domain]['related_party_did']))
+
     outputs:
       parameters:
       - name: catalogue_url
@@ -124,3 +131,6 @@ spec:
       - name: issm_api_url
         valueFrom:
           path: /tmp/issm_api_url.txt
+      - name: domain_related_party_did
+        valueFrom:
+          path: /tmp/related_party_did.txt

@@ -39,6 +39,7 @@ spec:
       - name: trmf_url
       - name: srsd_url
       - name: issm_api_url
+      - name: domain_related_party_did
       - name: kafka_dl
 
       - name: order_id
@@ -67,6 +68,8 @@ spec:
             value: "{{inputs.parameters.srsd_url}}"
           - name: issm_api_url
             value: "{{inputs.parameters.issm_api_url}}"
+          - name: domain_related_party_did
+            value: "{{inputs.parameters.domain_related_party_did}}"
 
           - name: kafka_dl
             value: "{{inputs.parameters.kafka_dl}}"
@@ -83,6 +86,7 @@ spec:
       - name: trmf_url
       - name: srsd_url
       - name: issm_api_url
+      - name: domain_related_party_did
       - name: kafka_dl
 
       - name: order_id
@@ -110,6 +114,8 @@ spec:
             value: "{{inputs.parameters.srsd_url}}"
           - name: issm_api_url
             value: "{{inputs.parameters.issm_api_url}}"
+          - name: domain_related_party_did
+            value: "{{inputs.parameters.domain_related_party_did}}"
 
           - name: kafka_dl
             value: "{{inputs.parameters.kafka_dl}}"
@@ -162,6 +168,7 @@ spec:
       - name: trmf_url
       - name: srsd_url
       - name: issm_api_url
+      - name: domain_related_party_did
       - name: snfvo_data
     steps:
       - - name: event-uuid
@@ -189,6 +196,7 @@ spec:
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
                   "srsd_url": "{{inputs.parameters.srsd_url}}",
                   "issm_api_url": "{{inputs.parameters.issm_api_url}}",
+                  "domain_related_party_did": "{{inputs.parameters.domain_related_party_did}}",
                   "snfvo_data": {{inputs.parameters.snfvo_data}}
                 }
             - name: kafka_topic
@@ -207,6 +215,7 @@ spec:
       - name: trmf_url
       - name: srsd_url
       - name: issm_api_url
+      - name: domain_related_party_did
       - name: snfvo_data
       - name: place
       - name: app_topology
@@ -235,6 +244,7 @@ spec:
                   "trmf_url": "{{inputs.parameters.trmf_url}}",
                   "srsd_url": "{{inputs.parameters.srsd_url}}",
                   "issm_api_url": "{{inputs.parameters.issm_api_url}}",
+                  "domain_related_party_did": "{{inputs.parameters.domain_related_party_did}}",
                   "snfvo_data": {{inputs.parameters.snfvo_data}},
                   "place": {{inputs.parameters.place}},
                   "app_topology": {{inputs.parameters.app_topology}}

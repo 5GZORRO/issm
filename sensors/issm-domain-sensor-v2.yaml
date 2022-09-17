@@ -160,6 +160,8 @@ spec:
                   - name: resources_ran
                     value: OVERRIDE
 
+                  - name: service_owner
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -246,6 +248,8 @@ spec:
                           value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
                         - name: issm_api_url
                           value: "{{tasks.get-domain-env.outputs.parameters.issm_api_url}}"
+                        - name: domain_related_party_did
+                          value: "{{tasks.get-domain-env.outputs.parameters.domain_related_party_did}}"
 
                         - name: srsd_url
                           value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
@@ -329,6 +333,8 @@ spec:
                           value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
                         - name: issm_api_url
                           value: "{{tasks.get-domain-env.outputs.parameters.issm_api_url}}"
+                        - name: domain_related_party_did
+                          value: "{{tasks.get-domain-env.outputs.parameters.domain_related_party_did}}"
 
                         - name: srsd_url
                           value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
@@ -841,3 +847,11 @@ spec:
                 dataKey: body.resources_ran
                 value: DEFAULT
               dest: spec.arguments.parameters.29.value
+
+            - src:
+                dependencyName: test-dep
+                # Note: retrieved from *this* domain
+                # mapped into service_owner_did
+                dataKey: body.domain_env_related_party_did
+                value: DEFAULT
+              dest: spec.arguments.parameters.30.value
