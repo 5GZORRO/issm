@@ -25,13 +25,13 @@ spec:
     # 'main' order is returned via output order_id and sub order(s) are set inside the provided
     # snfvo_data as <sub order category>_order_id_<index>
     #
-    # Parameters:
+    # Parameters
     # catalogue_url: url to the catalogue (str)
     # order_id: list of json elements {'uuid': <uuid>, 'main': <boolean>}
     # category: the category of the main order as being provided in input intent (string)
     # snfvo_data: snvfo data as being provided in input intent (json)
     #
-    # outputs:
+    # Outputs
     # refer to <outputs:> section for details
     inputs:
       parameters:
@@ -115,17 +115,16 @@ spec:
           path: /tmp/snfvo_data.txt
 
   - name: get-order-from-catalog
-    # This step is responsible for retrieving order's offer information by
-    # querying the domain catalogue with the given order uuid.
+    # This step is responsible to retrieve an order offer by querying the
+    # domain catalogue with the given order uuid.
     #
-    # It uses the order's offer category to properly extract the data.
+    # Note: it is assumed that an order contains a single product offer.
     #
-    # Note: it is assumed that order contains a single product offer (1:1)
-    #
-    # Parameters:
+    # Parameters
+    # catalogue_url: domain catalogue URL (str in URL format)
     # order_id: The uuid of the order (str)
     #
-    # outputs:
+    # Outputs
     # refer to <outputs:> section for details
     inputs:
       parameters:
@@ -551,12 +550,13 @@ spec:
 
 
   - name: create-order
-    # Step to create an order object.
+    # Submit an order request.
     #
     # Parameters:
+    # catalogue_url: domain catalogue URL (str in URL format)
     # resource_id: product offer uuid (str)
-    # operator_id_seller: operator name that owns this product offer (str)
-    # operator_id_buyer: operator name. Usually service owner (str)
+    # operator_id_seller: operator name (e.g. operator-a) that owns this offer (str)
+    # operator_id_buyer: operator name (e.g. operator-c) that buys this offer. Usually service owner (str)
     #
     inputs:
       parameters:
@@ -618,8 +618,9 @@ spec:
             raise Exception('%s. %s' % (error_msg, r.text))
 
   - name: notify-trmf
-    # Update TRMF with the given product offer DID.
-    # This srtep is being called after a resource is being purchased
+    # Notify TRMF with the given product offer DID.
+    #
+    # This step is being called after a resource is being purchased
     #
     # Parameters:
     # resource_did: product offer DID
@@ -661,6 +662,8 @@ spec:
             raise Exception('%s. %s' % (error_msg, r.text))
 
   - name: acquire
+    # Template that is composed with `create-order` followed by
+    # `notify-reputation-manager`
     inputs:
       parameters:
       - name: resource_id
@@ -688,6 +691,15 @@ spec:
 
 
   - name: update-order-instance-id
+    # Update an order with an instantiated instance.
+    #
+    # Parameters
+    # issm_api_url: domain ISSM agent to be used for this request (str in URL format)
+    # transaction_uuid: the transaction that instantiated this instance (str in UUID format)
+    # main: whether this instance is related to an order which is considered as the main order in this transaction. Boolean
+    # order_id: the order id the instance had been instantiated from (str in UUID format)
+    # related_party: operator name e.g. operator-a where this instance had been instantiated at (str)
+    # instance_id: the id of the instance as returned by the operator orchestrator (str)
     inputs:
       parameters:
       - name: transaction_uuid
@@ -740,6 +752,14 @@ spec:
 
 
   - name: delete-status-instance
+    # Remove an instantiated instance given its related_party and vsi_id.
+    # Note: the instance is automatically removed from its order.
+    #
+    # Parameters
+    # issm_api_url: domain ISSM agent to be used for this request (str in URL format)
+    # transaction_uuid: the transaction this instantiated instance belongs to (str in UUID format)
+    # related_party: operator name e.g. operator-a where this instance had been instantiated at (str)
+    # vsi_id: the id of the instance as returned by the operator orchestrator (str)
     inputs:
       parameters:
       - name: transaction_uuid
@@ -783,6 +803,12 @@ spec:
 
 
   - name: delete-status-transaction
+    # Remove the transaction composite root object.
+    # This step assumes all instances belong to this transaction, had been removed.
+    #
+    # Parameters
+    # issm_api_url: domain ISSM agent to be used for this request (str in URL format)
+    # transaction_uuid: the transaction to delete its composite object (str in UUID format)
     inputs:
       parameters:
       - name: transaction_uuid
@@ -822,6 +848,14 @@ spec:
 
 
   - name: list-status-instance-of-order
+    # Return all instantiated instances of this order
+    #
+    # Parameters
+    # issm_api_url: domain ISSM agent to be used for this request (str in URL format)
+    # order_id: the order (str in UUID format)
+    #
+    # Outputs
+    # status_instances: an array of StatusInstance object (json)
     inputs:
       parameters:
       - name: order_id
@@ -870,6 +904,14 @@ spec:
           path: /tmp/status_instances.txt
 
   - name: list-status-instance-of-transaction
+    # Return all instances instantiated by this transaction.
+    #
+    # Parameters
+    # issm_api_url: domain ISSM agent to be used for this request (str in URL format)
+    # transaction_uuid: the transaction (str in UUID format)
+    #
+    # Outputs
+    # status_instances: an array of StatusInstance object (json)
     inputs:
       parameters:
       - name: transaction_uuid
@@ -910,7 +952,6 @@ spec:
         status_instances = r.json()
         with open('/tmp/status_instances.txt', 'w') as f:
             json.dump(status_instances, f)
-
 
     outputs:
       parameters:

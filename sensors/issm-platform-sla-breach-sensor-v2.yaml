@@ -77,6 +77,8 @@ spec:
 
                 templates:
                 - name: handlerequest
+                  # An entry point of breach notification that arrives to platform
+                  # ISSM forwards to the proper domain
                   steps:
                   - - name: domain
                       templateRef:

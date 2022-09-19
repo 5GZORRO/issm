@@ -12,17 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-###############################
-#
-# Entry point for ISBP breach
-# Input:
-#
-# workflow.parameters.transaction_uuid
-# workflow.parameters.instance_id
-# workflow.parameters.place
-#
-###############################
-
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
@@ -30,6 +19,8 @@ metadata:
 spec:
   templates:
   - name: breach
+    # Entry point of a breach notification arriving into ISSM local agent. ISSM
+    # generates a scaleout operation out from
     dag:
       tasks:
       - name: transaction-uuid

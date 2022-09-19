@@ -19,7 +19,19 @@ metadata:
 spec:
   templates:
   - name: build-intent-query
-    # Buid a discovery intent query with the supplied input paramaters (category, location and sizings)
+    # Buid a discovery intent query
+    #
+    # Parameters
+    # category: the category to search for e.g. RAN, Edge (str). Mandatory
+    # place: the location to search for (json in trmf format). Mandatory
+    # cpu: the number of CPUs (int). Relevant for Edge. Optional
+    # mem: the amount of memory (int). Relevant for Edge. Optional
+    # mem_unit: memory unit (e.g. MB, GB) (str). Relevant for Edge. Optional
+    # storage: the amount of storage (int). Relevant for Edge. Optional
+    # storage_unit: storage unit (e.g. MB, GB) (str). Relevant for Edge. Optional
+    #
+    # Outputs
+    # query_str: intent query string (str)
     inputs:
       parameters:
       - name: category
@@ -62,14 +74,14 @@ spec:
 
 
   - name: srds-service
-    # Query discovery service with the given query intent.
+    # Query discovery service for a list of offers given query intent.
     #
-    # Parameters:
-    # srsd_url: discovery service url (str)
+    # Parameters
+    # srsd_url: discovery service url (str in URL format)
     # intent_query: search query (json)
     #
-    # Outputs:
-    # offers: list of product offers (json)
+    # Outputs
+    # offers: list of product offers (json list of elements)
     inputs:
       parameters:
       - name: srsd_url
@@ -95,7 +107,13 @@ spec:
 
 
   - name: resource-attributes
-    # Return various resource offer attributes neede by the transaction flows
+    # Return various resource offer attributes such as name, related_party, ..
+    #
+    # Parameters
+    # resource: a resource offer as returned by SRSD (json)
+    #
+    # Outputs
+    # refer to <outputs:> section for details
     inputs:
       parameters:
       - name: resource
@@ -207,6 +225,13 @@ spec:
 
   - name: best-offer-ran
     # Returns the first ran offer that matches given related_party
+    #
+    # Parameters
+    # related_party: operator name e.g. operator-a (str)
+    # resources_ran: list of RAN product offers returned by SRSD (json list of elements)
+    #
+    # Outputs
+    # best_offer: RAN product offer (json)
     inputs:
       parameters:
       - name: resources_ran

@@ -40,7 +40,7 @@ spec:
     #
     # Parameters
     # kafka_topic: the topic to publish the message on (string)
-    # kafka: ipaddress:port of the kafka broker (string)
+    # kafka: ipaddress:port of the kafka broker (string in <ipaddress:port> format)
     # data: the payload to publish (json)
     inputs:
       parameters:
@@ -81,9 +81,11 @@ spec:
     #
     # Parameters
     # kafka_topic: the topic to publish the message on (string)
-    # kafka_ip: ipaddress of the kafka broker (string)
-    # kafka_port: kafka broker port (number)
+    # kafka: ipaddress:port of the kafka broker (string in <ipaddress:port> format)
     # msg_id: the id of the message to look for (str)
+    #
+    # Outputs
+    # payload: the consumed message (json)
     inputs:
       parameters:
       - name: kafka_topic
@@ -136,6 +138,7 @@ spec:
 
 
   - name: from-key
+    # Generic step to retreive value out from a given key
     inputs:
       parameters:
       - name: key
@@ -151,6 +154,7 @@ spec:
 
 
   - name: rand
+    # Generic step to produce random number
     inputs:
       parameters:
       - name: from
@@ -182,6 +186,7 @@ spec:
 
 
   - name: jq-script
+    # Generic step to run jq with a given jq query
     inputs:
       parameters:
       - name: json_str
@@ -215,6 +220,7 @@ spec:
         exit 0
 
   - name: event-uuid
+    # Generic step to produce unique UUID
     script:
       image: python:alpine3.6
       imagePullPolicy: IfNotPresent
@@ -224,6 +230,7 @@ spec:
         print(str(uuid.uuid4()).replace('-',''))
 
   - name: py-split
+    # Generic step to run python split on a given string
     inputs:
       parameters:
       - name: str
@@ -240,6 +247,7 @@ spec:
         print (str_in.split(':')[idx])
 
   - name: add-to-dict
+    # Generic step to update two dictionaries e.g. json structures
     inputs:
       parameters:
       - name: dict1
