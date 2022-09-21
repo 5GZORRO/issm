@@ -48,6 +48,9 @@ spec:
                   - name: order_id
                     value: OVERRIDE
 
+                  - name: intent
+                    value: OVERRIDE
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -61,6 +64,10 @@ spec:
                   - - name: order-created
                       when: "{{workflow.parameters.sub_operation}} == \"CREATED\""
                       template: order-created
+
+                  - - name: pre-onboard-instantiate
+                      when: "{{workflow.parameters.sub_operation}} == \"PRE_ONBOARD_INSTANTIATE\""
+                      template: pre-onboard-instantiate
 
                   - - name: order-deleted
                       when: "{{workflow.parameters.sub_operation}} == \"DELETED\""
@@ -87,6 +94,39 @@ spec:
                           value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
                         - name: issm_api_url
                           value: "{{steps.get-domain-env.outputs.parameters.issm_api_url}}"
+
+
+                - name: pre-onboard-instantiate
+                  steps:
+                  - - name: get-domain-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-domain-env
+                      arguments:
+                        parameters:
+                        - name: domain
+                          value: "{{workflow.parameters.service_owner}}"
+
+                  - - name: onboard-snfvo
+                      template: onboard-snfvo
+                      arguments:
+                        parameters:
+                        - name: order_id
+                          value: "{{workflow.parameters.order_id}}"
+                        - name: catalogue_url
+                          value: "{{steps.get-domain-env.outputs.parameters.catalogue_url}}"
+                        - name: issm_api_url
+                          value: "{{steps.get-domain-env.outputs.parameters.issm_api_url}}"
+
+                  - - name: forward-request
+                      template: forward-request
+                      arguments:
+                        parameters:
+                        - name: issm_api_url
+                          value: "{{steps.get-domain-env.outputs.parameters.issm_api_url}}"
+                        - name: intent
+                          value: "{{workflow.parameters.intent}}"
+
 
                 - name: order-deleted
                   steps:
@@ -266,6 +306,55 @@ spec:
                       r = requests.delete(issm_api_url+'/snfvo/%s/%s' % (service_owner, po_id), headers=headers)
                       r.raise_for_status()
 
+                - name: forward-request
+                  inputs:
+                    parameters:
+                    - name: issm_api_url
+                    - name: intent
+                  script:
+                    image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+                    imagePullPolicy: IfNotPresent
+                    command: [python]
+                    source: |
+                      import json
+                      import requests
+                      import sys
+              
+                      from kafka import KafkaProducer
+                      from kafka.errors import KafkaError
+              
+                      KAFKA_TOPIC = "issm-in-{{inputs.parameters.resource_owner}}"
+                      KAFKA_TIMEOUT = 10
+                      KAFKA_API_VERSION = (1, 1, 0)
+              
+                      issm_api_url = "{{inputs.parameters.issm_api_url}}"
+                      intent = {{inputs.parameters.intent}}
+
+                      sys.stdout.write('issm_api_url: "%s"\n' % issm_api_url)
+                      sys.stdout.write('intent: %s\n' % intent)
+
+                      KAFKA_SERVER = "{}".format("{{workflow.parameters.kafka}}")
+                      producer = KafkaProducer(bootstrap_servers=KAFKA_SERVER,
+                                               api_version=KAFKA_API_VERSION,
+                                               value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+              
+                      t = producer.send(KAFKA_TOPIC, intent)
+                      # Block for 'synchronous' send; set timeout on X seconds
+                      try:
+                          t.get(timeout=KAFKA_TIMEOUT)
+                      except KafkaError as ke:
+                          raise ke
+                      print ("0")
+              
+                      with open('/tmp/event_uuid.txt', 'w') as f:
+                          f.write(str(event_uuid))
+                  outputs:
+                    parameters:
+                    - name: event_uuid
+                      valueFrom:
+                        path: /tmp/event_uuid.txt
+
+
           parameters:
             - src:
                 dependencyName: aux-dep
@@ -287,3 +376,11 @@ spec:
                 dataKey: body.order_id
                 value: DEFAULT
               dest: spec.arguments.parameters.3.value
+
+            - src:
+                dependencyName: aux-dep
+                dataKey: body.intent
+                value: |
+                  {
+                  }
+              dest: spec.arguments.parameters.4.value
