@@ -12,23 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-###############################
-#
-# Entry point for API
-# Input:
-#
-# workflow.parameters.service_owner
-# workflow.parameters.place
-# workflow.parameters.order_id
-# workflow.parameters.category
-# workflow.parameters.snfvo_data
-#
-###############################
-
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: instantiate-scaleout-terminate
+  # Contains templates to forward instantiate, scaleout and terminate requests.
+  # The transaction ID remains the same and the sub operation is being set to
+  # its proper value based on the main operation.
 spec:
   templates:
   - name: scaleout

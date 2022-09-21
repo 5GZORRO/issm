@@ -79,10 +79,11 @@ spec:
 
                   - name: service_owner
 
-                  # 'instantiate', 'scaleout'
+                  # 'instantiate', 'scaleout, terminate'
                   - name: operation
                     value: OVERRIDE
 
+                  # the sub operation whithin the (main) operation
                   - name: sub_operation
                     value: OVERRIDE
 
@@ -114,7 +115,6 @@ spec:
 
                   - name: issm_api_url
                     value: OVERRIDE
-
 
                   - name: place
                     value: OVERRIDE
@@ -162,6 +162,9 @@ spec:
 
                 templates:
                 - name: handlerequest
+                  #
+                  # Main entry point for all transaction operations
+                  #
                   steps:
                   - - name: instantiate
                       when: "{{workflow.parameters.operation}} == \"instantiate\""
@@ -195,8 +198,7 @@ spec:
 
                 - name: instantiate-from-api
                   #
-                  # Load domain's env first and parse order array, then call into
-                  # INSTANTIATE_SERVICE
+                  # Entry point called from portal invocation
                   #
                   dag:
                     tasks:
@@ -281,6 +283,9 @@ spec:
                       template: orchestrate
 
                 - name: scaleout-from-api
+                  #
+                  # Entry point called from portal invocation
+                  #
                   dag:
                     tasks:
                     - name: get-domain-env
@@ -358,7 +363,7 @@ spec:
 
                 - name: terminate-from-api
                   #
-                  # Load domain's env first
+                  # Entry point called from portal invocation
                   #
                   dag:
                     tasks:
@@ -578,6 +583,8 @@ spec:
                   # 
                   # Invoke proper s-nfvo (Instantiate)
                   #
+                  # Note: conditional snfvo steps are missing because they are
+                  # dynamically added/removed during platform lifecycle
                   steps:
                   - - name: get-order-from-catalog
                       templateRef:
@@ -592,6 +599,8 @@ spec:
                   # 
                   # Invoke proper s-nfvo (Scaleout)
                   #
+                  # Note: conditional snfvo steps are missing because they are
+                  # dynamically added/removed during platform lifecycle
                   steps:
                   - - name: get-order-from-catalog
                       templateRef:
@@ -604,6 +613,10 @@ spec:
 
 
                 - name: prepare-terminate
+                  #
+                  # Utility step to be used as a branching point based on
+                  # termination type
+                  #
                   script:
                     image: python:alpine3.6
                     imagePullPolicy: IfNotPresent
@@ -626,7 +639,8 @@ spec:
             - src:
                 #
                 # event_uuid is treated as an instance uuid for this
-                # flow instance
+                # specific flow instance
+                #
                 dependencyName: test-dep
                 dataKey: body.event_uuid
               dest: metadata.name

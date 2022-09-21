@@ -19,18 +19,19 @@ metadata:
 spec:
   templates:
   - name: issm-api-get-transaction
-    # Return transaction attributes.
+    # Return transaction object (Workflow CR).
     #
-    # Query ISSM API service with the given transaction uuid.
+    # Query ISSM API service for the given transaction uuid.
+    #
     # This step is mainly being used by the SLA breach handler to build a scaleout
     # transaction out from the the one that caused SLA violation.
     #
-    # Parameters:
+    # Parameters
     # issm_api_url: url to domain issm-api (str)
     # transaction_uuid: transaction uuid (str)
     #
-    # outputs:
-    # refer to <outputs:> section for details
+    # Outputs
+    # transaction object (json of Workflow CR)
     inputs:
       parameters:
       - name: issm_api_url
@@ -50,7 +51,20 @@ spec:
             headers=headers)
         json.dump(r.json(), sys.stdout)
 
+
   - name: jq-script
+    # Return various transaction attributes.
+    #
+    # Such attributes are: service owner, order id, snfvo data
+    #
+    # This step is mainly being used by the SLA breach handler to build a scaleout
+    # transaction out from the the one that caused SLA violation.
+    #
+    # Parameters
+    # json_str: json representation of the transaction object (Workflow CR)
+    #
+    # Outputs
+    # refer to <outputs:> section for details
     inputs:
       parameters:
       - name: json_str

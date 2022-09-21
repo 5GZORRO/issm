@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
@@ -18,6 +19,13 @@ metadata:
 spec:
   templates:
   - name: get-platform-env
+    # Defines access information for various centralized services.
+    #
+    # This is one of the first steps that ISSM loads for the transactions to
+    # properly access various platrform services
+    #
+    # Outputs
+    # refer to <outputs:> section for details
     script:
       image: python:alpine3.6
       imagePullPolicy: IfNotPresent
@@ -46,6 +54,16 @@ spec:
   
   
   - name: get-domain-env
+    # Defines access information for various services of a given domain.
+    #
+    # This is one of the first steps that ISSM loads for the transactions to
+    # properly access various platrform services
+    #
+    # Parameters
+    # domain: operator name (e.g. operator-a) (str)
+    #
+    # Outputs
+    # refer to <outputs:> section for details
     inputs:
       parameters:
       - name: domain
