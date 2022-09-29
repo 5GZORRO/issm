@@ -166,7 +166,9 @@ class Proxy:
             if not main_order:
                 raise Exception('Missing "main" order ID')
 
-            aux_payload = dict(service_owner=service_owner, operation='order',
+            # _name is a special attribute that contains pre-board flow name
+            aux_payload = dict(_name='snfvo-pre-onboard-order-%s' % main_order['uuid'],
+                               service_owner=service_owner, operation='order',
                                sub_operation='PRE_ONBOARD_INSTANTIATE', order_id=main_order['uuid'])
             aux_payload['intent'] = payload
 

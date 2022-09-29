@@ -36,7 +36,7 @@ spec:
               apiVersion: argoproj.io/v1alpha1
               kind: Workflow
               metadata:
-                generateName: issm-aux-
+                name: "OVERRIDE"
               spec:
                 entrypoint: handlerequest
                 arguments:
@@ -353,6 +353,11 @@ spec:
                       print ("0")
 
           parameters:
+            - src:
+                dependencyName: aux-dep
+                dataKey: body._name
+              dest: metadata.name
+          
             - src:
                 dependencyName: aux-dep
                 dataKey: body.service_owner
