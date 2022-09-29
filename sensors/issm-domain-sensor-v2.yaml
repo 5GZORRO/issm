@@ -160,7 +160,7 @@ spec:
                   - name: resources_ran
                     value: OVERRIDE
 
-                  - name: service_owner_did
+                  - name: domain_related_party_did
 
                 templates:
                 - name: handlerequest
@@ -852,6 +852,6 @@ spec:
                 dependencyName: test-dep
                 # Note: retrieved from *this* domain
                 # mapped into service_owner_did
-                dataKey: body.domain_env_related_party_did
+                dataKey: body.domain_related_party_did
                 value: DEFAULT
               dest: spec.arguments.parameters.30.value
