@@ -192,6 +192,8 @@ spec:
         resourceSpecification = {}
         serviceSpecification_resourceSpecification = []
 
+        po_validFor = {}
+
         # SLA
         sla_did = po.get('serviceLevelAgreement', {}).get('id', "")
         sys.stdout.write('sla_did: "%s" \n' % sla_did)
@@ -200,7 +202,7 @@ spec:
         name = po['name']
         sys.stdout.write('name: "%s" \n' % name)
 
-        # Name
+        # Id
         po_id = po['id']
         sys.stdout.write('po_id: "%s" \n' % po_id)
 
@@ -211,6 +213,10 @@ spec:
         sys.stdout.write('\n')
         place = r.json()
         sys.stdout.write('place: "%s" \n' % place)
+
+        # validFor
+        po_validFor = po['validFor']
+        sys.stdout.write('validFor: %s \n' % po_validFor)
 
         if category in ['Network Service', 'Slice', 'Edge', 'Cloud', 'VNF', 'Spectrum']:
             href = po['productSpecification']['href']
@@ -489,6 +495,9 @@ spec:
         with open('/tmp/serviceSpecification_resourceSpecification.txt', 'w') as f:
             json.dump(serviceSpecification_resourceSpecification, f)
 
+        with open('/tmp/po_validFor.txt', 'w') as f:
+            json.dump(po_validFor, f)
+
     outputs:
       parameters:
       - name: id
@@ -560,6 +569,9 @@ spec:
         valueFrom:
           path: /tmp/serviceSpecification_resourceSpecification.txt
 
+      - name: validFor
+        valueFrom:
+          path: /tmp/po_validFor.txt
 
   - name: create-order
     # Step to create an order object.
@@ -583,6 +595,7 @@ spec:
 
       - name: related_party_buyer
       - name: related_party_did_buyer
+      - name: validFor
     script:
       image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
       imagePullPolicy: IfNotPresent
@@ -603,11 +616,15 @@ spec:
             return http_error_msg
 
         transaction_uuid = "{{workflow.parameters.transaction_uuid}}"
+
+        validFor = {{inputs.parameters.validFor}}
+        sys.stdout.write('validFor: %s \n' % validFor)
+
         payload = {
            "category": "{{inputs.parameters.resource_category}}",
            "description": "Product Order by ISSM Transaction ID: %s" % transaction_uuid,
-           "requestedStartDate": "2022-01-01T08:00:00.000Z",
-           "requestedCompletionDate": "2023-12-31T08:00:00.000Z",
+           "requestedStartDate": validFor['startDateTime'],
+           "requestedCompletionDate": validFor['endDateTime'],
            "productOrderItem": [
               {
                  "quantity": 1,
@@ -696,6 +713,7 @@ spec:
       - name: related_party_seller
       - name: related_party_did_seller
       - name: resource_did
+      - name: validFor
     steps:
       - - name: acquire-resource
           template: create-order
@@ -715,6 +733,8 @@ spec:
               value: "{{inputs.parameters.related_party_buyer}}"
             - name: related_party_did_buyer
               value: "{{inputs.parameters.related_party_did_buyer}}"
+            - name: validFor
+              value: "{{inputs.parameters.validFor}}"
 
       - - name: notify-reputation-manager
           template: notify-trmf

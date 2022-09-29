@@ -682,6 +682,9 @@ spec:
           - name: resource_did
             value: "{{tasks.edge-attributes.outputs.parameters.did}}"
 
+          - name: validFor
+            value: "{{tasks.edge-attributes.outputs.parameters.validFor}}"
+
 
       - name: slice-order-id
         dependencies: [acquire]
@@ -918,6 +921,9 @@ spec:
           - name: resource_did
             value: "{{tasks.edge-attributes.outputs.parameters.did}}"
 
+          - name: validFor
+            value: "{{tasks.edge-attributes.outputs.parameters.validFor}}"
+
       - name: acquire-ran
         dependencies: [ran-attributes, print-ran]
         templateRef:
@@ -938,6 +944,9 @@ spec:
             value: "{{workflow.parameters.service_owner}}"
           - name: resource_did
             value: "{{tasks.ran-attributes.outputs.parameters.did}}"
+
+          - name: validFor
+            value: "{{tasks.ran-attributes.outputs.parameters.validFor}}"
 
       - name: slice-order-id
         dependencies: [acquire, acquire-ran]

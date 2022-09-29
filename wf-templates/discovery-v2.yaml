@@ -125,6 +125,7 @@ spec:
         related_party = ""
         related_party_did = ""
         did = ""
+        validFor = {}
 
         # Name
         name = po_json['offer_object']['name']
@@ -151,6 +152,10 @@ spec:
 
         # DID
         did = po_json['offer_did']
+
+        # validFor
+        validFor = po_json['validFor']
+        sys.stdout.write('validFor: %s \n' % validFor)
 
         # vsbName is applicable to RAN offers..
         vsbName = ""
@@ -188,6 +193,9 @@ spec:
         with open('/tmp/vsbName.txt', 'w') as f:
             f.write(vsbName)
 
+        with open('/tmp/validFor.txt', 'w') as f:
+            json.dump(validFor, f)
+
     outputs:
       parameters:
       - name: place
@@ -221,6 +229,10 @@ spec:
       - name: vsbName
         valueFrom:
           path: /tmp/vsbName.txt
+
+      - name: validFor
+        valueFrom:
+          path: /tmp/validFor.txt
 
 
   - name: best-offer-ran
