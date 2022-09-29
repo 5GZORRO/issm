@@ -51,6 +51,12 @@ spec:
                   - name: intent
                     value: OVERRIDE
 
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  # ISSM kafka bus
+                  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  - name: kafka
+                    value: 172.28.3.196:9092
+
                 templates:
                 - name: handlerequest
                   steps:
@@ -319,14 +325,14 @@ spec:
                       import json
                       import requests
                       import sys
-              
+
                       from kafka import KafkaProducer
                       from kafka.errors import KafkaError
-              
-                      KAFKA_TOPIC = "issm-in-{{inputs.parameters.resource_owner}}"
+
+                      KAFKA_TOPIC = "issm-in-{{workflow.parameters.service_owner}}"
                       KAFKA_TIMEOUT = 10
                       KAFKA_API_VERSION = (1, 1, 0)
-              
+
                       issm_api_url = "{{inputs.parameters.issm_api_url}}"
                       intent = {{inputs.parameters.intent}}
 
@@ -345,15 +351,6 @@ spec:
                       except KafkaError as ke:
                           raise ke
                       print ("0")
-              
-                      with open('/tmp/event_uuid.txt', 'w') as f:
-                          f.write(str(event_uuid))
-                  outputs:
-                    parameters:
-                    - name: event_uuid
-                      valueFrom:
-                        path: /tmp/event_uuid.txt
-
 
           parameters:
             - src:
