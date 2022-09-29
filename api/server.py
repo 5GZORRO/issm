@@ -160,8 +160,24 @@ class Proxy:
                        operation=transaction_type, sub_operation='API')
         payload['callback'] = dict(type='kafka', kafka_topic=service_owner)
         payload.update(intent)
-        publish_intent(KAFKA_IP, KAFKA_PORT,
-                       topic='issm-in-%s' % service_owner, payload=payload)
+
+        if transaction_type == 'instantiate':
+            main_order = find (payload['order_id'], lambda e: e.get('main', '') == 'true')
+            if not main_order:
+                raise Exception('Missing "main" order ID')
+
+            aux_payload = dict(service_owner=service_owner, operation='order',
+                               sub_operation='PRE_ONBOARD_INSTANTIATE', order_id=main_order['uuid'])
+            aux_payload['intent'] = payload
+
+            sys.stdout.write ('Send onboard request for order id: ["%s"]..\n' % main_order['uuid'])
+            publish_intent(KAFKA_IP, KAFKA_PORT,
+                           topic='issm-aux-%s' % service_owner, payload=aux_payload)
+
+        else:
+            publish_intent(KAFKA_IP, KAFKA_PORT,
+                           topic='issm-in-%s' % service_owner, payload=payload)
+
         return {'transaction_uuid': event_uuid}
 
     def get_transactions(self, service_owner, transaction_type=None):
@@ -385,7 +401,7 @@ class Proxy:
                 )
             except Exception as e:
                 sys.stdout.write ('Failed to create snfvo template: %s \n' % str(e))
-                raise
+                return # silently ignore raise
 
         templates = sensor_json['spec']['triggers'][0]['template']['k8s']['source']\
             ['resource']['spec']['templates']
