@@ -669,14 +669,14 @@ spec:
 
           - name: resource_id
             value: "{{tasks.edge-attributes.outputs.parameters.id}}"
-          - name: operator_id_seller
+          - name: related_party_seller
             value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
-          - name: operator_id_did_seller
+          - name: related_party_did_seller
             value: "{{tasks.edge-attributes.outputs.parameters.related_party_did}}"
 
-          - name: operator_id_buyer
+          - name: related_party_buyer
             value: "{{workflow.parameters.service_owner}}"
-          - name: operator_id_did_buyer
+          - name: related_party_did_buyer
             value: "{{workflow.parameters.service_owner_did}}"
 
           - name: resource_did
@@ -908,14 +908,14 @@ spec:
             value: "{{tasks.edge-attributes.outputs.parameters.category}}"
           - name: resource_id
             value: "{{tasks.edge-attributes.outputs.parameters.id}}"
-          - name: operator_id_seller
+          - name: related_party_seller
             value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
-          - name: operator_id_did_seller
+          - name: related_party_did_seller
             value: "{{tasks.edge-attributes.outputs.parameters.related_party_did}}"
 
-          - name: operator_id_buyer
+          - name: related_party_buyer
             value: "{{workflow.parameters.service_owner}}"
-          - name: operator_id_did_buyer
+          - name: related_party_did_buyer
             value: "{{workflow.parameters.service_owner_did}}"
 
           - name: resource_did
@@ -938,9 +938,9 @@ spec:
 
           - name: resource_id
             value: "{{tasks.ran-attributes.outputs.parameters.id}}"
-          - name: operator_id_seller
+          - name: related_party_seller
             value: "{{tasks.ran-attributes.outputs.parameters.related_party}}"
-          - name: operator_id_buyer
+          - name: related_party_buyer
             value: "{{workflow.parameters.service_owner}}"
           - name: resource_did
             value: "{{tasks.ran-attributes.outputs.parameters.did}}"

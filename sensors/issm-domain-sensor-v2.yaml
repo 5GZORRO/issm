@@ -160,7 +160,7 @@ spec:
                   - name: resources_ran
                     value: OVERRIDE
 
-                  - name: service_owner
+                  - name: service_owner_did
 
                 templates:
                 - name: handlerequest

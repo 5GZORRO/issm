@@ -148,13 +148,14 @@ spec:
         sys.stdout.write('related_party_did: "%s" \n' % related_party_did)
 
         # Category
-        category = po_json['offer_did']['category'][0]['name']
+        category = po_json['offer_object']['category'][0]['name']
+        sys.stdout.write('category: %s \n' % category)
 
         # DID
         did = po_json['offer_did']
 
         # validFor
-        validFor = po_json['validFor']
+        validFor = po_json['offer_object']['validFor']
         sys.stdout.write('validFor: %s \n' % validFor)
 
         # vsbName is applicable to RAN offers..
@@ -195,6 +196,9 @@ spec:
 
         with open('/tmp/validFor.txt', 'w') as f:
             json.dump(validFor, f)
+
+        with open('/tmp/category.txt', 'w') as f:
+            f.write(category)
 
     outputs:
       parameters:
