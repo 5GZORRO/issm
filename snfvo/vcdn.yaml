@@ -477,6 +477,7 @@ spec:
                 "trmf_url": "{{workflow.parameters.trmf_url}}",
                 "srsd_url": "{{workflow.parameters.srsd_url}}",
                 "issm_api_url": "{{workflow.parameters.issm_api_url}}",
+                "domain_related_party_did": "{{workflow.parameters.domain_related_party_did}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
                 "kafka": "{{workflow.parameters.kafka}}",
@@ -592,6 +593,7 @@ spec:
                 "trmf_url": "{{workflow.parameters.trmf_url}}",
                 "srsd_url": "{{workflow.parameters.srsd_url}}",
                 "issm_api_url": "{{workflow.parameters.issm_api_url}}",
+                "domain_related_party_did": "{{workflow.parameters.domain_related_party_did}}",
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
                 "kafka": "{{workflow.parameters.kafka}}",
@@ -656,14 +658,28 @@ spec:
           template: acquire
         arguments:
           parameters:
+          - name: resource_name
+            value: "{{tasks.edge-attributes.outputs.parameters.name}}"
+          - name: resource_category
+            value: "{{tasks.edge-attributes.outputs.parameters.category}}"
+
           - name: resource_id
             value: "{{tasks.edge-attributes.outputs.parameters.id}}"
-          - name: operator_id_seller
+          - name: related_party_seller
             value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
-          - name: operator_id_buyer
+          - name: related_party_did_seller
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party_did}}"
+
+          - name: related_party_buyer
             value: "{{workflow.parameters.service_owner}}"
+          - name: related_party_did_buyer
+            value: "{{workflow.parameters.domain_related_party_did}}"
+
           - name: resource_did
             value: "{{tasks.edge-attributes.outputs.parameters.did}}"
+
+          - name: validFor
+            value: "{{tasks.edge-attributes.outputs.parameters.validFor}}"
 
 
       - name: slice-order-id
@@ -882,14 +898,28 @@ spec:
           template: acquire
         arguments:
           parameters:
+          - name: resource_name
+            value: "{{tasks.edge-attributes.outputs.parameters.name}}"
+          - name: resource_category
+            value: "{{tasks.edge-attributes.outputs.parameters.category}}"
           - name: resource_id
             value: "{{tasks.edge-attributes.outputs.parameters.id}}"
-          - name: operator_id_seller
+
+          - name: related_party_seller
             value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
-          - name: operator_id_buyer
+          - name: related_party_did_seller
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party_did}}"
+
+          - name: related_party_buyer
             value: "{{workflow.parameters.service_owner}}"
+          - name: related_party_did_buyer
+            value: "{{workflow.parameters.domain_related_party_did}}"
+
           - name: resource_did
             value: "{{tasks.edge-attributes.outputs.parameters.did}}"
+
+          - name: validFor
+            value: "{{tasks.edge-attributes.outputs.parameters.validFor}}"
 
       - name: acquire-ran
         dependencies: [ran-attributes, print-ran]
@@ -898,14 +928,29 @@ spec:
           template: acquire
         arguments:
           parameters:
+          - name: resource_name
+            value: "{{tasks.ran-attributes.outputs.parameters.name}}"
+          - name: resource_category
+            value: "{{tasks.ran-attributes.outputs.parameters.category}}"
+
           - name: resource_id
             value: "{{tasks.ran-attributes.outputs.parameters.id}}"
-          - name: operator_id_seller
+
+          - name: related_party_seller
             value: "{{tasks.ran-attributes.outputs.parameters.related_party}}"
-          - name: operator_id_buyer
+          - name: related_party_did_seller
+            value: "{{tasks.ran-attributes.outputs.parameters.related_party_did}}"
+
+          - name: related_party_buyer
             value: "{{workflow.parameters.service_owner}}"
+          - name: related_party_did_buyer
+            value: "{{workflow.parameters.domain_related_party_did}}"
+
           - name: resource_did
             value: "{{tasks.ran-attributes.outputs.parameters.did}}"
+
+          - name: validFor
+            value: "{{tasks.ran-attributes.outputs.parameters.validFor}}"
 
       - name: slice-order-id
         dependencies: [acquire, acquire-ran]

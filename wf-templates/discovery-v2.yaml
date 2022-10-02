@@ -141,7 +141,9 @@ spec:
         po_id = ""
         place = {}
         related_party = ""
+        related_party_did = ""
         did = ""
+        validFor = {}
 
         # Name
         name = po_json['offer_object']['name']
@@ -160,8 +162,19 @@ spec:
         related_party = related_party.replace('_','-').lower()
         sys.stdout.write('related_party: "%s" \n' % related_party)
 
+        related_party_did = po_json['offer_object']['productSpecification']['relatedParty'][0]['extendedInfo']
+        sys.stdout.write('related_party_did: "%s" \n' % related_party_did)
+
+        # Category
+        category = po_json['offer_object']['category'][0]['name']
+        sys.stdout.write('category: %s \n' % category)
+
         # DID
         did = po_json['offer_did']
+
+        # validFor
+        validFor = po_json['offer_object']['validFor']
+        sys.stdout.write('validFor: %s \n' % validFor)
 
         # vsbName is applicable to RAN offers..
         vsbName = ""
@@ -176,6 +189,7 @@ spec:
                 vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
                 sys.stdout.write('vsbName: "%s" \n' % vsbName)
         except Exception as e:
+            # vsbName is not mandatory
             sys.stdout.write('*** WARN ***: %s\n' % str(e))
 
         with open('/tmp/did.txt', 'w') as f:
@@ -186,6 +200,8 @@ spec:
 
         with open('/tmp/related_party.txt', 'w') as f:
             f.write(related_party)
+        with open('/tmp/related_party_did.txt', 'w') as f:
+            f.write(related_party_did)
 
         with open('/tmp/name.txt', 'w') as f:
             f.write(name)
@@ -196,6 +212,12 @@ spec:
         with open('/tmp/vsbName.txt', 'w') as f:
             f.write(vsbName)
 
+        with open('/tmp/validFor.txt', 'w') as f:
+            json.dump(validFor, f)
+
+        with open('/tmp/category.txt', 'w') as f:
+            f.write(category)
+
     outputs:
       parameters:
       - name: place
@@ -205,6 +227,14 @@ spec:
       - name: related_party
         valueFrom:
           path: /tmp/related_party.txt
+
+      - name: related_party_did
+        valueFrom:
+          path: /tmp/related_party_did.txt
+
+      - name: category
+        valueFrom:
+          path: /tmp/category.txt
 
       - name: did
         valueFrom:
@@ -221,6 +251,10 @@ spec:
       - name: vsbName
         valueFrom:
           path: /tmp/vsbName.txt
+
+      - name: validFor
+        valueFrom:
+          path: /tmp/validFor.txt
 
 
   - name: best-offer-ran
