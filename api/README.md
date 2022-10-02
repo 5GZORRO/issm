@@ -342,6 +342,133 @@ Invocation example:
  curl -H "Content-type: application/json" -X DELETE http://172.28.3.15:30080/snfvo/operator-c/2ed69036-81ba-4e9a-a194-c066cea20847
 ```
 
+## API (termination)
+
+### Terminate all instances by transaction
+
+Terminate all instances instantiated by the given transaction that was instantiated previously by the service owner
+
+```
+curl -H "Content-type: application/json" -X POST -d '{"productOrderStatusTransaction": {"transaction_uuid": "<transaction uuid>"}}'   http://issm_api_ip_address:30080/transactions/<service_owner>/terminate
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the service owner (str)
+```
+
+
+Data payload:
+
+```
+    transaction_uuid - the transaction to terminate its instances (str in uuid format)
+```
+
+
+Return:
+
+```
+    status - 200
+```
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -X POST -d  '{"productOrderStatusTransaction": {"transaction_uuid": "e5eed8ec7d0d48c3b6cca13e2dbb5ec4"}}'  http://172.28.3.15:30080/transactions/operator-c/terminate
+
+    {
+        "transaction_uuid": "cc0bb0e0fe214705a9222b4582f17961"
+    }
+```
+
+### Terminate all instances by a product order
+
+Terminate all instances instantiated by the given product order of the service owner
+
+```
+curl -H "Content-type: application/json" -X POST -d '{"productOrder": {"order_id": <order uuid>}}'
+http://issm_api_ip_address:30080/transactions/<service_owner>/terminate
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the service owner (str)
+```
+
+
+Data payload:
+
+```
+    order_id - the order to terminate its instances (str in uuid format)
+```
+
+
+Return:
+
+```
+    status - 200
+```
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -X POST -d  '{"productOrder": {"order_id": "ef9254f0-299f-4287-b061-e5dd5abbc895"}}'
+    http://172.28.3.15:30080/transactions/operator-c/terminate
+
+    {
+        "transaction_uuid": "22147d7596f449bb897f139d146ed10b"
+    }
+```
+
+
+### Terminate a specific instance
+
+Terminate specific instance denoted by its local instance id and operator name
+
+```
+curl -H "Content-type: application/json" -X POST -d '{"statusInstance": {"transaction_uuid": "<uuid>", "vsi_id": "<id>", "related_party": "<operator name>"}}'
+http://issm_api_ip_address:30080/transactions/<service_owner>/terminate
+```
+
+REST path:
+
+```
+    issm_api_ip_address - ipaddress ISSM API service.
+    service_owner       - the service owner (str)
+```
+
+
+Data payload:
+
+```
+    transaction_uuid - the transaction this instance belongs to (str in uuid format)
+    vsi_id           - the local id of this instance (str)
+    related_party    - the name of the operator this instance had been instantiated at (e.g. operator-a, operator-b, ..) (str)
+```
+
+Return:
+
+```
+    status - 200
+```
+
+Invocation example:
+
+```
+    curl -H "Content-type: application/json" -X POST -d '{"statusInstance": {"transaction_uuid": "22147d7596f449bb897f139d146ed10b", "vsi_id": "11", "related_party":
+    "operator-a"}}' http://issm_api_ip_address:30080/transactions/<service_owner>/terminate
+
+    {
+        "transaction_uuid": "22147d7596f449bb897f139d146ed10b"
+    }
+```
+
+
+
 ## Build (**relevant for developers only**)
 
 1.  Set the `REGISTRY` environment variable to hold the name of your docker registry. The following command sets it

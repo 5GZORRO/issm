@@ -257,7 +257,7 @@ spec:
           templateRef:
             name: workflow-base
             template: event-uuid
-      - - name: publish-to-scaleout
+      - - name: publish-to-terminate
           templateRef:
             name: workflow-base
             template: publish-on-kafka

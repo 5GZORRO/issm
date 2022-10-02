@@ -390,7 +390,7 @@ spec:
                         template: get-platform-env
 
                     - name: do-terminate
-                      dependencies: [get-domain-env]
+                      dependencies: [get-domain-env, get-platform-env]
                       templateRef:
                         name: instantiate-scaleout-terminate
                         template: terminate
