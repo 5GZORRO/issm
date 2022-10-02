@@ -218,42 +218,66 @@ spec:
                       po_id = po['id']
                       sys.stdout.write('po_id: "%s" \n' % po_id)
 
-                      category = r.json()['category'][0]['name']
-                      if category in ['Network Service', 'Slice']:
-                          href = po['productSpecification']['href']
-                          r = requests.get(str(href), headers=headers)
-                          json.dump(r.json(), sys.stdout)
-                          sys.stdout.write('\n')
+                      href = po['productSpecification']['href']
+                      r = requests.get(str(href), headers=headers)
+                      json.dump(r.json(), sys.stdout)
+                      sys.stdout.write('\n')
 
+                      snfvoUrl = ""
+                      # first, look at serviceSpecification
+                      try:
                           href = r.json()['serviceSpecification'][0]['href']
-                          r = requests.get(str(href), headers=headers)
-                          json.dump(r.json(), sys.stdout)
+                          r_spec = requests.get(str(href), headers=headers)
+                          json.dump(r_spec.json(), sys.stdout)
                           sys.stdout.write('\n')
 
-                          rsc_list = r.json()['serviceSpecCharacteristic']
+                          rsc_list = r_spec.json()['serviceSpecCharacteristic']
 
                           # snfvoUrl
                           element = find(rsc_list, lambda e: e.get('name', '') == 'snfvoUrl')
                           if not element:
-                              snfvoUrl = "https://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/vcdn.yaml"
-                              #raise Exception("*** Unable to find 'snfvoUrl' ***")
+                              sys.stdout.write('*** Unable to find "snfvoUrl" at serviceSpecification. ***\n')
                           else:
                               snfvoUrl = element['serviceSpecCharacteristicValue'][0]['value']['value']
                               sys.stdout.write('snfvoUrl: "%s" \n' % snfvoUrl)
+                      except Exception as e:
+                          pass
 
-                      r = requests.get(snfvoUrl, headers=headers)
-                      snfvo_json = yaml.safe_load(r.text)
-                      json.dump(snfvo_json, sys.stdout)
-                      sys.stdout.write('\n')
+                      if not snfvoUrl:
+                          try:
+                              href = r.json()['resourceSpecification'][0]['href']
+                              r_spec = requests.get(str(href), headers=headers)
+                              json.dump(r_spec.json(), sys.stdout)
+                              sys.stdout.write('\n')
+    
+                              rsc_list = r_spec.json()['resourceSpecCharacteristic']
+    
+                              # snfvoUrl
+                              element = find(rsc_list, lambda e: e.get('name', '') == 'snfvoUrl')
+                              if not element:
+                                  sys.stdout.write('*** Unable to find "snfvoUrl" at resourceSpecification. ***\n')
+                              else:
+                                  snfvoUrl = element['resourceSpecCharacteristicValue'][0]['value']['value']
+                                  sys.stdout.write('snfvoUrl: "%s" \n' % snfvoUrl)
+                          except Exception as e:
+                              pass
 
-                      payload = {
-                          "snfvo_name": name,
-                          "product_offer_id": po_id,
-                          "snfvo_json": snfvo_json
-                      }
-
-                      r = requests.post(issm_api_url+'/snfvo/%s' % service_owner, json=payload, headers=headers)
-                      r.raise_for_status()
+                      if snfvoUrl:
+                          r = requests.get(snfvoUrl, headers=headers)
+                          snfvo_json = yaml.safe_load(r.text)
+                          json.dump(snfvo_json, sys.stdout)
+                          sys.stdout.write('\n')
+    
+                          payload = {
+                              "snfvo_name": name,
+                              "product_offer_id": po_id,
+                              "snfvo_json": snfvo_json
+                          }
+    
+                          r = requests.post(issm_api_url+'/snfvo/%s' % service_owner, json=payload, headers=headers)
+                          r.raise_for_status()
+                      else:
+                          sys.stdout.write('*** snfvoUrl missing from serviceSpecification/resourceSpecification ***\n')
 
 
                 - name: delete-snfvo
