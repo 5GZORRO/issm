@@ -7,5 +7,5 @@ python3 ./cli.py --file ./ota.yaml --service_owner operator-c --issm_api_url htt
 python3 ./cli.py --file ./spectrum.yaml --service_owner operator-c --issm_api_url http://172.28.3.15:30080 --snfvo_name "Slice Offer UC2" --product_offer_id 91a0a81d-5434-47be-a1a1-c724babc2e50
 python3 ./cli.py --file ./spectrum-slice.yaml --service_owner operator-c --issm_api_url http://172.28.3.15:30080 --snfvo_name "Slice offer with configurable spectrum" --product_offer_id 00abbe8a-839d-4999-b9aa-aeda91850c23
 
-python3 ./cli.py --file ./vcdn.yaml --service_owner operator-c --issm_api_url http://172.28.3.15:30080 --snfvo_name "CDN Network Service (CDN+SAS)" --product_offer_id 7ba86cad-b147-4aec-8ece-f0c1b748b9b8
+python3 ./cli.py --file ./vcdn.yaml --service_owner operator-c --issm_api_url http://172.28.3.15:30080 --snfvo_name "CDN Network Service (CDN+SAS)" --product_offer_id ea383187-ffba-49a5-a465-7276820a509c
 python3 ./cli.py --file ./vcdn-mec-cnmp.yaml --service_owner operator-c --issm_api_url http://172.28.3.15:30080 --snfvo_name "vCDN Optimized Service (e2e test of ISSM-O)" --product_offer_id 416767e2-cd33-4b62-b2d5-074aaa156004
