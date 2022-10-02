@@ -753,12 +753,12 @@ spec:
             - name: validFor
               value: "{{inputs.parameters.validFor}}"
 
-      - - name: notify-reputation-manager
-          template: notify-trmf
-          arguments:
-            parameters:
-            - name: resource_did
-              value: "{{inputs.parameters.resource_did}}"
+#      - - name: notify-reputation-manager
+#          template: notify-trmf
+#          arguments:
+#            parameters:
+#            - name: resource_did
+#              value: "{{inputs.parameters.resource_did}}"
 
     outputs:
       parameters:
