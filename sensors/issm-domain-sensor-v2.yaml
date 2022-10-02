@@ -160,6 +160,9 @@ spec:
                   - name: resources_ran
                     value: OVERRIDE
 
+                  # this domain DID
+                  - name: domain_related_party_did
+
                 templates:
                 - name: handlerequest
                   #
@@ -198,7 +201,8 @@ spec:
 
                 - name: instantiate-from-api
                   #
-                  # Entry point called from portal invocation
+                  # Load domain's env first and parse order array, then call into
+                  # INSTANTIATE_SERVICE
                   #
                   dag:
                     tasks:
@@ -248,6 +252,8 @@ spec:
                           value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
                         - name: issm_api_url
                           value: "{{tasks.get-domain-env.outputs.parameters.issm_api_url}}"
+                        - name: domain_related_party_did
+                          value: "{{tasks.get-domain-env.outputs.parameters.domain_related_party_did}}"
 
                         - name: srsd_url
                           value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
@@ -334,6 +340,8 @@ spec:
                           value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
                         - name: issm_api_url
                           value: "{{tasks.get-domain-env.outputs.parameters.issm_api_url}}"
+                        - name: domain_related_party_did
+                          value: "{{tasks.get-domain-env.outputs.parameters.domain_related_party_did}}"
 
                         - name: srsd_url
                           value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
@@ -363,7 +371,7 @@ spec:
 
                 - name: terminate-from-api
                   #
-                  # Entry point called from portal invocation
+                  # Load domain's env first
                   #
                   dag:
                     tasks:
@@ -855,3 +863,11 @@ spec:
                 dataKey: body.resources_ran
                 value: DEFAULT
               dest: spec.arguments.parameters.29.value
+
+            - src:
+                dependencyName: test-dep
+                # Note: retrieved from *this* domain
+                # mapped into service_owner_did
+                dataKey: body.domain_related_party_did
+                value: DEFAULT
+              dest: spec.arguments.parameters.30.value
