@@ -575,7 +575,7 @@ spec:
   - name: create-order
     # Step to create an order object.
     #
-    # Parameters:
+    # Parameters
     # resource_category: product offer category (e.g. Edge, RAN)
     # resource_id: product offer uuid (str)
     # related_party_seller: operator name that owns this product offer (str)
@@ -583,6 +583,8 @@ spec:
     # related_party_buyer: operator name. Usually service owner (str)
     # related_party_did_buyer: operator DID (str)
     #
+    # Outputs
+    # refer to <outputs:> section for details
     inputs:
       parameters:
       - name: resource_category      
@@ -656,6 +658,19 @@ spec:
         error_msg = raise_for_status(r)
         if error_msg:
             raise Exception('%s. %s' % (error_msg, r.text))
+
+        # orderId
+        order_id = r.json()['id']
+
+        with open('/tmp/order_id.txt', 'w') as f:
+            f.write(str(order_id))
+
+    outputs:
+      parameters:
+      - name: order_id
+        valueFrom:
+          path: /tmp/order_id.txt
+
 
   - name: notify-trmf
     # Notify TRMF with the given product offer DID.
@@ -744,6 +759,12 @@ spec:
             parameters:
             - name: resource_did
               value: "{{inputs.parameters.resource_did}}"
+
+    outputs:
+      parameters:
+      - name: order_id
+        valueFrom:
+          parameter: "{{steps.acquire-resource.outputs.parameters.order_id}}"
 
 
   - name: update-order-instance-id

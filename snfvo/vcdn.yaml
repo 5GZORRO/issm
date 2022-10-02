@@ -952,21 +952,8 @@ spec:
           - name: validFor
             value: "{{tasks.ran-attributes.outputs.parameters.validFor}}"
 
-      - name: slice-order-id
-        dependencies: [acquire, acquire-ran]
-        templateRef:
-          name: workflow-base
-          template: from-key
-        arguments:
-          parameters:
-          - name: key
-            value: slice_order_id_0
-          - name: json_str
-            value: |
-              {{workflow.parameters.snfvo_data}}
-
       - name: userdata-slice1
-        dependencies: [slice-order-id]
+        dependencies: [acquire, acquire-ran]
         templateRef:
           name: workflow-base
           template: from-key
@@ -1134,8 +1121,7 @@ spec:
           - name: transaction_uuid
             value: "{{workflow.parameters.transaction_uuid}}"
           - name: order_id
-            # TODO: replace with RAN order id
-            value: "{{tasks.slice-order-id.outputs.result}}"
+            value: "{{tasks.acquire-ran.outputs.parameters.order_id}}"
           - name: main
             value: "false"
           - name: instance_id
