@@ -70,18 +70,27 @@ spec:
           arguments:
             parameters:
             - name: data
-              # note: service_owner in this sense is the owner of this offer (e.g. operator-c)
-              # where it will perform the actual orchestration
+              # note: service_owner in this sense is the owner of this order's offer (e.g. operator-c)
+              # where it will perform the actual orchestration/stiching
               value: |
-                { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-                  "event_uuid": "{{steps.event-uuid.outputs.result}}",
+                {
+                  "_name": "snfvo-pre-onboard-{{steps.event-uuid.outputs.result}}",
                   "service_owner": "{{inputs.parameters.related_party}}",
-                  "operation": "instantiate", "sub_operation": "API",
-                  "order_id": {{inputs.parameters.order_id}},
-                  "snfvo_data": {{inputs.parameters.snfvo_data}}
+                  "operation": "order",
+                  "sub_operation": "PRE_ONBOARD_INSTANTIATE",
+                  "order_id": "7a347492-3be8-444c-9cb1-d1a87c7a7ad5",
+                  "intent": {
+                    "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                    "event_uuid": "{{steps.event-uuid.outputs.result}}",
+                    "service_owner": "{{inputs.parameters.related_party}}",
+                    "operation": "instantiate", "sub_operation": "API",
+                    "order_id": {{inputs.parameters.order_id}},
+                    "snfvo_data": {{inputs.parameters.snfvo_data}}
+                  }
                 }
             - name: kafka_topic
-              value: "issm-in-{{inputs.parameters.related_party}}"
+              # Important: forward to aux so that snfvo is auto onboarded
+              value: "issm-aux-{{inputs.parameters.related_party}}"
 
   - name: scaleout
     dag:
