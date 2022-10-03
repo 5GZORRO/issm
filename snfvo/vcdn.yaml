@@ -780,6 +780,7 @@ spec:
           - name: transaction_uuid
             value: "{{workflow.parameters.transaction_uuid}}"
           - name: order_id
+            # TODO: to confirm
             value: "{{tasks.slice-order-id.outputs.result}}"
           - name: main
             value: "false"

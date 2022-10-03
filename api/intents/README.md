@@ -4,7 +4,7 @@ An ISSM intent defines the input parameters (json) to be used when submitting a 
 
 ## Intent structure
 
-An ISSM intent consists of two sections
+An ISSM intent consists of two main sections
 
 ### Generic section
 
@@ -18,9 +18,7 @@ Generic attributes that exist on every intent
 
 Specific attributes processed by the s-nfvo
 
-* `snfvo_data`: key, val pairs (json) known to the s-nfvo
-
-**Note:** additional key, val pair are automatically added by ISSM. These are the sub orders ids (if exist) in the following format: `<sub order offer category>_order_id_<index>`
+* `snfvo_data`: key, val pairs (json) known to the s-nfvo. **Note:** additional key, val pair are automatically added by ISSM. These are the sub orders ids (if exist) in the following format: `<sub order offer category>_order_id_<index>`
 
 ## Intent examples
 

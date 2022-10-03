@@ -2,6 +2,8 @@
 
 ISSM-API provides management API endpoints for create, delete and list transactions.
 
+Review [intents](./intents/README.md) page for the definition of the intput parameters ISSM expects
+
 ## Pre-requisites
 
 issm-api calls into argo-server REST endpoints.

@@ -79,7 +79,7 @@ Create the sensor and templates
 
 ## Installation (ISSM local instance)
 
-Follow these instructions to install a local ISSM agent (sensor and flow templates) in the participating 5GZorro operators. Repeat this process for every operator (i.e. `operator-a`, `operator-b` and `operator-c`)
+Follow these instructions to install a local ISSM agent (event source, sensor and flow templates) in the participating 5GZorro operators. Repeat this process for every operator (i.e. `operator-a`, `operator-b` and `operator-c`)
 
 The below procedure applies to MNO (mobile network operator) `operator-a`
 
@@ -114,27 +114,7 @@ envsubst < deploy/install-v1.1.0-operator.yaml.template | kubectl apply -f -
 kubectl apply -n $MNO_NAMESPACE -f https://raw.githubusercontent.com/argoproj/argo-events/v1.1.0/examples/eventbus/native.yaml
 ```
 
-### Add kafka event source to MNO namespace
-
-Register event source with platform communication fabric
-
-Update kafka ip and port accordingly
-
-```
-export KAFKA_HOST=172.28.3.196
-export KAFKA_PORT=9092
-
-export ISSM_DOMAIN_TOPIC=issm-in-$MNO_NAME
-envsubst < deploy/kafka-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
-
-export SLA_BREACH_DOMAIN_TOPIC=issm-breach-$MNO_NAME
-envsubst < deploy/kafka-domain-sla-breach-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
-
-export AUX_DOMAIN_TOPIC=issm-aux-$MNO_NAME
-envsubst < deploy/kafka-domain-aux-event-source.yaml.template | kubectl apply -n $MNO_NAMESPACE -f -
-```
-
-### Deploy sensor and templates
+### Deploy sensor event source and templates
 
 ```
 export MNO_NAME=operator-a
