@@ -1,0 +1,92 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: snfvo-ota-composite
+spec:
+  templates:
+  - name: instantiate
+    steps:
+    - - name: instantiate-service
+        when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
+        template: instantiate-service
+
+
+  - name: instantiate-service
+    dag:
+      tasks:
+      - name: get-order-from-catalog
+        templateRef:
+          name: workflow-catalog
+          template: get-order-from-catalog
+        arguments:
+          parameters:
+          - name: order_id
+            value: "{{workflow.parameters.order_id}}"
+
+      - name: trigger-instantiate
+        dependencies: [get-order-from-catalog]
+        template: trigger-instantiate
+        arguments:
+          parameters:
+          - name: related_party
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
+          - name: order_id
+            # TODO: replace with OTA
+            value: |
+              [
+                {"uuid": "dc3ded2e-64ff-4c2c-b45e-b0e9ab05b0cc"},
+                {"uuid": "7a347492-3be8-444c-9cb1-d1a87c7a7ad5", "main": "true"}
+              ]
+          - name: snfvo_data
+            # TODO: replace with OTA
+            value: |
+              {
+                "userdata_slice": {
+                  "sm.plmn_id": "00103",
+                  "sm.imsi_list": "001035432100005,001035432000003",
+                  "sm.apn": "Zorro_vCDN"
+                },
+                "vsd_parameters": {
+                 "users": "1000"
+                }
+              }
+
+  - name: trigger-instantiate
+    inputs:
+      parameters:
+      - name: related_party
+      # list of orders ({uuid,main},..)
+      - name: order_id
+      - name: snfvo_data
+    steps:
+      - - name: event-uuid
+          templateRef:
+            name: workflow-base
+            template: event-uuid
+      - - name: publish-to-instantiate
+          templateRef:
+            name: workflow-base
+            template: publish-on-kafka
+          arguments:
+            parameters:
+            - name: data
+              # note: service_owner in this sense is the owner of this offer (e.g. operator-c)
+              # where it will perform the actual orchestration
+              value: |
+                { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+                  "event_uuid": "{{steps.event-uuid.outputs.result}}",
+                  "service_owner": "{{inputs.parameters.related_party}}",
+                  "operation": "instantiate", "sub_operation": "API",
+                  "order_id": {{inputs.parameters.order_id}},
+                  "snfvo_data": {{inputs.parameters.snfvo_data}}
+                }
+            - name: kafka_topic
+              value: "issm-in-{{inputs.parameters.related_party}}"
+
+  - name: scaleout
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
