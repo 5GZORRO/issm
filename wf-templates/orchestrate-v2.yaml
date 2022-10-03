@@ -69,7 +69,8 @@ spec:
             "userdata": {{inputs.parameters.userdata}},
             "vsd_parameters": {{inputs.parameters.vsd_parameters}}
         }
-        
+
+        sys.stdout.write('payload: %s\n' % payload)
 
         KAFKA_SERVER = "{}".format("{{workflow.parameters.kafka}}")
         producer = KafkaProducer(bootstrap_servers=KAFKA_SERVER,

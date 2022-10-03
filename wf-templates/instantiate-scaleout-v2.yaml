@@ -21,103 +21,6 @@ metadata:
   # its proper value based on the main operation.
 spec:
   templates:
-  - name: scaleout
-    inputs:
-      parameters:
-      - name: catalogue_url
-      - name: elma_url
-      - name: trmf_url
-      - name: srsd_url
-      - name: issm_api_url
-      - name: domain_related_party_did
-      - name: kafka_dl
-
-      - name: order_id
-      - name: snfvo_data 
-    dag:
-      tasks:
-      - name: trigger-scaleout
-        template: trigger-scaleout
-        arguments:
-          parameters:
-          - name: service_owner
-            value: "{{workflow.parameters.service_owner}}"
-          - name: place
-            value: "{{workflow.parameters.place}}"
-          - name: order_id
-            value: "{{inputs.parameters.order_id}}"
-          - name: category
-            value: "{{workflow.parameters.category}}"
-          - name: elma_url
-            value: "{{inputs.parameters.elma_url}}"
-          - name: catalogue_url
-            value: "{{inputs.parameters.catalogue_url}}"
-          - name: trmf_url
-            value: "{{inputs.parameters.trmf_url}}"
-          - name: srsd_url
-            value: "{{inputs.parameters.srsd_url}}"
-          - name: issm_api_url
-            value: "{{inputs.parameters.issm_api_url}}"
-          - name: domain_related_party_did
-            value: "{{inputs.parameters.domain_related_party_did}}"
-
-          - name: kafka_dl
-            value: "{{inputs.parameters.kafka_dl}}"
-
-          - name: snfvo_data
-            value: "{{inputs.parameters.snfvo_data}}"
-          
-
-  - name: instantiate
-    inputs:
-      parameters:
-      - name: catalogue_url
-      - name: elma_url
-      - name: trmf_url
-      - name: srsd_url
-      - name: issm_api_url
-      - name: domain_related_party_did
-      - name: kafka_dl
-
-      - name: order_id
-      - name: snfvo_data 
-
-    dag:
-      tasks:
-      - name: trigger-instantiate
-        template: trigger-instantiate
-        arguments:
-          parameters:
-          - name: service_owner
-            value: "{{workflow.parameters.service_owner}}"
-          - name: order_id
-            value: "{{inputs.parameters.order_id}}"
-          - name: category
-            value: "{{workflow.parameters.category}}"
-          - name: elma_url
-            value: "{{inputs.parameters.elma_url}}"
-          - name: catalogue_url
-            value: "{{inputs.parameters.catalogue_url}}"
-          - name: trmf_url
-            value: "{{inputs.parameters.trmf_url}}"
-          - name: srsd_url
-            value: "{{inputs.parameters.srsd_url}}"
-          - name: issm_api_url
-            value: "{{inputs.parameters.issm_api_url}}"
-          - name: domain_related_party_did
-            value: "{{inputs.parameters.domain_related_party_did}}"
-
-          - name: kafka_dl
-            value: "{{inputs.parameters.kafka_dl}}"
-
-          - name: snfvo_data
-            value: "{{inputs.parameters.snfvo_data}}"
-
-          - name: place
-            value: "{{workflow.parameters.place}}"
-          - name: app_topology
-            value: "{{workflow.parameters.app_topology}}"
-
   - name: terminate
     inputs:
       parameters:
@@ -145,14 +48,11 @@ spec:
             value: "{{inputs.parameters.kafka_dl}}"
 
 
-  - name: trigger-scaleout
+  - name: scaleout
     inputs:
       parameters:
       - name: kafka_dl
-      - name: service_owner
-      - name: place
       - name: order_id
-      - name: category
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
@@ -160,46 +60,74 @@ spec:
       - name: issm_api_url
       - name: domain_related_party_did
       - name: snfvo_data
-    steps:
-      - - name: event-uuid
-          templateRef:
-            name: workflow-base
-            template: event-uuid
-      - - name: publish-to-scaleout
-          templateRef:
-            name: workflow-base
-            template: publish-on-kafka
-          arguments:
-            parameters:
-            - name: data
-              value: |
-                { "event_uuid": "{{steps.event-uuid.outputs.result}}",
-                  "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-                  "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
-                  "place": {{inputs.parameters.place}},
-                  "service_owner": "{{inputs.parameters.service_owner}}",
-                  "order_id": "{{inputs.parameters.order_id}}",
-                  "category": "{{inputs.parameters.category}}",
-                  "elma_url": "{{inputs.parameters.elma_url}}",
-                  "catalogue_url": "{{inputs.parameters.catalogue_url}}",
-                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
-                  "trmf_url": "{{inputs.parameters.trmf_url}}",
-                  "srsd_url": "{{inputs.parameters.srsd_url}}",
-                  "issm_api_url": "{{inputs.parameters.issm_api_url}}",
-                  "domain_related_party_did": "{{inputs.parameters.domain_related_party_did}}",
-                  "snfvo_data": {{inputs.parameters.snfvo_data}}
-                }
-            - name: kafka_topic
-              value: "issm-in-{{inputs.parameters.service_owner}}"
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+        import uuid
 
+        from kafka import KafkaProducer
+        from kafka.errors import KafkaError
 
-  - name: trigger-instantiate
+        KAFKA_TOPIC = "issm-in-{{workflow.parameters.service_owner}}"
+        KAFKA_TIMEOUT = 10
+        KAFKA_API_VERSION = (1, 1, 0)
+
+        event_uuid = str(uuid.uuid4()).replace('-','')
+
+        sys.stdout.write('event_uuid: "%s"\nKAFKA_TOPIC: "%s"\n' %
+                          (event_uuid, KAFKA_TOPIC))
+
+        payload = {
+            "event_uuid": event_uuid,
+            "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+            "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
+            "place": {{workflow.parameters.place}},
+            "service_owner": "{{workflow.parameters.service_owner}}",
+            "order_id": "{{inputs.parameters.order_id}}",
+            "category": "{{workflow.parameters.category}}",
+            "elma_url": "{{inputs.parameters.elma_url}}",
+            "catalogue_url": "{{inputs.parameters.catalogue_url}}",
+            "kafka_dl": "{{inputs.parameters.kafka_dl}}",
+            "trmf_url": "{{inputs.parameters.trmf_url}}",
+            "srsd_url": "{{inputs.parameters.srsd_url}}",
+            "issm_api_url": "{{inputs.parameters.issm_api_url}}",
+            "domain_related_party_did": "{{inputs.parameters.domain_related_party_did}}",
+            "snfvo_data": {{inputs.parameters.snfvo_data}}
+        }
+
+        sys.stdout.write('payload: %s\n' % payload)
+
+        KAFKA_SERVER = "{}".format("{{workflow.parameters.kafka}}")
+        producer = KafkaProducer(bootstrap_servers=KAFKA_SERVER,
+                                 api_version=KAFKA_API_VERSION,
+                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+
+        t = producer.send(KAFKA_TOPIC, payload)
+        # Block for 'synchronous' send; set timeout on X seconds
+        try:
+            t.get(timeout=KAFKA_TIMEOUT)
+        except KafkaError as ke:
+            raise ke
+        print ("0")
+
+        with open('/tmp/event_uuid.txt', 'w') as f:
+            f.write(str(event_uuid))
+    outputs:
+      parameters:
+      - name: event_uuid
+        valueFrom:
+          path: /tmp/event_uuid.txt
+
+  - name: instantiate
     inputs:
       parameters:
       - name: kafka_dl
-      - name: service_owner
       - name: order_id
-      - name: category
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
@@ -207,40 +135,69 @@ spec:
       - name: issm_api_url
       - name: domain_related_party_did
       - name: snfvo_data
-      - name: place
-      - name: app_topology
-    steps:
-      - - name: event-uuid
-          templateRef:
-            name: workflow-base
-            template: event-uuid
-      - - name: publish-to-instantiate
-          templateRef:
-            name: workflow-base
-            template: publish-on-kafka
-          arguments:
-            parameters:
-            - name: data
-              value: |
-                { "event_uuid": "{{steps.event-uuid.outputs.result}}",
-                  "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-                  "operation": "instantiate", "sub_operation": "INSTANTIATE_SERVICE",
-                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
-                  "service_owner": "{{inputs.parameters.service_owner}}",
-                  "order_id": "{{inputs.parameters.order_id}}",
-                  "category": "{{inputs.parameters.category}}",
-                  "elma_url": "{{inputs.parameters.elma_url}}",
-                  "catalogue_url": "{{inputs.parameters.catalogue_url}}",
-                  "trmf_url": "{{inputs.parameters.trmf_url}}",
-                  "srsd_url": "{{inputs.parameters.srsd_url}}",
-                  "issm_api_url": "{{inputs.parameters.issm_api_url}}",
-                  "domain_related_party_did": "{{inputs.parameters.domain_related_party_did}}",
-                  "snfvo_data": {{inputs.parameters.snfvo_data}},
-                  "place": {{inputs.parameters.place}},
-                  "app_topology": {{inputs.parameters.app_topology}}
-                }
-            - name: kafka_topic
-              value: "issm-in-{{inputs.parameters.service_owner}}"
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+        import uuid
+
+        from kafka import KafkaProducer
+        from kafka.errors import KafkaError
+
+        KAFKA_TOPIC = "issm-in-{{workflow.parameters.service_owner}}"
+        KAFKA_TIMEOUT = 10
+        KAFKA_API_VERSION = (1, 1, 0)
+
+        event_uuid = str(uuid.uuid4()).replace('-','')
+
+        sys.stdout.write('event_uuid: "%s"\nKAFKA_TOPIC: "%s"\n' %
+                          (event_uuid, KAFKA_TOPIC))
+
+        payload = {
+            "event_uuid": event_uuid,
+            "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
+            "operation": "instantiate", "sub_operation": "INSTANTIATE_SERVICE",
+            "kafka_dl": "{{inputs.parameters.kafka_dl}}",
+            "service_owner": "{{workflow.parameters.service_owner}}",
+            "order_id": "{{inputs.parameters.order_id}}",
+            "category": "{{workflow.parameters.category}}",
+            "elma_url": "{{inputs.parameters.elma_url}}",
+            "catalogue_url": "{{inputs.parameters.catalogue_url}}",
+            "trmf_url": "{{inputs.parameters.trmf_url}}",
+            "srsd_url": "{{inputs.parameters.srsd_url}}",
+            "issm_api_url": "{{inputs.parameters.issm_api_url}}",
+            "domain_related_party_did": "{{inputs.parameters.domain_related_party_did}}",
+            "snfvo_data": {{inputs.parameters.snfvo_data}},
+            "place": {{workflow.parameters.place}},
+            "app_topology": {{workflow.parameters.app_topology}}
+        }
+
+        sys.stdout.write('payload: %s\n' % payload)
+
+        KAFKA_SERVER = "{}".format("{{workflow.parameters.kafka}}")
+        producer = KafkaProducer(bootstrap_servers=KAFKA_SERVER,
+                                 api_version=KAFKA_API_VERSION,
+                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+
+        t = producer.send(KAFKA_TOPIC, payload)
+        # Block for 'synchronous' send; set timeout on X seconds
+        try:
+            t.get(timeout=KAFKA_TIMEOUT)
+        except KafkaError as ke:
+            raise ke
+        print ("0")
+
+        with open('/tmp/event_uuid.txt', 'w') as f:
+            f.write(str(event_uuid))
+    outputs:
+      parameters:
+      - name: event_uuid
+        valueFrom:
+          path: /tmp/event_uuid.txt
 
   - name: trigger-terminate
     inputs:

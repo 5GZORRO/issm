@@ -117,7 +117,7 @@ spec:
             value: "{{workflow.parameters.operationType}}"
 
       - name: trigger-scaleout
-        template: trigger-scaleout
+        template: scaleout
         dependencies: [update-snfvo, get-platform-env]
         arguments:
           parameters:
@@ -189,10 +189,9 @@ spec:
           path: /tmp/snfvo_data.txt
 
 
-  - name: trigger-scaleout
+  - name: scaleout
     inputs:
       parameters:
-      - name: kafka_dl
       - name: service_owner
       - name: place
       - name: order_id
@@ -200,43 +199,126 @@ spec:
       - name: elma_url
       - name: catalogue_url
       - name: trmf_url
-      - name: srsd_url
       - name: issm_api_url
       - name: domain_related_party_did
+      - name: srsd_url
+      - name: kafka_dl
       - name: snfvo_data
-    steps:
-      - - name: event-uuid
-          templateRef:
-            name: workflow-base
-            template: event-uuid
-      - - name: publish-to-scaleout
-          templateRef:
-            name: workflow-base
-            template: publish-on-kafka
-          arguments:
-            parameters:
-            - name: data
-              # Triggering here a new bussines transaction:
-              # important that event and transaction uuids are the same
-              value: |
-                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
-                  "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
-                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
-                  "place": {{inputs.parameters.place}},
-                  "service_owner": "{{inputs.parameters.service_owner}}",
-                  "order_id": "{{inputs.parameters.order_id}}",
-                  "instance_id": "{{inputs.parameters.instance_id}}",
-                  "elma_url": "{{inputs.parameters.elma_url}}",
-                  "catalogue_url": "{{inputs.parameters.catalogue_url}}",
-                  "trmf_url": "{{inputs.parameters.trmf_url}}",
-                  "srsd_url": "{{inputs.parameters.srsd_url}}",
-                  "issm_api_url": "{{inputs.parameters.issm_api_url}}",
-                  "domain_related_party_did": "{{inputs.parameters.domain_related_party_did}}",
-                  "snfvo_data": {{inputs.parameters.snfvo_data}},
-                  "sla_breach": {
-                    "applicable": "true",
-                    "breachPredictionNotification": {{workflow.parameters.breachPredictionNotification}}
-                  }
-                }
-            - name: kafka_topic
-              value: "issm-in-{{inputs.parameters.service_owner}}"
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+        import uuid
+
+        from kafka import KafkaProducer
+        from kafka.errors import KafkaError
+
+        KAFKA_TOPIC = "issm-in-{{inputs.parameters.service_owner}}"
+        KAFKA_TIMEOUT = 10
+        KAFKA_API_VERSION = (1, 1, 0)
+
+        event_uuid = str(uuid.uuid4()).replace('-','')
+
+        sys.stdout.write('event_uuid: "%s"\nKAFKA_TOPIC: "%s"\n' %
+                          (event_uuid, KAFKA_TOPIC))
+
+        payload = {
+            "event_uuid": event_uuid,
+            "transaction_uuid": event_uuid,
+            "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
+            "service_owner": "{{inputs.parameters.service_owner}}",
+            "place": {{inputs.parameters.place}},
+            "service_owner": "{{inputs.parameters.service_owner}}",
+            "order_id": "{{inputs.parameters.order_id}}",
+            "elma_url": "{{inputs.parameters.elma_url}}",
+            "catalogue_url": "{{inputs.parameters.catalogue_url}}",
+            "kafka_dl": "{{inputs.parameters.kafka_dl}}",
+            "trmf_url": "{{inputs.parameters.trmf_url}}",
+            "srsd_url": "{{inputs.parameters.srsd_url}}",
+            "issm_api_url": "{{inputs.parameters.issm_api_url}}",
+            "domain_related_party_did": "{{inputs.parameters.domain_related_party_did}}",
+            "snfvo_data": {{inputs.parameters.snfvo_data}},
+            "sla_breach": {
+              "applicable": "true",
+              "breachPredictionNotification": {{workflow.parameters.breachPredictionNotification}}
+            }
+        }
+
+        sys.stdout.write('payload: %s\n' % payload)
+
+        KAFKA_SERVER = "{}".format("{{workflow.parameters.kafka}}")
+        producer = KafkaProducer(bootstrap_servers=KAFKA_SERVER,
+                                 api_version=KAFKA_API_VERSION,
+                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+
+        t = producer.send(KAFKA_TOPIC, payload)
+        # Block for 'synchronous' send; set timeout on X seconds
+        try:
+            t.get(timeout=KAFKA_TIMEOUT)
+        except KafkaError as ke:
+            raise ke
+        print ("0")
+
+        with open('/tmp/event_uuid.txt', 'w') as f:
+            f.write(str(event_uuid))
+    outputs:
+      parameters:
+      - name: event_uuid
+        valueFrom:
+          path: /tmp/event_uuid.txt
+
+#  - name: trigger-scaleout
+#    inputs:
+#      parameters:
+#      - name: kafka_dl
+#      - name: service_owner
+#      - name: place
+#      - name: order_id
+#      - name: instance_id
+#      - name: elma_url
+#      - name: catalogue_url
+#      - name: trmf_url
+#      - name: srsd_url
+#      - name: issm_api_url
+#      - name: domain_related_party_did
+#      - name: snfvo_data
+#    steps:
+#      - - name: event-uuid
+#          templateRef:
+#            name: workflow-base
+#            template: event-uuid
+#      - - name: publish-to-scaleout
+#          templateRef:
+#            name: workflow-base
+#            template: publish-on-kafka
+#          arguments:
+#            parameters:
+#            - name: data
+#              # Triggering here a new bussines transaction:
+#              # important that event and transaction uuids are the same
+#              value: |
+#                { "event_uuid": "{{steps.event-uuid.outputs.result}}", "transaction_uuid": "{{steps.event-uuid.outputs.result}}",
+#                  "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
+#                  "kafka_dl": "{{inputs.parameters.kafka_dl}}",
+#                  "place": {{inputs.parameters.place}},
+#                  "service_owner": "{{inputs.parameters.service_owner}}",
+#                  "order_id": "{{inputs.parameters.order_id}}",
+#                  "instance_id": "{{inputs.parameters.instance_id}}",
+#                  "elma_url": "{{inputs.parameters.elma_url}}",
+#                  "catalogue_url": "{{inputs.parameters.catalogue_url}}",
+#                  "trmf_url": "{{inputs.parameters.trmf_url}}",
+#                  "srsd_url": "{{inputs.parameters.srsd_url}}",
+#                  "issm_api_url": "{{inputs.parameters.issm_api_url}}",
+#                  "domain_related_party_did": "{{inputs.parameters.domain_related_party_did}}",
+#                  "snfvo_data": {{inputs.parameters.snfvo_data}},
+#                  "sla_breach": {
+#                    "applicable": "true",
+#                    "breachPredictionNotification": {{workflow.parameters.breachPredictionNotification}}
+#                  }
+#                }
+#            - name: kafka_topic
+#              value: "issm-in-{{inputs.parameters.service_owner}}"
