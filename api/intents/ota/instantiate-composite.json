@@ -2,20 +2,6 @@
     "operation": "instantiate",
     "order_id": [{"uuid": "e8d683c9-9f2c-4590-a6eb-167d6bca4b88", "main": "true"}],
     "snfvo_data": {
-      "userdata_edge": {
-        "cp_address.upf_e.n4_net.cp_n4": "192.168.162.3",
-        "cp_address.upf_e.vpn_net.cp_int": "192.168.161.2",
-        "cp_address.gw.vpn_net.cp_int": "192.168.161.9",
-        "cp_address.upf_e.app_net.cp_app": "192.168.161.19",
-        "cp_address.edge_app.app_net.cp_app": "192.168.161.18"
-      },
-      "userdata_core": {
-        "cp_address.core.n4_net.cp_n4": "192.168.162.5",
-        "cp_address.ueransim.n4_net.cp_n4": "192.168.162.7",
-        "cp_address.core.vpn_net_core.cp_int": "192.168.161.50",
-        "cp_address.gw.vpn_net_core.cp_int": "192.168.161.51",
-        "cp_address.ueransim.vpn_net_core.cp_int": "192.168.161.52"
-      },
       "vsd_parameters": {
         "users": "1000"
       }
