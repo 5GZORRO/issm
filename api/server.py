@@ -168,8 +168,7 @@ class Proxy:
 
             # _name is a special attribute that contains pre-board flow name
             # workflow name (_name) should be unique
-            _uuid = str(uuid.uuid4()).replace('-','')
-            aux_payload = dict(_name='snfvo-pre-onboard-%s' % _uuid,
+            aux_payload = dict(_name='snfvo-pre-onboard-%s' % event_uuid,
                                service_owner=service_owner, operation='order',
                                sub_operation='PRE_ONBOARD_INSTANTIATE', order_id=main_order['uuid'])
             aux_payload['intent'] = payload
