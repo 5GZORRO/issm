@@ -56,6 +56,19 @@
       ]
     },
     {
+      "description": "Url to the snfvo (yaml) of this offer.",
+      "name": "snfvoUrl",
+      "serviceSpecCharRelationship": [],
+      "serviceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "snfvoUrl",
+            "value": "https://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/vcdn.yaml"
+          }
+        }
+      ]
+    },
+    {
       "description": "vCPU lower bound and upper bound.",
       "name": "vCPU Requirements",
       "serviceSpecCharRelationship": [],
