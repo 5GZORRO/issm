@@ -1,6 +1,5 @@
 {
     "operation": "instantiate",
-    "order_id": [{"uuid": "df3a8d26-39c4-43bd-bd12-237fd806e7cc"}, {"uuid": "50ebab4d-0865-4ef9-aa68-c4558312d28e", "main": "true"}],
     "snfvo_data": {
       "userdata_edge": {
         "cp_address.upf_e.n4_net.cp_n4": "192.168.162.3",
