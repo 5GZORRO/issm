@@ -37,6 +37,17 @@ spec:
               kind: Workflow
               metadata:
                 name: "OVERRIDE"
+                labels:
+                  #
+                  # transaction_uuid lable contains the transaction uuid of
+                  # bussiness flow. NOTE: there could be several instances with
+                  # a same transaction uuid
+                  #
+                  transaction_uuid: OVERRIDE
+                  #
+                  # to denote that this wf belongs to ISSM component to be used
+                  # by ISSM-API queries
+                  issm: "false"
               spec:
                 entrypoint: handlerequest
                 arguments:
@@ -410,3 +421,20 @@ spec:
                   {
                   }
               dest: spec.arguments.parameters.4.value
+
+            - src:
+                dependencyName: aux-dep
+                dataKey: body.issm
+                value: "false"
+              dest: metadata.labels.issm
+
+            - src:
+                dependencyName: aux-dep
+                dataKey: body._operation
+              dest: metadata.labels.operation
+
+            - src:
+                dependencyName: aux-dep
+                dataKey: body.intent.transaction_uuid
+                value: DEFAULT
+              dest: metadata.labels.transaction_uuid

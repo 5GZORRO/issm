@@ -1,3 +1,29 @@
+# Copyright 2020 - 2022 IBM Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#
+# This sensor is responsible to onboard or remove a given snfvo from the given domain.
+#
+# It acts agaist two message types.
+#
+# (1) Notification messages being received from the communication bus upon order creation/deletion:
+#
+#     {"service_owner": "operator-c", "operation": "order", "sub_operation": "CREATED", "order_id": "50ebab4d-0865-4ef9-aa68-c4558312d28e"}
+#     {"service_owner": "operator-c", "operation": "order", "sub_operation": "DELETED", "order_id": "50ebab4d-0865-4ef9-aa68-c4558312d28e"}
+#
+# (2) Instantiation operation against a given main order.
+
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
@@ -75,6 +101,7 @@ spec:
               value: |
                 {
                   "_name": "snfvo-pre-onboard-{{steps.event-uuid.outputs.result}}",
+                  "issm": "true", "_operation": "instantiate",
                   "service_owner": "{{inputs.parameters.related_party}}",
                   "operation": "order",
                   "sub_operation": "PRE_ONBOARD_INSTANTIATE",
