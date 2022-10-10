@@ -57,23 +57,30 @@ spec:
           - name: related_party
             value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
           - name: order_id
-            # TODO: replace with OTA
             value: |
               [
-                {"uuid": "dc3ded2e-64ff-4c2c-b45e-b0e9ab05b0cc"},
-                {"uuid": "7a347492-3be8-444c-9cb1-d1a87c7a7ad5", "main": "true"}
+                {"uuid": "ce94e036-79ce-41cd-8a1f-cbbd1ad31418"},
+                {"uuid": "38b01c74-5e38-4024-afb5-c603620496f3", "main": "true"}
               ]
           - name: snfvo_data
-            # TODO: replace with OTA
             value: |
               {
-                "userdata_slice": {
-                  "sm.plmn_id": "00103",
-                  "sm.imsi_list": "001035432100005,001035432000003",
-                  "sm.apn": "Zorro_vCDN"
+                "userdata_edge": {
+                  "cp_address.upf_e.n4_net.cp_n4": "192.168.162.3",
+                  "cp_address.upf_e.vpn_net.cp_int": "192.168.161.2",
+                  "cp_address.gw.vpn_net.cp_int": "192.168.161.9",
+                  "cp_address.upf_e.app_net.cp_app": "192.168.161.19",
+                  "cp_address.edge_app.app_net.cp_app": "192.168.161.18"
+                },
+                "userdata_core": {
+                  "cp_address.core.n4_net.cp_n4": "192.168.162.5",
+                  "cp_address.ueransim.n4_net.cp_n4": "192.168.162.7",
+                  "cp_address.core.vpn_net_core.cp_int": "192.168.161.50",
+                  "cp_address.gw.vpn_net_core.cp_int": "192.168.161.51",
+                  "cp_address.ueransim.vpn_net_core.cp_int": "192.168.161.52"
                 },
                 "vsd_parameters": {
-                 "users": "1000"
+                  "users": "1000"
                 }
               }
 

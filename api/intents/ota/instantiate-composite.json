@@ -1,6 +1,6 @@
 {
     "operation": "instantiate",
-    "order_id": [{"uuid": "e8d683c9-9f2c-4590-a6eb-167d6bca4b88", "main": "true"}],
+    "order_id": [{"uuid": "49b22298-923d-4bb4-9747-6f24dd3c0939", "main": "true"}],
     "snfvo_data": {
       "vsd_parameters": {
         "users": "1000"
