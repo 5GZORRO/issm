@@ -36,7 +36,18 @@ spec:
               apiVersion: argoproj.io/v1alpha1
               kind: Workflow
               metadata:
-                name: "OVERRIDE"
+                generateName: snfvo-pre-onboard-
+                labels:
+                  #
+                  # transaction_uuid lable contains the transaction uuid of
+                  # bussiness flow. NOTE: there could be several instances with
+                  # a same transaction uuid
+                  #
+                  transaction_uuid: override
+                  #
+                  # to denote that this wf belongs to ISSM component to be used
+                  # by ISSM-API queries
+                  issm: "false"
               spec:
                 entrypoint: handlerequest
                 arguments:
@@ -379,11 +390,6 @@ spec:
           parameters:
             - src:
                 dependencyName: aux-dep
-                dataKey: body._name
-              dest: metadata.name
-          
-            - src:
-                dependencyName: aux-dep
                 dataKey: body.service_owner
               dest: spec.arguments.parameters.0.value
 
@@ -410,3 +416,21 @@ spec:
                   {
                   }
               dest: spec.arguments.parameters.4.value
+
+            - src:
+                dependencyName: aux-dep
+                dataKey: body.issm
+                value: "false"
+              dest: metadata.labels.issm
+
+            - src:
+                dependencyName: aux-dep
+                dataKey: body._operation
+                value: default
+              dest: metadata.labels.operation
+
+            - src:
+                dependencyName: aux-dep
+                dataKey: body.intent.transaction_uuid
+                value: default
+              dest: metadata.labels.transaction_uuid
