@@ -345,74 +345,74 @@ spec:
             srv_spec = r.json()
 
             rsc_list = srv_spec['serviceSpecCharacteristic']
-            # 1. vsbName
+            # 1. vsbName (optional for composite NS)
             element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
             if not element:
-                raise Exception("*** Unable to find 'vsbName' ***")
-    
-            vsbName = element['serviceSpecCharacteristicValue'][0]['value']['value']
-            sys.stdout.write('vsbName: "%s" \n' % vsbName)
-    
-            # 2. vCPU Requirements
+                sys.stdout.write('*** WARN Missing vsbName ***\n')
+            else:
+                vsbName = element['serviceSpecCharacteristicValue'][0]['value']['value']
+                sys.stdout.write('vsbName: "%s" \n' % vsbName)
+
+            # 2. vCPU Requirements (optional for composite NS)
             element = find(rsc_list, lambda e: e.get('name', '') == 'vCPU Requirements')
             if not element:
-                raise Exception("*** Unable to find 'vCPU Requirements' ***")
+                sys.stdout.write("***WARN Unable to find 'vCPU Requirements' ***")
+            else:
+                # min
+                min = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-vCPU')
+                if not min:
+                    raise Exception("*** Unable to find 'min-vCPU' ***")
+                cpu_min = min['value']['value']
     
-            # min
-            min = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-vCPU')
-            if not min:
-                raise Exception("*** Unable to find 'min-vCPU' ***")
-            cpu_min = min['value']['value']
+                # max
+                max = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-vCPU')
+                if not max:
+                    raise Exception("*** Unable to find 'max-vCPU' ***")
+                cpu_max = max['value']['value']
+        
+                sys.stdout.write('cpu_min/max: "%s, %s" \n' % (cpu_min, cpu_max))
     
-            # max
-            max = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-vCPU')
-            if not max:
-                raise Exception("*** Unable to find 'max-vCPU' ***")
-            cpu_max = max['value']['value']
-    
-            sys.stdout.write('cpu_min/max: "%s, %s" \n' % (cpu_min, cpu_max))
-    
-            # 3. Virtual Memory Requirements
+            # 3. Virtual Memory Requirements (optional for composite NS)
             element = find(rsc_list, lambda e: e.get('name', '') == 'Virtual Memory Requirements')
             if not element:
-                raise Exception("*** Unable to find 'Virtual Memory Requirements' ***")
+                sys.stdout.write("*** Unable to find 'Virtual Memory Requirements' ***")
+            else:
+                # min
+                min = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-virtual-memory')
+                if not min:
+                    raise Exception("*** Unable to find 'min-virtual-memory' ***")
+                mem_min = min['value']['value']
+                mem_unit = min['unitOfMeasure']
+        
+                # max
+                max = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-virtual-memory')
+                if not max:
+                    raise Exception("*** Unable to find 'max-virtual-memory' ***")
+                mem_max = max['value']['value']
+        
+                sys.stdout.write('mem_min/max: "%s, %s" \n' % (mem_min, mem_max))
+                sys.stdout.write('mem_unit: "%s" \n' % mem_unit)
     
-            # min
-            min = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-virtual-memory')
-            if not min:
-                raise Exception("*** Unable to find 'min-virtual-memory' ***")
-            mem_min = min['value']['value']
-            mem_unit = min['unitOfMeasure']
-    
-            # max
-            max = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-virtual-memory')
-            if not max:
-                raise Exception("*** Unable to find 'max-virtual-memory' ***")
-            mem_max = max['value']['value']
-    
-            sys.stdout.write('mem_min/max: "%s, %s" \n' % (mem_min, mem_max))
-            sys.stdout.write('mem_unit: "%s" \n' % mem_unit)
-    
-            # 4. Storage Requirements
+            # 4. Storage Requirements (optional for composite NS)
             element = find(rsc_list, lambda e: e.get('name', '') == 'Storage Requirements')
             if not element:
-                raise Exception("*** Unable to find 'Storage Requirements' ***")
-    
-            # min
-            min = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-storage')
-            if not min:
-                raise Exception("*** Unable to find 'min-storage' ***")
-            storage_min = min['value']['value']
-            storage_unit = min['unitOfMeasure']
-    
-            # max
-            max = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-storage')
-            if not max:
-                raise Exception("*** Unable to find 'max-storage' ***")
-            storage_max = max['value']['value']
-    
-            sys.stdout.write('storage_min/max: "%s, %s" \n' % (storage_min, storage_max))
-            sys.stdout.write('storage_unit: "%s" \n' % storage_unit)
+                sys.stdout.write("*** WARN Unable to find 'Storage Requirements' ***")
+            else:
+                # min
+                min = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'min-storage')
+                if not min:
+                    raise Exception("*** WARN Unable to find 'min-storage' ***")
+                storage_min = min['value']['value']
+                storage_unit = min['unitOfMeasure']
+        
+                # max
+                max = find(element['serviceSpecCharacteristicValue'], lambda e: e['value']['alias'] == 'max-storage')
+                if not max:
+                    raise Exception("*** WARN Unable to find 'max-storage' ***")
+                storage_max = max['value']['value']
+        
+                sys.stdout.write('storage_min/max: "%s, %s" \n' % (storage_min, storage_max))
+                sys.stdout.write('storage_unit: "%s" \n' % storage_unit)
 
         if category == 'Slice':
             href = po['productSpecification']['href']
