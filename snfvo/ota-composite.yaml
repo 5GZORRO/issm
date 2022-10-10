@@ -100,7 +100,6 @@ spec:
               # where it will perform the actual orchestration/stiching
               value: |
                 {
-                  "_name": "snfvo-pre-onboard-{{steps.event-uuid.outputs.result}}",
                   "issm": "true", "_operation": "instantiate",
                   "service_owner": "{{inputs.parameters.related_party}}",
                   "operation": "order",
