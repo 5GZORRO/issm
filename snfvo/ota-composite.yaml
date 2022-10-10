@@ -19,7 +19,7 @@
 #
 # (1) Notification messages being received from the communication bus upon order creation/deletion:
 #
-#     {"service_owner": "operator-c", "operation": "order", "sub_operation": "CREATED", "order_id": "50ebab4d-0865-4ef9-aa68-c4558312d28e"}
+#     {"service_owner": "operator-c", "operation": "order", "sub_operation": "CREATED", "order_id": "50ebab4d-0865-4ef9-aa68-c4558312d28e"}
 #     {"service_owner": "operator-c", "operation": "order", "sub_operation": "DELETED", "order_id": "50ebab4d-0865-4ef9-aa68-c4558312d28e"}
 #
 # (2) Instantiation operation against a given main order.
