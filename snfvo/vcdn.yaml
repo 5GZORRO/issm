@@ -892,35 +892,35 @@ spec:
           - name: resource
             value: "{{tasks.best-offer-ran.outputs.parameters.best_offer}}"
         
-#      - name: acquire
-#        dependencies: [edge-attributes, print-edge]
-#        templateRef:
-#          name: workflow-catalog
-#          template: acquire
-#        arguments:
-#          parameters:
-#          - name: resource_name
-#            value: "{{tasks.edge-attributes.outputs.parameters.name}}"
-#          - name: resource_category
-#            value: "{{tasks.edge-attributes.outputs.parameters.category}}"
-#          - name: resource_id
-#            value: "{{tasks.edge-attributes.outputs.parameters.id}}"
-#
-#          - name: related_party_seller
-#            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
-#          - name: related_party_did_seller
-#            value: "{{tasks.edge-attributes.outputs.parameters.related_party_did}}"
-#
-#          - name: related_party_buyer
-#            value: "{{workflow.parameters.service_owner}}"
-#          - name: related_party_did_buyer
-#            value: "{{workflow.parameters.domain_related_party_did}}"
-#
-#          - name: resource_did
-#            value: "{{tasks.edge-attributes.outputs.parameters.did}}"
-#
-#          - name: validFor
-#            value: "{{tasks.edge-attributes.outputs.parameters.validFor}}"
+      - name: acquire
+        dependencies: [edge-attributes, print-edge]
+        templateRef:
+          name: workflow-catalog
+          template: acquire
+        arguments:
+          parameters:
+          - name: resource_name
+            value: "{{tasks.edge-attributes.outputs.parameters.name}}"
+          - name: resource_category
+            value: "{{tasks.edge-attributes.outputs.parameters.category}}"
+          - name: resource_id
+            value: "{{tasks.edge-attributes.outputs.parameters.id}}"
+
+          - name: related_party_seller
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party}}"
+          - name: related_party_did_seller
+            value: "{{tasks.edge-attributes.outputs.parameters.related_party_did}}"
+
+          - name: related_party_buyer
+            value: "{{workflow.parameters.service_owner}}"
+          - name: related_party_did_buyer
+            value: "{{workflow.parameters.domain_related_party_did}}"
+
+          - name: resource_did
+            value: "{{tasks.edge-attributes.outputs.parameters.did}}"
+
+          - name: validFor
+            value: "{{tasks.edge-attributes.outputs.parameters.validFor}}"
 
       - name: acquire-ran
         dependencies: [ran-attributes, print-ran]
@@ -954,8 +954,7 @@ spec:
             value: "{{tasks.ran-attributes.outputs.parameters.validFor}}"
 
       - name: userdata-slice1
-        #dependencies: [acquire, acquire-ran]
-        dependencies: [acquire-ran]
+        dependencies: [acquire, acquire-ran]
         templateRef:
           name: workflow-base
           template: from-key
