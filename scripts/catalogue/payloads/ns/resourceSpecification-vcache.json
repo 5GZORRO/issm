@@ -1,8 +1,8 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "vcache",
-  "description": "IBM vcache - resource specification",
+  "name": "5gzorro_security_sas-vnf",
+  "description": "IBM 5gzorro_security_sas-vnf - resource specification",
   "relatedParty": [],
   "resourceSpecCharacteristic": [
     {
@@ -74,7 +74,7 @@
         {
           "value": {
             "alias": "vsbName",
-            "value": "vcache_IBM"
+            "value": "5gzorro_security_sas"
           }
         }
       ]

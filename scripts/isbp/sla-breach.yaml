@@ -65,7 +65,7 @@ spec:
           }
         }
     - name: operationType
-      value: b
+      value: "extend network"
     - name: opaque_params
       value: |
         {

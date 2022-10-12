@@ -1,8 +1,8 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "upf",
-  "description": "IBM upf - resource specification",
+  "name": "vTAP_final-vnf",
+  "description": "IBM vTAP_final-vnf - resource specification",
   "relatedParty": [],
   "resourceSpecCharacteristic": [
     {
@@ -74,7 +74,7 @@
         {
           "value": {
             "alias": "vsbName",
-            "value": "upf_IBM"
+            "value": "vTAP_final"
           }
         }
       ]

@@ -1,8 +1,8 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "core",
-  "description": "IBM core - resource specification",
+  "name": "5g_zorro_cdn_edge_sec-vnf",
+  "description": "IBM 5g_zorro_cdn_edge_sec-vnf - resource specification",
   "relatedParty": [],
   "resourceSpecCharacteristic": [
     {
@@ -74,7 +74,7 @@
         {
           "value": {
             "alias": "vsbName",
-            "value": "core_IBM"
+            "value": "5g_zorro_cdn_edge_sec"
           }
         }
       ]

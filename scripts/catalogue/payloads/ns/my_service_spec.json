@@ -1,7 +1,7 @@
 {
   "attachment": [],
   "description": "IBM - service specification",
-  "name": "networkservice",
+  "name": "5gzorro_cdn_edge_sec-ns",
   "relatedParty": [
     {
       "extendedInfo": "OD1ndI3xw0Pi6Sl4rgoa6F",
@@ -12,19 +12,19 @@
   ],
   "resourceSpecification": [
     {
-      "href": "http://172.28.3.15:31080/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%coreId%",
+      "href": "%url%/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%coreId%",
       "id": "%coreId%",
-      "name": "core"
+      "name": "5g_zorro_cdn_edge_sec-vnf"
     },
     {
-      "href": "http://172.28.3.15:31080/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%upfId%",
+      "href": "%url%/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%upfId%",
       "id": "%upfId%",
-      "name": "upf"
+      "name": "vTAP_final-vnf"
     },
     {
-      "href": "http://172.28.3.15:31080/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%vcacheId%",
+      "href": "%url%/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%vcacheId%",
       "id": "%vcacheId%",
-      "name": "vcache"
+      "name": "5gzorro_security_sas-vnf"
     }
   ],
   "serviceLevelSpecification": [],
@@ -37,7 +37,7 @@
         {
           "value": {
             "alias": "nsdId",
-            "value": "7fa8874d-c94e-4175-82da-f64faf8ccb94"
+            "value": "1234"
           }
         }
       ]
@@ -50,7 +50,7 @@
         {
           "value": {
             "alias": "vsbName",
-            "value": "ns_IBM"
+            "value": "vcache_vsb"
           }
         }
       ]

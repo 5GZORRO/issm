@@ -402,10 +402,10 @@ spec:
       - name: scaleout_type
     steps:
     - - name: scaleout-service-slice
-        when: "{{inputs.parameters.scaleout_type}} == \"a\""
+        when: "\"{{inputs.parameters.scaleout_type}}\" == \"extend service\""
         template: scaleout-service-slice
     - - name: scaleout-service-slice-ran
-        when: "{{inputs.parameters.scaleout_type}} == \"b\""
+        when: "\"{{inputs.parameters.scaleout_type}}\" == \"extend network\""
         template: scaleout-service-slice-ran
 
   - name: scaleout-service-slice
@@ -610,10 +610,10 @@ spec:
       - name: scaleout_type
     steps:
     - - name: best-edge-selection-slice
-        when: "{{inputs.parameters.scaleout_type}} == \"a\""
+        when: "\"{{inputs.parameters.scaleout_type}}\" == \"extend service\""
         template: best-edge-selection-slice
     - - name: best-edge-selection-ran
-        when: "{{inputs.parameters.scaleout_type}} == \"b\""
+        when: "\"{{inputs.parameters.scaleout_type}}\" == \"extend network\""
         template: best-edge-selection-ran
 
 

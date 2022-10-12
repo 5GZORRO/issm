@@ -1,6 +1,5 @@
 {
     "operation": "scaleout",
-    "order_id": [{"uuid": "dc3ded2e-64ff-4c2c-b45e-b0e9ab05b0cc"}, {"uuid": "7a347492-3be8-444c-9cb1-d1a87c7a7ad5", "main": "true"}],
     "place": {
       "city": "Barcelona",
       "country": "Spain",
@@ -18,7 +17,7 @@
       }
     },
     "snfvo_data": {
-      "scaleout_type": "a",
+      "scaleout_type": "extend service",
       "userdata_slice": {
         "sm.plmn_id": "00103",
         "sm.imsi_list": "001035432100005,001035432000003",

@@ -22,14 +22,15 @@ curl -X POST -d "@resourceSpecification-vcache.json" "$URL/tmf-api/resourceCatal
 ## Customize network service
 
 ```
-coreId=`curl $URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification -H  "accept: application/json" -H "Content-Type: application/json" | jq -r '.[] | select(.name=="core")'.id`
+coreId=`curl $URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification -H  "accept: application/json" -H "Content-Type: application/json" | jq -r '.[] | select(.name=="5g_zorro_cdn_edge_sec-vnf")'.id`
 
-upfId=`curl $URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification -H  "accept: application/json" -H "Content-Type: application/json" | jq -r '.[] | select(.name=="upf")'.id`
+upfId=`curl $URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification -H  "accept: application/json" -H "Content-Type: application/json" | jq -r '.[] | select(.name=="vTAP_final-vnf")'.id`
 
-vcacheId=`curl $URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification -H  "accept: application/json" -H "Content-Type: application/json" | jq -r '.[] | select(.name=="vcache")'.id`
+vcacheId=`curl $URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification -H  "accept: application/json" -H "Content-Type: application/json" | jq -r '.[] | select(.name=="5gzorro_security_sas-vnf")'.id`
 ```
 
 ```
+sed -i "s|%url%|$URL|g" my_service_spec.json
 sed -i "s/%coreId%/$coreId/g" my_service_spec.json
 sed -i "s/%upfId%/$upfId/g" my_service_spec.json
 sed -i "s/%vcacheId%/$vcacheId/g" my_service_spec.json
