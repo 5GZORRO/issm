@@ -3,7 +3,7 @@
     "snfvo_data": {
         "userdata_slice": {
             "sm.plmn_id": "00103",  
-            "sm.apn": "5Gzorro.uc2",  
+            "sm.apn": "5GzorroUC2",  
             "sm.imsi_list": "001035432100005,001035432000003"
         },
         "vsd_parameters": {
