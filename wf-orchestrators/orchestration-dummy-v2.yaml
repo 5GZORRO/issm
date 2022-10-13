@@ -320,7 +320,7 @@ spec:
         #    }
         #}
 
-		# UC3
+        # UC3
         vsi_info = {
             "name": name,
             "description": name,

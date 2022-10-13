@@ -102,8 +102,24 @@ spec:
           - name: dict2
             value: "{{tasks.spectrum-parameters.outputs.parameters.spectrum_parameters}}"
 
+      - name: final-user-data
+        dependencies: [get-order-from-catalog, slice-parameters-spectrum-parameters]
+        templateRef:
+          name: workflow-base
+          template: add-to-dict
+        arguments:
+          parameters:
+          - name: dict1
+            value: "{{tasks.slice-parameters-spectrum-parameters.outputs.parameters.dict}}"
+          - name: dict2
+            value: |
+              {
+                "product_id": "{{tasks.get-order-from-catalog.outputs.parameters.did}}",
+                "transaction_id": "{{workflow.parameters.transaction_uuid}}"
+              }
+
       - name: trigger-orchestration-slice
-        dependencies: [get-order-from-catalog, slice-parameters-spectrum-parameters, vsd-parameters]
+        dependencies: [final-user-data, vsd-parameters]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration
@@ -117,7 +133,7 @@ spec:
             value: "{{tasks.get-order-from-catalog.outputs.parameters.vsbName}}"
 
           - name: userdata
-            value: "{{tasks.slice-parameters-spectrum-parameters.outputs.parameters.dict}}"
+            value: "{{tasks.final-user-data.outputs.parameters.dict}}"
 
           - name: vsd_parameters
             value: "{{tasks.vsd-parameters.outputs.result}}"
