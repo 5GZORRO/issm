@@ -207,7 +207,7 @@ spec:
           parameters:
           - name: product_DID
             # NOTE: taken from the spectrum
-            value: "{{tasks.get-spectrum-order-from-catalog.outputs.parameters.did}}"
+            value: "{{tasks.get-order-from-catalog.outputs.parameters.did}}"
           - name: sla_DID
             # NOTE: taken from the spectrum
             value: "{{tasks.get-spectrum-order-from-catalog.outputs.parameters.sla_did}}"
