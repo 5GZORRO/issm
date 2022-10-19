@@ -605,6 +605,7 @@ spec:
         import json
         import requests
         import sys
+        from datetime import datetime
 
         def raise_for_status(r):
             http_error_msg = ''
@@ -621,10 +622,14 @@ spec:
         validFor = {{inputs.parameters.validFor}}
         sys.stdout.write('validFor: %s \n' % validFor)
 
+        now = datetime.now()        
+        iso_curr_time = now.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        sys.stdout.write('iso_curr_time: %s \n' % iso_curr_time)
+
         payload = {
            "category": "{{inputs.parameters.resource_category}}",
            "description": "Product Order by ISSM Transaction ID: %s" % transaction_uuid,
-           "requestedStartDate": validFor['startDateTime'],
+           "requestedStartDate": iso_curr_time,
            "requestedCompletionDate": validFor['endDateTime'],
            "productOrderItem": [
               {
