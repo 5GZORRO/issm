@@ -12,18 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#
-# This sensor is responsible to onboard or remove a given snfvo from the given domain.
-#
-# It acts agaist two message types.
-#
-# (1) Notification messages being received from the communication bus upon order creation/deletion:
-#
-#     {"service_owner": "operator-c", "operation": "order", "sub_operation": "CREATED", "order_id": "50ebab4d-0865-4ef9-aa68-c4558312d28e"}
-#     {"service_owner": "operator-c", "operation": "order", "sub_operation": "DELETED", "order_id": "50ebab4d-0865-4ef9-aa68-c4558312d28e"}
-#
-# (2) Instantiation operation against a given main order.
-
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
@@ -105,13 +93,14 @@ spec:
             - name: data
               # note: service_owner in this sense is the owner of this order's offer (e.g. operator-c)
               # where it will perform the actual orchestration/stiching
+              # Note: for now outer order_id should match the main one above
               value: |
                 {
                   "issm": "true", "_operation": "instantiate",
                   "service_owner": "{{inputs.parameters.related_party}}",
                   "operation": "order",
                   "sub_operation": "PRE_ONBOARD_INSTANTIATE",
-                  "order_id": "7a347492-3be8-444c-9cb1-d1a87c7a7ad5",
+                  "order_id": "38b01c74-5e38-4024-afb5-c603620496f3",
                   "intent": {
                     "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                     "event_uuid": "{{steps.event-uuid.outputs.result}}",
