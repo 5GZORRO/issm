@@ -82,7 +82,7 @@ spec:
         arguments:
           parameters:
           - name: dict1
-            value: "{{tasks.userdata-edge.outputs.parameters.dict}}"
+            value: "{{tasks.userdata-edge.outputs.result}}"
           - name: dict2
             value: |
               {
@@ -105,7 +105,7 @@ spec:
             value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.vsbName}}"
 
           - name: userdata
-            value: "{{tasks.final-user-data.outputs.result}}"
+            value: "{{tasks.final-user-data.outputs.parameters.dict}}"
 
           - name: vsd_parameters
             # snfvo_data['vsd_parameters']
