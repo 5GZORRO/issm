@@ -47,8 +47,8 @@ spec:
           - name: order_id
             value: |
               [
-                {"uuid": "ce94e036-79ce-41cd-8a1f-cbbd1ad31418"},
-                {"uuid": "38b01c74-5e38-4024-afb5-c603620496f3", "main": "true"}
+                {"uuid": "37f313d5-f3ba-4b34-8ddf-12ce7bcb52c6"},
+                {"uuid": "76d0d91c-37f8-43d9-bb63-3ac6a4373d49", "main": "true"}
               ]
           - name: snfvo_data
             value: |

@@ -324,7 +324,7 @@ spec:
 
 #############
 
-      - name: core-status
+      - name: core-status-success
         dependencies: [get-core-instance-id]
         templateRef:
           name: workflow-base
