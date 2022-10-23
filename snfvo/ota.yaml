@@ -324,7 +324,7 @@ spec:
 
 #############
 
-      - name: core-status-success
+      - name: core-status
         dependencies: [get-core-instance-id]
         templateRef:
           name: workflow-base
@@ -337,12 +337,17 @@ spec:
             value: |
               {{tasks.wait-for-status.outputs.parameters.payload}}
 
+      - name: core-status-success
+        dependencies: [core-status]
+        templateRef:
+          name: workflow-base
+          template: success
+        when: "{{tasks.core-status.outputs.result}} == \"SUCCESS\""
 
       - name: core-status-fail
         dependencies: [core-status]
         template: status-fail
         when: "{{tasks.core-status.outputs.result}} == \"FAIL\""
-
 
   - name: status-fail
     dag:

@@ -219,6 +219,14 @@ spec:
       source: |
         exit 0
 
+  - name: success
+    script:
+      image: debian:9.4
+      imagePullPolicy: IfNotPresent
+      command: [bash]
+      source: |
+        exit 0
+
   - name: event-uuid
     # Generic step to produce unique UUID
     script:

@@ -306,32 +306,33 @@ spec:
         with open('/tmp/status.txt', 'w') as f:
             f.write(status)
 
-        #vsi_info = {
-        #    "name": name,
-        #    "description": name,
-        #    "vsiId": vsi_id,
-        #    "vsdId": 15,
-        #    "status": "INSTANTIATED",
-        #    "externalGwAddress": "10.30.6.36",
-        #    "internalVpnSubnets": ["192.168.161.16/28"],
-        #    "allocatedVlSubnets": {
-        #      "app_net": "192.168.161.16/28",
-        #      "vpn_net": "192.168.161.0/28"
-        #    }
-        #}
-
-        # UC3
+        # UC1
         vsi_info = {
             "name": name,
             "description": name,
             "vsiId": vsi_id,
             "vsdId": 15,
             "status": "INSTANTIATED",
-            "sm.core_address": "172.16.1.10",
-            "sm.core_port": "38412",
-            "sm.core_vlan": "140",
-            "sm.plmn_id": "00103"
+            "externalGwAddress": "10.30.6.36",
+            "internalVpnSubnets": ["192.168.161.16/28"],
+            "allocatedVlSubnets": {
+              "app_net": "192.168.161.16/28",
+              "vpn_net": "192.168.161.0/28"
+            }
         }
+
+        # UC3
+        #vsi_info = {
+        #    "name": name,
+        #    "description": name,
+        #    "vsiId": vsi_id,
+        #    "vsdId": 15,
+        #    "status": "INSTANTIATED",
+        #    "sm.core_address": "172.16.1.10",
+        #    "sm.core_port": "38412",
+        #    "sm.core_vlan": "140",
+        #    "sm.plmn_id": "00103"
+        #}
 
         with open('/tmp/vsi_info.txt', 'w') as f:
             json.dump(vsi_info, f)
