@@ -25,17 +25,17 @@ spec:
           - name: order_id
             value: "{{workflow.parameters.order_id}}"
 
-      - name: update-topology
-        dependencies: [get-order-from-catalog]      
-        templateRef:
-          name: workflow-topology
-          template: update-topology
-        arguments:
-          parameters:
-          - name: app_topology
-            value: "{{workflow.parameters.app_topology}}"
-          - name: resource_specs
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.serviceSpecification_resourceSpecification}}"
+#      - name: update-topology
+#        dependencies: [get-order-from-catalog]      
+#        templateRef:
+#          name: workflow-topology
+#          template: update-topology
+#        arguments:
+#          parameters:
+#          - name: app_topology
+#            value: "{{workflow.parameters.app_topology}}"
+#          - name: resource_specs
+#            value: "{{tasks.get-order-from-catalog.outputs.parameters.serviceSpecification_resourceSpecification}}"
 
       - name: build-discovery-query
         dependencies: [get-order-from-catalog]
@@ -74,7 +74,7 @@ spec:
   
   
       - name: prepare-request-to-optimizer
-        dependencies: [discover-edges, update-topology]
+        dependencies: [discover-edges]
         templateRef:
           name: workflow-topology
           template: mock-optimizer-output
@@ -83,7 +83,7 @@ spec:
           - name: resources
             value: "{{tasks.discover-edges.outputs.result}}"
           - name: app_topology
-            value: "{{tasks.update-topology.outputs.parameters.app_topology}}"
+            value: "{{workflow.parameters.app_topology}}"
   
       - name: send-edges-to-optimizer
         # simulates interaction with ISSM-O
@@ -109,7 +109,7 @@ spec:
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
                 "kafka": "{{workflow.parameters.kafka}}",
-                "app_topology": {{tasks.update-topology.outputs.parameters.app_topology}},
+                "app_topology": {{workflow.parameters.app_topology}},
                 "serviceSpecification_resourceSpecification": {{tasks.get-order-from-catalog.outputs.parameters.serviceSpecification_resourceSpecification}},
                 "optimizer_output": {{tasks.prepare-request-to-optimizer.outputs.parameters.optimizer_output}}
               }
@@ -275,7 +275,7 @@ spec:
             value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party}}"
 
           - name: vsbName
-            # possible values: 'core', 'upf' or 'vcache'
+            # currently, values should match orcehstrator capabilities
             value: "{{tasks.mapped-function.outputs.result}}"
 
           - name: userdata

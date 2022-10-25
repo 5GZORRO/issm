@@ -73,13 +73,28 @@
           "id": "U"
         },
         {
-          "id": "upf"
+          "id": "upf",
+          "minConfig": {
+            "cpu": {"value": 1},
+            "mem": {"value": 2, "units": "GB"},
+            "storage": {"value": 5, "units": "GB"}          
+          }
         },
         {
-          "id": "core"
+          "id": "core",
+          "minConfig": {
+            "cpu": {"value": 4},
+            "mem": {"value": 8, "units": "GB"},
+            "storage": {"value": 50, "units": "GB"}          
+          }
         },
         {
-          "id": "vcache"
+          "id": "vcache",
+          "minConfig": {
+            "cpu": {"value": 4},
+            "mem": {"value": 4, "units": "GB"},
+            "storage": {"value": 20, "units": "GB"}
+          }
         }
       ],
       "adjacency": [

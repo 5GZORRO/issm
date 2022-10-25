@@ -1,0 +1,48 @@
+{
+  "attachment": [],
+  "description": "IBM - service specification",
+  "name": "ns-opt-topology",
+  "relatedParty": [
+    {
+      "extendedInfo": "OD1ndI3xw0Pi6Sl4rgoa6F",
+      "href": "http://172.28.3.15:31080/tmf-api/party/v4/organization/",
+      "id": "95400a9b-1b22-46aa-951e-e53d16f75e2a",
+      "name": "Operator-a"
+    }
+  ],
+  "resourceSpecification": [
+    {
+      "href": "%url%/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%coreId%",
+      "id": "%coreId%",
+      "name": "core"
+    },
+    {
+      "href": "%url%/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%upfId%",
+      "id": "%upfId%",
+      "name": "upf"
+    },
+    {
+      "href": "%url%/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%vcacheId%",
+      "id": "%vcacheId%",
+      "name": "vcache"
+    }
+  ],
+  "serviceLevelSpecification": [],
+  "serviceSpecCharacteristic": [
+    {
+      "description": "Url to the snfvo (yaml) of this offer.",
+      "name": "snfvoUrl",
+      "serviceSpecCharRelationship": [],
+      "serviceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "snfvoUrl",
+            "value": "https://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/opt-topology.yaml"
+          }
+        }
+      ]
+    }
+  ],
+  "serviceSpecRelationship": [],
+  "version": "1.0"
+}

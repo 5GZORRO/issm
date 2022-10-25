@@ -1,0 +1,89 @@
+{
+  "attachment": [],
+  "feature": [],
+  "name": "upf",
+  "description": "IBM upf - resource specification",
+  "relatedParty": [],
+  "resourceSpecCharacteristic": [
+    {
+      "description": "vCPU requirements for upf",
+      "name": "vCPU Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "min-vCPU",
+            "value": "1"
+          }
+        },
+        {
+          "value": {
+            "alias": "max-vCPU",
+            "value": "1"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Memory requirements for upf",
+      "name": "Virtual Memory Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "min-virtual-memory",
+            "value": "2"
+          }
+        },
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "max-virtual-memory",
+            "value": "2"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Storage requirements for upf",
+      "name": "Storage Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "min-storage",
+            "value": "5"
+          }
+        },
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "max-storage",
+            "value": "5"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Name of service blueprint in VS",
+      "name": "vsbName",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "vsbName",
+            "value": "upf_IBM"
+          }
+        }
+      ]
+    }
+  ],
+  "resourceSpecRelationship": [],
+  "validFor": {
+    "endDateTime": "string",
+    "startDateTime": "string"
+  },
+  "version": "0.1"
+}
