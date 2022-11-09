@@ -68,7 +68,7 @@
             "kind": "Vcache",
             "success_condition": "status.registered == true",
             "config": {
-            "image": "vcache_icom:latest",
+            "image": "ghcr.io/5gzorro/issm-mec-cnmp/vcache_icom:latest",
             "data_network_name": "gilan"
             }
         },
