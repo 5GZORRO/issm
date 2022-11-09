@@ -56,44 +56,14 @@ spec:
           - name: vs_url
             value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
 
-      - name: create-vcache-vsi
+      - name: create-app-vsi
         dependencies: [get-domain-env]
-        # TODO: make this 'when' more generic
-        when: "{{workflow.parameters.vsbName}} == \"vcache\""
+        when: "{{workflow.parameters.vsbName}} == \"app\""
         template: create-app-vsi
         arguments:
           parameters:
           - name: vs_url
             value: "{{tasks.get-domain-env.outputs.parameters.vs_url}}"
-
-
-  - name: create-app-vsi
-    inputs:
-      parameters:
-      - name: vs_url
-    dag:
-      tasks:
-      - name: vsi-id
-        templateRef:
-          name: workflow-base
-          template: rand
-        arguments:
-          parameters:
-          - name: from
-            value: "1"
-          - name: to
-            value: "10000"
-
-      - name: create-vsi-success
-        template: create-vsi-success
-        dependencies: [vsi-id]
-        arguments:
-          parameters:
-          - name: vsi_id
-            value: "{{tasks.vsi-id.outputs.parameters.result}}"
-          - name: vsi_info
-            value: |
-              { }
 
 
   - name: create-core-vsi
@@ -164,6 +134,65 @@ spec:
       tasks:
       - name: deploy
         template: subnetslice
+        arguments:
+          parameters:
+          - name: vs_url
+            value: "{{inputs.parameters.vs_url}}"
+          - name: namespace
+            value: "domain-{{workflow.parameters.service_owner}}"
+          - name: userdata
+            value: "{{workflow.parameters.userdata}}"
+      
+      - name: poll
+        dependencies: [deploy]
+        template: poll
+        arguments:
+          parameters:
+          - name: poll
+            value: "true"
+          - name: vs_url
+            value: "{{inputs.parameters.vs_url}}"
+          - name: namespace
+            value: "domain-{{workflow.parameters.service_owner}}"
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: jq_query
+            value: ".phase"
+          - name: jq_query_value
+            value: "Succeeded"
+          - name: timeout
+            value: 120
+
+      - name: create-vsi-fail
+        dependencies: [poll]
+        template: create-vsi-fail
+        when: "{{tasks.poll.outputs.parameters.status}} == \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
+
+      - name: create-vsi-success
+        dependencies: [poll]
+        template: create-vsi-success
+        when: "{{tasks.poll.outputs.parameters.status}} != \"TIMEOUT\""
+        arguments:
+          parameters:
+          - name: vsi_id
+            value: "{{tasks.deploy.outputs.parameters.vsi_id}}"
+          - name: vsi_info
+            value: "{{tasks.poll.outputs.parameters.vsi_info}}"
+
+  - name: create-app-vsi
+    inputs:
+      parameters:
+      - name: vs_url
+    dag:
+      tasks:
+      - name: deploy
+        template: app
         arguments:
           parameters:
           - name: vs_url
@@ -394,12 +423,84 @@ spec:
             "sst": userdata['sst'],
             "sd": userdata['sd'],
             "connectedFrom": "gNB1",
+
+            "network_name": userdata['network_name'],
+            "network_master": userdata['network_master'],
+            "network_range": userdata['network_range'],
+            "network_start": userdata['network_start'],
+            "network_end": userdata['network_end'],
+
             "networks": userdata['networks'],
             "pool": userdata['pool']
         }
 
         sys.stdout.write('Create instance..\n')
         r = requests.post("{{inputs.parameters.vs_url}}/subnetslice",
+            json=payload, headers=headers)
+
+        sys.stdout.write('r.text [%s]\n' % r.text)
+
+        error_msg = raise_for_status(r)
+
+        if error_msg:
+            raise Exception('%s. %s' % (error_msg, r.text))
+
+        name  = r.json()['name']
+        sys.stdout.write('vsi_id: "%s" \n' % name)
+
+        with open('/tmp/id.txt', 'w') as f:
+            f.write(str(name))
+
+    outputs:
+      parameters:
+      - name: vsi_id
+        valueFrom:
+          path: /tmp/id.txt
+
+  - name: app
+    inputs:
+      parameters:
+      - name: userdata
+      - name: namespace
+      - name: vs_url
+    script:
+      image: docker.pkg.github.com/5gzorro/issm/python:alpine3.6-kafka-v0.1
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import requests
+        import sys
+
+        def raise_for_status(r):
+            http_error_msg = ''
+            if 400 <= r.status_code < 500:
+                http_error_msg = '%s Client Error: %s' % (r.status_code, r.reason)
+
+            elif 500 <= r.status_code < 600:
+                http_error_msg = '%s Server Error: %s' % (r.status_code, r.reason)
+
+            return http_error_msg
+
+        vs_url = "{{inputs.parameters.vs_url}}"
+        userdata = {{inputs.parameters.userdata}}
+        namespace = "{{inputs.parameters.namespace}}"
+
+        sys.stdout.write('vs_url: "%s"\nuserdata: %s\nnamespace: "%s"'
+            % (vs_url, userdata, namespace))
+
+        headers = {'Content-Type': 'application/json'}
+        payload = {
+            "cluster": "cluster-2",
+            "namespace": namespace,
+
+            "api_version": userdata['api_version'],
+            "kind": userdata['kind'],
+            "config": userdata['config']
+        }
+
+        sys.stdout.write('Create instance..\n')
+        r = requests.post("{{inputs.parameters.vs_url}}/app",
             json=payload, headers=headers)
 
         sys.stdout.write('r.text [%s]\n' % r.text)

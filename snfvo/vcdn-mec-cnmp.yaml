@@ -275,7 +275,7 @@ spec:
             value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party}}"
 
           - name: vsbName
-            # possible values: 'core', 'upf' or 'vcache'
+            # possible values: 'core', 'upf' or 'app'
             value: "{{tasks.mapped-function.outputs.result}}"
 
           - name: userdata
