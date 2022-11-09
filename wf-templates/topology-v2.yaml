@@ -157,43 +157,63 @@ spec:
         resources = {{inputs.parameters.resources}}
         app_topology = {{inputs.parameters.app_topology}}
 
-        optimizer_output = []
-        
-        for i, n in enumerate(app_topology['nodes']):
-            print(i, n)
-            # special case. Ignore UE
-            # NOTE: It is assumed UE is marked as 'U'
-            if n['id'] == 'U':
-                continue
-
-            s_o_rp = resources[i]['offer_object']['productSpecification']['relatedParty'][0]['name']
-            s_o_rp_did = resources[i]['offer_object']['productSpecification']['relatedParty'][0]['extendedInfo']
-            s_o = {
-                # mock only needed fields
-                'offer_object': {
-                  'name': resources[i]['offer_object']['name'],
-                  'id': resources[i]['offer_object']['id'],
-                  'place': [resources[i]['offer_object']['place'][0]],
-                  'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'GwvbsTg539xMqYraTQiZa5'}]}
-                  # 'productSpecification': {'relatedParty': [{'name': s_o_rp, 'extendedInfo': s_o_rp_did}]}
-                },
-                'offer_did': resources[i]['offer_did']
-              }
-
-            sys.stdout.write('APPENDING: %s \n' % s_o)
-
-            optimizer_output.append(dict(index=i, selected_offer=s_o, mapped_function=n['id']))
-
-        # another upf, vcache
-        i = len(optimizer_output)
-        optimizer_output.append(dict(index=i, selected_offer=optimizer_output[i-2]['selected_offer'], mapped_function='upf'))
-        optimizer_output.append(dict(index=i+1, selected_offer=optimizer_output[i-1]['selected_offer'], mapped_function='vcache'))
+        optimizer_output = [
+            {
+                'index': 0,
+                'mapped_function': 'core',
+                'selected_offer': {
+                    'name': 'some edge resource',
+                    'id': '1',
+                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    'offer_did': '9'
+                }
+            },
+            {
+                'index': 1,
+                'mapped_function': 'upf',
+                'selected_offer': {
+                    'name': 'some edge resource 1',
+                    'id': '2',
+                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    'offer_did': '8'
+                }
+            },
+            {
+                'index': 2,
+                'mapped_function': 'app',
+                'selected_offer': {
+                    'name': 'some edge resource 2',
+                    'id': '3',
+                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    'offer_did': '7'
+                }
+            },
+            {
+                'index': 3,
+                'mapped_function': 'upf',
+                'selected_offer': {
+                    'name': 'some edge resource 3',
+                    'id': '4',
+                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    'offer_did': '6'
+                }
+            },
+            {
+                'index': 4,
+                'mapped_function': 'app',
+                'selected_offer': {
+                    'name': 'some edge resource 4',
+                    'id': '5',
+                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    'offer_did': '5'
+                }
+            },
+        ]
 
         with open('/tmp/optimizer_output.txt', 'w') as f:
             # flatten it (like print) since it's going to be published on
             # kafka
             f.write(str(optimizer_output))
-            #json.dump(optimizer_output, f)
 
     outputs:
       parameters:

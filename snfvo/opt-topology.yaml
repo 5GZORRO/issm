@@ -25,18 +25,6 @@ spec:
           - name: order_id
             value: "{{workflow.parameters.order_id}}"
 
-      - name: update-topology
-        dependencies: [get-order-from-catalog]      
-        templateRef:
-          name: workflow-topology
-          template: update-topology
-        arguments:
-          parameters:
-          - name: app_topology
-            value: "{{workflow.parameters.app_topology}}"
-          - name: resource_specs
-            value: "{{tasks.get-order-from-catalog.outputs.parameters.serviceSpecification_resourceSpecification}}"
-
       - name: build-discovery-query
         dependencies: [get-order-from-catalog]
         templateRef:
@@ -74,7 +62,7 @@ spec:
   
   
       - name: prepare-request-to-optimizer
-        dependencies: [discover-edges, update-topology]
+        dependencies: [discover-edges]
         templateRef:
           name: workflow-topology
           template: mock-optimizer-output
@@ -83,7 +71,7 @@ spec:
           - name: resources
             value: "{{tasks.discover-edges.outputs.result}}"
           - name: app_topology
-            value: "{{tasks.update-topology.outputs.parameters.app_topology}}"
+            value: "{{workflow.parameters.app_topology}}"
   
       - name: send-edges-to-optimizer
         # simulates interaction with ISSM-O
@@ -109,7 +97,7 @@ spec:
                 "name": "{{tasks.get-order-from-catalog.outputs.parameters.name}}",
                 "snfvo_data": {{workflow.parameters.snfvo_data}},
                 "kafka": "{{workflow.parameters.kafka}}",
-                "app_topology": {{tasks.update-topology.outputs.parameters.app_topology}},
+                "app_topology": {{workflow.parameters.app_topology}},
                 "serviceSpecification_resourceSpecification": {{tasks.get-order-from-catalog.outputs.parameters.serviceSpecification_resourceSpecification}},
                 "optimizer_output": {{tasks.prepare-request-to-optimizer.outputs.parameters.optimizer_output}}
               }
@@ -120,8 +108,8 @@ spec:
 # [{'index': 0, 'selected_offer': '...', 'mapped_function': 'upf'},
 # {'index':  1, 'selected_offer': '...', 'mapped_function': 'core'},
 # {'index':  2, 'selected_offer': '...', 'mapped_function': 'upf'},
-# {'index':  3, 'selected_offer': '...', 'mapped_function': 'vcache'},
-# {'index':  4, 'selected_offer': '...', 'mapped_function': 'vcache'}]
+# {'index':  3, 'selected_offer': '...', 'mapped_function': 'app'},
+# {'index':  4, 'selected_offer': '...', 'mapped_function': 'app'}]
   - name: optimizer-response
     dag:
       tasks:
@@ -189,18 +177,6 @@ spec:
             value: |
               {{inputs.parameters.entry}}
 
-#      - name: resource-spec-by-name
-#        # return vsbName
-#        dependencies: [mapped-function]
-#        template: resource-spec-by-name
-#        arguments:
-#          parameters:
-#          - name: name
-#            value: "{{tasks.mapped-function.outputs.result}}"
-#          - name: resource_specs
-#            value: |
-#              {{workflow.parameters.serviceSpecification_resourceSpecification}}
-
       - name: print-selected-offer
         dependencies: [selected-offer]
         templateRef:
@@ -223,31 +199,31 @@ spec:
           - name: resource
             value: "{{tasks.selected-offer.outputs.result}}"
         
-      - name: acquire
-        dependencies: [selected-offer-attributes, print-selected-offer]
-        templateRef:
-          name: workflow-catalog
-          template: acquire
-        arguments:
-          parameters:
-          - name: resource_name
-            value: "{{tasks.selected-offer-attributes.outputs.parameters.name}}"
-          - name: resource_category
-            value: "{{tasks.selected-offer-attributes.outputs.parameters.category}}"
-          - name: resource_id
-            value: "{{tasks.selected-offer-attributes.outputs.parameters.id}}"
-          - name: operator_id_seller
-            value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party}}"
-          - name: operator_id_did_seller
-            value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party_did}}"
-
-          - name: operator_id_buyer
-            value: "{{workflow.parameters.service_owner}}"
-          - name: operator_id_did_buyer
-            value: "{{workflow.parameters.service_owner_did}}"
-
-          - name: resource_did
-            value: "{{tasks.selected-offer-attributes.outputs.parameters.did}}"
+#      - name: acquire
+#        dependencies: [selected-offer-attributes, print-selected-offer]
+#        templateRef:
+#          name: workflow-catalog
+#          template: acquire
+#        arguments:
+#          parameters:
+#          - name: resource_name
+#            value: "{{tasks.selected-offer-attributes.outputs.parameters.name}}"
+#          - name: resource_category
+#            value: "{{tasks.selected-offer-attributes.outputs.parameters.category}}"
+#          - name: resource_id
+#            value: "{{tasks.selected-offer-attributes.outputs.parameters.id}}"
+#          - name: operator_id_seller
+#            value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party}}"
+#          - name: operator_id_did_seller
+#            value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party_did}}"
+#
+#          - name: operator_id_buyer
+#            value: "{{workflow.parameters.service_owner}}"
+#          - name: operator_id_did_buyer
+#            value: "{{workflow.parameters.service_owner_did}}"
+#
+#          - name: resource_did
+#            value: "{{tasks.selected-offer-attributes.outputs.parameters.did}}"
 
       - name: userdata
         dependencies: [mapped-function, index]
@@ -264,7 +240,8 @@ spec:
 
 
       - name: trigger-orchestration
-        dependencies: [acquire, userdata]
+        # dependencies: [acquire, userdata]
+        dependencies: [userdata]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration

@@ -1,0 +1,89 @@
+{
+  "attachment": [],
+  "feature": [],
+  "name": "app",
+  "description": "IBM app - resource specification",
+  "relatedParty": [],
+  "resourceSpecCharacteristic": [
+    {
+      "description": "vCPU requirements for app",
+      "name": "vCPU Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "min-vCPU",
+            "value": "4"
+          }
+        },
+        {
+          "value": {
+            "alias": "max-vCPU",
+            "value": "4"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Memory requirements for app",
+      "name": "Virtual Memory Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "min-virtual-memory",
+            "value": "4"
+          }
+        },
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "max-virtual-memory",
+            "value": "4"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Storage requirements for app",
+      "name": "Storage Requirements",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "min-storage",
+            "value": "20"
+          }
+        },
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "max-storage",
+            "value": "20"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Name of service blueprint in VS",
+      "name": "vsbName",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "vsbName",
+            "value": "app"
+          }
+        }
+      ]
+    }
+  ],
+  "resourceSpecRelationship": [],
+  "validFor": {
+    "endDateTime": "string",
+    "startDateTime": "string"
+  },
+  "version": "0.1"
+}
