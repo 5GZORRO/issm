@@ -70,7 +70,9 @@ spec:
         arguments:
           parameters:
           - name: resources
-            value: "{{tasks.discover-edges.outputs.result}}"
+            # "{{tasks.discover-edges.outputs.result}}"
+            value: |
+              [{"todo": "replace until SRSD is fixed"}]
           - name: app_topology
             value: "{{workflow.parameters.app_topology}}"
   
@@ -243,7 +245,7 @@ spec:
 
       - name: trigger-orchestration
         # dependencies: [acquire, userdata]
-        dependencies: [userdata]
+        dependencies: [userdata, selected-offer-attributes]
         templateRef:
           name: workflow-orchestrator
           template: trigger-orchestration

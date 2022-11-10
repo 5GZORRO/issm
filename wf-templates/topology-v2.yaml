@@ -162,9 +162,14 @@ spec:
                 'index': 0,
                 'mapped_function': 'core',
                 'selected_offer': {
-                    'name': 'some edge resource',
-                    'id': '1',
-                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]},
+                    'offer_object': {
+                        'name': 'some edge resource',
+                        'id': '1',
+                        'place': [{"city": "Madrid", "country": "Spain", "locality": "Madrid"}],
+                        'category': [{'name': 'Edge'}],
+                        'validFor': {},
+                        'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    },
                     'offer_did': '9'
                 }
             },
@@ -172,9 +177,14 @@ spec:
                 'index': 1,
                 'mapped_function': 'upf',
                 'selected_offer': {
-                    'name': 'some edge resource 1',
-                    'id': '2',
-                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]},
+                    'offer_object': {
+                        'name': 'some edge resource 1',
+                        'id': '2',
+                        'place': [{"city": "Madrid", "country": "Spain", "locality": "Madrid"}],
+                        'category': [{'name': 'Edge'}],
+                        'validFor': {},
+                        'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    },
                     'offer_did': '8'
                 }
             },
@@ -182,9 +192,14 @@ spec:
                 'index': 2,
                 'mapped_function': 'app',
                 'selected_offer': {
-                    'name': 'some edge resource 2',
-                    'id': '3',
-                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]},
+                    'offer_object': {
+                        'name': 'some edge resource 2',
+                        'id': '3',
+                        'place': [{"city": "Madrid", "country": "Spain", "locality": "Madrid"}],
+                        'category': [{'name': 'Edge'}],
+                        'validFor': {},
+                        'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    },
                     'offer_did': '7'
                 }
             },
@@ -192,9 +207,14 @@ spec:
                 'index': 3,
                 'mapped_function': 'upf',
                 'selected_offer': {
-                    'name': 'some edge resource 3',
-                    'id': '4',
-                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]},
+                    'offer_object': {
+                        'name': 'some edge resource 3',
+                        'id': '4',
+                        'place': [{"city": "Madrid", "country": "Spain", "locality": "Madrid"}],
+                        'category': [{'name': 'Edge'}],
+                        'validFor': {},
+                        'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    },
                     'offer_did': '6'
                 }
             },
@@ -202,12 +222,17 @@ spec:
                 'index': 4,
                 'mapped_function': 'app',
                 'selected_offer': {
-                    'name': 'some edge resource 4',
-                    'id': '5',
-                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]},
+                    'offer_object': {
+                        'name': 'some edge resource 4',
+                        'id': '5',
+                        'place': [{"city": "Madrid", "country": "Spain", "locality": "Madrid"}],
+                        'category': [{'name': 'Edge'}],
+                        'validFor': {},
+                        'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    },
                     'offer_did': '5'
                 }
-            },
+            }
         ]
 
         with open('/tmp/optimizer_output.txt', 'w') as f:

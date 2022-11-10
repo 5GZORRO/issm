@@ -108,7 +108,7 @@ spec:
               "catalogue_url": "http://10.4.2.126:31104",
               "elma_url": "http://0.0.0.0:0000",
               "trmf_url": "http://10.4.2.110:31116",
-              "vs_url": "http://10.4.2.126:31082",
+              "vs_url": "http://10.4.2.206:30055",
               "issm_api_url": "http://10.4.2.126:30080",
               "related_party_did": "Mftgi4YEab1ZNkdwLwVypo"
             }
