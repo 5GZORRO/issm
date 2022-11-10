@@ -1,11 +1,11 @@
 {
     "operation": "instantiate",
     "place": {
-      "city": "Barcelona",
+      "city": "Madrid",
       "country": "Spain",
-      "locality": "Barcelona",
+      "locality": "Madrid",
       "geographicLocation": {
-        "name": "Barcelona i2CAT Area, Spain ",
+        "name": "Madrid Area, Spain ",
         "geometryType": "string",
         "geometry": [
           {
@@ -89,25 +89,25 @@
         {
           "id": "upf",
           "minConfig": {
-            "cpu": {"value": 1},
-            "mem": {"value": 2, "units": "GB"},
-            "storage": {"value": 5, "units": "GB"}          
+            "cpu": {"value": 4},
+            "mem": {"value": 8, "units": "GB"},
+            "storage": {"value": 20, "units": "GB"}
           }
         },
         {
           "id": "core",
           "minConfig": {
-            "cpu": {"value": 4},
+            "cpu": {"value": 2},
             "mem": {"value": 8, "units": "GB"},
-            "storage": {"value": 50, "units": "GB"}          
+            "storage": {"value": 50, "units": "GB"}
           }
         },
         {
           "id": "app",
           "minConfig": {
-            "cpu": {"value": 4},
-            "mem": {"value": 4, "units": "GB"},
-            "storage": {"value": 20, "units": "GB"}
+            "cpu": {"value": 10},
+            "mem": {"value": 18, "units": "GB"},
+            "storage": {"value": 90, "units": "GB"}
           }
         }
       ],

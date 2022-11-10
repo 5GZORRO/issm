@@ -13,13 +13,13 @@
         {
           "value": {
             "alias": "min-vCPU",
-            "value": "4"
+            "value": "2"
           }
         },
         {
           "value": {
             "alias": "max-vCPU",
-            "value": "4"
+            "value": "2"
           }
         }
       ]
