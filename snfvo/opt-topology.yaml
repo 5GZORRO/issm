@@ -48,21 +48,22 @@ spec:
           - name: storage_unit
             value: ""
   
-      - name: discover-edges
-        templateRef:
-          name: workflow-discovery
-          template: srds-service
-        dependencies: [build-discovery-query]
-        arguments:
-          parameters:
-          - name: srsd_url
-            value: "{{workflow.parameters.srsd_url}}"
-          - name: intent_query
-            value: "{{tasks.build-discovery-query.outputs.result}}"
+#      - name: discover-edges
+#        templateRef:
+#          name: workflow-discovery
+#          template: srds-service
+#        dependencies: [build-discovery-query]
+#        arguments:
+#          parameters:
+#          - name: srsd_url
+#            value: "{{workflow.parameters.srsd_url}}"
+#          - name: intent_query
+#            value: "{{tasks.build-discovery-query.outputs.result}}"
   
   
       - name: prepare-request-to-optimizer
-        dependencies: [discover-edges]
+        dependencies: [build-discovery-query]
+        # dependencies: [discover-edges]
         templateRef:
           name: workflow-topology
           template: mock-optimizer-output
@@ -82,11 +83,12 @@ spec:
         arguments:
           parameters:
           - name: data
+            # "resources": {{tasks.discover-edges.outputs.result}},
             value: |
               { "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
                 "topic": "issm-in-{{workflow.parameters.service_owner}}", 
                 "category": "{{workflow.parameters.category}}",
-                "resources": {{tasks.discover-edges.outputs.result}},
+                "resources": [{"todo": "replace until SRSD is fixed"}],
                 "operation": "instantiate", "sub_operation": "BEST_OFFER_SELECTION",
                 "service_owner": "{{workflow.parameters.service_owner}}",
                 "order_id": "{{workflow.parameters.order_id}}",

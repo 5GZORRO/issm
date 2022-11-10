@@ -1,6 +1,5 @@
 {
     "operation": "instantiate",
-    "order_id": [{"uuid": "99969444-59ab-4e84-8d7d-24d5528717b0", "main": "true"}],
     "place": {
       "city": "Barcelona",
       "country": "Spain",

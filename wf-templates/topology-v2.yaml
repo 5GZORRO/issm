@@ -164,7 +164,7 @@ spec:
                 'selected_offer': {
                     'name': 'some edge resource',
                     'id': '1',
-                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]},
                     'offer_did': '9'
                 }
             },
@@ -174,7 +174,7 @@ spec:
                 'selected_offer': {
                     'name': 'some edge resource 1',
                     'id': '2',
-                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]},
                     'offer_did': '8'
                 }
             },
@@ -184,7 +184,7 @@ spec:
                 'selected_offer': {
                     'name': 'some edge resource 2',
                     'id': '3',
-                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]},
                     'offer_did': '7'
                 }
             },
@@ -194,7 +194,7 @@ spec:
                 'selected_offer': {
                     'name': 'some edge resource 3',
                     'id': '4',
-                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]},
                     'offer_did': '6'
                 }
             },
@@ -204,7 +204,7 @@ spec:
                 'selected_offer': {
                     'name': 'some edge resource 4',
                     'id': '5',
-                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
+                    'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]},
                     'offer_did': '5'
                 }
             },

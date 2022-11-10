@@ -33,7 +33,7 @@ appId=`curl $URL/tmf-api/resourceCatalogManagement/v2/resourceSpecification -H  
 sed -i "s|%url%|$URL|g" my_service_spec.json
 sed -i "s/%coreId%/$coreId/g" my_service_spec.json
 sed -i "s/%upfId%/$upfId/g" my_service_spec.json
-sed -i "s/%appId%/$vcacheId/g" my_service_spec.json
+sed -i "s/%appId%/$appId/g" my_service_spec.json
 ```
 
 ## Create network service
