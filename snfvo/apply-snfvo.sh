@@ -2,4 +2,4 @@
 
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-python3 ./cli.py --file ./ota-composite.yaml --service_owner operator-e --issm_api_url http://10.4.2.126:30080 --snfvo_name "OTA Composite Offer" --product_offer_id  2d9951f5-aa8e-4d0a-a91a-5b23b5cea0e4
+python3 ./cli.py --file ./opt-topology.yaml --service_owner operator-c --issm_api_url http://172.28.3.15:30080 --snfvo_name "OTA Composite Offer" --product_offer_id  673db4c4-c2a4-4348-9e54-0f916f56d5d9
