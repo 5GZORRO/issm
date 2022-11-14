@@ -1,0 +1,14 @@
+{
+    "operation": "instantiate",
+    "snfvo_data": {
+      "userdata_vcache": {
+        "api_version": "5g.ibm.com/v1alpha1",
+        "kind": "Vcache",
+        "success_condition": "status.registered == true",
+        "config": {
+          "image": "ghcr.io/5gzorro/issm-mec-cnmp/vcache_icom:latest",
+          "data_network_name": "gilan"
+        }
+      }
+    }
+}
