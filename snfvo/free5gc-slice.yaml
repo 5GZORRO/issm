@@ -77,7 +77,7 @@ spec:
             value: "upf"
 
           - name: userdata
-            value: "{{tasks.userdata-slice.outputs.parameters.dict}}"
+            value: "{{tasks.userdata-slice.outputs.result}}"
 
           - name: vsd_parameters
             value: |
@@ -111,7 +111,7 @@ spec:
               {{tasks.wait-for-status.outputs.parameters.payload}}
 
       - name: update-order
-        dependencies: [get-edge-instance-id]
+        dependencies: [get-slice-instance-id]
         templateRef:
           name: workflow-catalog
           template: update-order-instance-id
@@ -128,3 +128,11 @@ spec:
             value: "{{tasks.get-slice-instance-id.outputs.result}}"
           - name: related_party
             value: "{{tasks.get-edge-order-from-catalog.outputs.parameters.related_party}}"
+
+  - name: scaleout
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
