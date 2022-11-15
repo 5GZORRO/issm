@@ -1,12 +1,32 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "ICOM vCache",
-  "description": "ICOM vCache - resource specification",
-  "relatedParty": [],
+  "name": "vcache container",
+  "description": "IBM vcache - resource specification",
+  "relatedParty": [
+    {
+      "extendedInfo": "OD1ndI3xw0Pi6Sl4rgoa6F",
+      "href": "http://172.28.3.15:31080/tmf-api/party/v4/organization/",
+      "id": "95400a9b-1b22-46aa-951e-e53d16f75e2a",
+      "name": "Operator-a"
+    }
+  ],
   "resourceSpecCharacteristic": [
     {
-      "description": "vCPU requirements for vCache",
+      "description": "snfvoUrl",
+      "name": "snfvoUrl",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "snfvoUrl",
+            "value": "http://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/vcache.yaml"
+          }
+        }
+      ]
+    },
+    {
+      "description": "vCPU requirements for vcache",
       "name": "vCPU Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
@@ -25,7 +45,7 @@
       ]
     },
     {
-      "description": "Memory requirements for vCache",
+      "description": "Memory requirements for vcache",
       "name": "Virtual Memory Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
@@ -46,7 +66,7 @@
       ]
     },
     {
-      "description": "Storage requirements for vCache",
+      "description": "Storage requirements for vcache",
       "name": "Storage Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
@@ -74,16 +94,11 @@
         {
           "value": {
             "alias": "vsbName",
-            "value": "vCDN_edge_ICOM"
+            "value": "app"
           }
         }
       ]
     }
   ],
-  "resourceSpecRelationship": [],
-  "validFor": {
-    "endDateTime": "string",
-    "startDateTime": "string"
-  },
-  "version": "0.1"
+  "resourceSpecRelationship": []
 }

@@ -1,10 +1,30 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "upf",
-  "description": "upf - resource specification",
-  "relatedParty": [],
+  "name": "free5gc slice",
+  "description": "IBM free5gc slice - resource specification",
+  "relatedParty": [
+    {
+      "extendedInfo": "OD1ndI3xw0Pi6Sl4rgoa6F",
+      "href": "http://172.28.3.15:31080/tmf-api/party/v4/organization/",
+      "id": "95400a9b-1b22-46aa-951e-e53d16f75e2a",
+      "name": "Operator-a"
+    }
+  ],
   "resourceSpecCharacteristic": [
+    {
+      "description": "snfvoUrl",
+      "name": "snfvoUrl",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "snfvoUrl",
+            "value": "http://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/free5gc-slice.yaml"
+          }
+        }
+      ]
+    },
     {
       "description": "vCPU requirements for upf",
       "name": "vCPU Requirements",
@@ -13,13 +33,13 @@
         {
           "value": {
             "alias": "min-vCPU",
-            "value": "1"
+            "value": "2"
           }
         },
         {
           "value": {
             "alias": "max-vCPU",
-            "value": "1"
+            "value": "2"
           }
         }
       ]
@@ -30,17 +50,17 @@
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
         {
-          "unitOfMeasure": "MB",
+          "unitOfMeasure": "GB",
           "value": {
             "alias": "min-virtual-memory",
-            "value": "128.0"
+            "value": "4"
           }
         },
         {
-          "unitOfMeasure": "MB",
+          "unitOfMeasure": "GB",
           "value": {
             "alias": "max-virtual-memory",
-            "value": "128.0"
+            "value": "4"
           }
         }
       ]
@@ -51,26 +71,34 @@
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
         {
-          "unitOfMeasure": "MB",
+          "unitOfMeasure": "GB",
           "value": {
             "alias": "min-storage",
-            "value": "256.0"
+            "value": "10"
           }
         },
         {
-          "unitOfMeasure": "MB",
+          "unitOfMeasure": "GB",
           "value": {
             "alias": "max-storage",
-            "value": "256.0"
+            "value": "10"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Name of service blueprint in VS",
+      "name": "vsbName",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "vsbName",
+            "value": "upf"
           }
         }
       ]
     }
   ],
-  "resourceSpecRelationship": [],
-  "validFor": {
-    "endDateTime": "string",
-    "startDateTime": "string"
-  },
-  "version": "0.1"
+  "resourceSpecRelationship": []
 }

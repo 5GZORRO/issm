@@ -1,9 +1,16 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "upf",
-  "description": "IBM upf - resource specification",
-  "relatedParty": [],
+  "name": "free5gc slice",
+  "description": "IBM free5gc slice - resource specification",
+  "relatedParty": [
+    {
+      "extendedInfo": "OD1ndI3xw0Pi6Sl4rgoa6F",
+      "href": "http://172.28.3.15:31080/tmf-api/party/v4/organization/",
+      "id": "95400a9b-1b22-46aa-951e-e53d16f75e2a",
+      "name": "Operator-a"
+    }
+  ],
   "resourceSpecCharacteristic": [
     {
       "description": "vCPU requirements for upf",
