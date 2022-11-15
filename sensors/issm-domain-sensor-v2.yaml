@@ -170,19 +170,19 @@ spec:
                   #
                   steps:
                   - - name: instantiate
-                      when: "{{workflow.parameters.operation}} == \"instantiate\""
+                      when: "\"{{workflow.parameters.operation}}\" == \"instantiate\""
                       template: instantiate
 
                   - - name: extend-to-geolocation
-                      when: "{{workflow.parameters.operation}} == \"extend to geolocation\""
+                      when: "\"{{workflow.parameters.operation}}\" == \"extend-to-geolocation\""
                       template: instantiate
 
                   - - name: scaleout
-                      when: "{{workflow.parameters.operation}} == \"scaleout\""
+                      when: "\"{{workflow.parameters.operation}}\" == \"scaleout\""
                       template: scaleout
 
                   - - name: terminate
-                      when: "{{workflow.parameters.operation}} == \"terminate\""
+                      when: "\"{{workflow.parameters.operation}}\" == \"terminate\""
                       template: terminate
 
                 - name: instantiate
