@@ -33,7 +33,7 @@ spec:
       source: |
 
         platform = {
-          "srsd_url": "http://172.28.3.15:32068",
+          "srsd_url": "http://172.28.3.103:32068",
           "kafka_dl": "172.28.3.196:9092"
         }
 
