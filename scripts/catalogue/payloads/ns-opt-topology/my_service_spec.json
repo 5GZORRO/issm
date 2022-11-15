@@ -1,7 +1,7 @@
 {
   "attachment": [],
-  "description": "IBM - service specification",
-  "name": "ns-opt-topology",
+  "description": "IBM vcdn on slice - service specification",
+  "name": "vcdn on slice",
   "relatedParty": [
     {
       "extendedInfo": "OD1ndI3xw0Pi6Sl4rgoa6F",
@@ -10,23 +10,7 @@
       "name": "Operator-a"
     }
   ],
-  "resourceSpecification": [
-    {
-      "href": "%url%/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%coreId%",
-      "id": "%coreId%",
-      "name": "core"
-    },
-    {
-      "href": "%url%/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%upfId%",
-      "id": "%upfId%",
-      "name": "upf"
-    },
-    {
-      "href": "%url%/tmf-api/resourceCatalogManagement/v2/resourceSpecification/%appId%",
-      "id": "%appId%",
-      "name": "app"
-    }
-  ],
+  "resourceSpecification": [],
   "serviceLevelSpecification": [],
   "serviceSpecCharacteristic": [
     {
@@ -37,7 +21,7 @@
         {
           "value": {
             "alias": "snfvoUrl",
-            "value": "https://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/opt-topology.yaml"
+            "value": "https://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/vcdn-on-slice.yaml"
           }
         }
       ]
