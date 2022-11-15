@@ -26,6 +26,49 @@
       ]
     },
     {
+      "description": "imageUrl",
+      "name": "imageUrl",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "amfImageUrl",
+            "value": "ghcr.io/5gzorro/issm-mec-cnmp/free5gc-amf:v3.1.1-tls"
+          }
+        },
+        {
+          "value": {
+            "alias": "smfImageUrl",
+            "value": "ghcr.io/5gzorro/issm-mec-cnmp/free5gc-smf:v3.1.1-tls"
+          }
+        },
+        {
+          "value": {
+            "alias": "pcfImageUrl",
+            "value": "ghcr.io/5gzorro/issm-mec-cnmp/free5gc-pcf:v3.1.1-tls"
+          }
+        },
+        {
+          "value": {
+            "alias": "nssfImageUrl",
+            "value": "ghcr.io/5gzorro/issm-mec-cnmp/free5gc-nssf:v3.1.1-tls"
+          }
+        },
+        {
+          "value": {
+            "alias": "udrImageUrl",
+            "value": "ghcr.io/5gzorro/issm-mec-cnmp/free5gc-udr:v3.1.1-tls"
+          }
+        },
+        {
+          "value": {
+            "alias": "udmImageUrl",
+            "value": "ghcr.io/5gzorro/issm-mec-cnmp/free5gc-udm:v3.1.1-tls"
+          }
+        }
+      ]
+    },
+    {
       "description": "vCPU requirements for core",
       "name": "vCPU Requirements",
       "resourceSpecCharRelationship": [],

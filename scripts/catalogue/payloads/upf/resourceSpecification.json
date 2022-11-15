@@ -26,6 +26,19 @@
       ]
     },
     {
+      "description": "imageUrl",
+      "name": "imageUrl",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "upfImageUrl",
+            "value": "ghcr.io/5gzorro/issm-mec-cnmp/free5gc-upf:v3.1.1-tls"
+          }
+        }
+      ]
+    },
+    {
       "description": "vCPU requirements for upf",
       "name": "vCPU Requirements",
       "resourceSpecCharRelationship": [],
