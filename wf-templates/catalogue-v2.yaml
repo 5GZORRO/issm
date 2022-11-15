@@ -264,11 +264,11 @@ spec:
             # 1. vsbName
             element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
             if not element:
-                raise Exception("*** Unable to find 'vsbName' ***")
-    
-            vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
-            sys.stdout.write('vsbName: "%s" \n' % vsbName)
-    
+                sys.stdout.write('*** WARN Missing vsbName ***\n')
+            else:
+                vsbName = element['resourceSpecCharacteristicValue'][0]['value']['value']
+                sys.stdout.write('vsbName: "%s" \n' % vsbName)
+
             # 2. vCPU Requirements
             element = find(rsc_list, lambda e: e.get('name', '') == 'vCPU Requirements')
             if not element:
@@ -429,10 +429,10 @@ spec:
             # 1. vsbName
             element = find(rsc_list, lambda e: e.get('name', '') == 'vsbName')
             if not element:
-                raise Exception("*** Unable to find 'vsbName' ***")
-    
-            vsbName = element['serviceSpecCharacteristicValue'][0]['value']['value']
-            sys.stdout.write('vsbName: "%s" \n' % vsbName)
+                sys.stdout.write('*** WARN Missing vsbName ***\n')
+            else:
+                vsbName = element['serviceSpecCharacteristicValue'][0]['value']['value']
+                sys.stdout.write('vsbName: "%s" \n' % vsbName)
 
         # can only use DID
         # sys.stdout.write('po id: "%s" \n' % po['id'])
