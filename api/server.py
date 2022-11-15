@@ -64,7 +64,7 @@ if not LB_ARGO_SERVER:
     raise sys.exit(1)
 
 
-TRANSACTION_TYPES = ['instantiate', 'scaleout']
+TRANSACTION_TYPES = ['instantiate', 'scaleout', 'extend to geolocation']
 
 
 """

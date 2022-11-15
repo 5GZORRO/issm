@@ -103,7 +103,7 @@ spec:
                 "topic": "issm-in-{{workflow.parameters.service_owner}}", 
                 "category": "{{workflow.parameters.category}}",
                 "resources": {{tasks.discover-edges.outputs.result}},
-                "operation": "instantiate", "sub_operation": "BEST_OFFER_SELECTION",
+                "operation": "{{workflow.parameters.operation}}", "sub_operation": "BEST_OFFER_SELECTION",
                 "service_owner": "{{workflow.parameters.service_owner}}",
                 "order_id": "{{workflow.parameters.order_id}}",
                 "catalogue_url": "{{workflow.parameters.catalogue_url}}",

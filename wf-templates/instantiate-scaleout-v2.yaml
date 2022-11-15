@@ -85,7 +85,7 @@ spec:
         payload = {
             "event_uuid": event_uuid,
             "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-            "operation": "scaleout", "sub_operation": "SCALEOUT_SERVICE",
+            "operation": "{{workflow.parameters.operation}}", "sub_operation": "SCALEOUT_SERVICE",
             "place": {{workflow.parameters.place}},
             "service_owner": "{{workflow.parameters.service_owner}}",
             "order_id": "{{inputs.parameters.order_id}}",
@@ -160,7 +160,7 @@ spec:
         payload = {
             "event_uuid": event_uuid,
             "transaction_uuid": "{{workflow.parameters.transaction_uuid}}",
-            "operation": "instantiate", "sub_operation": "INSTANTIATE_SERVICE",
+            "operation": "{{workflow.parameters.operation}}", "sub_operation": "INSTANTIATE_SERVICE",
             "kafka_dl": "{{inputs.parameters.kafka_dl}}",
             "service_owner": "{{workflow.parameters.service_owner}}",
             "order_id": "{{inputs.parameters.order_id}}",

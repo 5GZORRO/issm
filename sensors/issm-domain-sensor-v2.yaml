@@ -173,6 +173,10 @@ spec:
                       when: "{{workflow.parameters.operation}} == \"instantiate\""
                       template: instantiate
 
+                  - - name: extend-to-geolocation
+                      when: "{{workflow.parameters.operation}} == \"extend to geolocation\""
+                      template: instantiate
+
                   - - name: scaleout
                       when: "{{workflow.parameters.operation}} == \"scaleout\""
                       template: scaleout
