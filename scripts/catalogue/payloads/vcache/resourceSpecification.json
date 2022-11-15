@@ -98,19 +98,6 @@
           }
         }
       ]
-    },
-    {
-      "description": "Name of service blueprint in VS",
-      "name": "vsbName",
-      "resourceSpecCharRelationship": [],
-      "resourceSpecCharacteristicValue": [
-        {
-          "value": {
-            "alias": "vsbName",
-            "value": "app"
-          }
-        }
-      ]
     }
   ],
   "resourceSpecRelationship": []
