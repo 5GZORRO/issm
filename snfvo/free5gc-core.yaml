@@ -121,9 +121,9 @@ spec:
           - name: transaction_uuid
             value: "{{workflow.parameters.transaction_uuid}}"
           - name: order_id
-            value: "{{tasks.edge-order-id.outputs.result}}"
+            value: "{{workflow.parameters.order_id}}"
           - name: main
-            value: "false"
+            value: "true"
           - name: instance_id
             value: "{{tasks.get-core-instance-id.outputs.result}}"
           - name: related_party
