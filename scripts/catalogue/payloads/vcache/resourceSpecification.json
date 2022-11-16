@@ -46,13 +46,13 @@
         {
           "value": {
             "alias": "min-vCPU",
-            "value": "4"
+            "value": "5"
           }
         },
         {
           "value": {
             "alias": "max-vCPU",
-            "value": "4"
+            "value": "5"
           }
         }
       ]
@@ -66,14 +66,14 @@
           "unitOfMeasure": "GB",
           "value": {
             "alias": "min-virtual-memory",
-            "value": "4"
+            "value": "9"
           }
         },
         {
           "unitOfMeasure": "GB",
           "value": {
             "alias": "max-virtual-memory",
-            "value": "4"
+            "value": "9"
           }
         }
       ]
@@ -87,14 +87,14 @@
           "unitOfMeasure": "GB",
           "value": {
             "alias": "min-storage",
-            "value": "20"
+            "value": "45"
           }
         },
         {
           "unitOfMeasure": "GB",
           "value": {
             "alias": "max-storage",
-            "value": "20"
+            "value": "45"
           }
         }
       ]
