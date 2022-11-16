@@ -21,7 +21,7 @@ Invoke the below in this order
 
 ```
 export REGISTRY=docker.pkg.github.com
-export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
+export IMAGE=$REGISTRY/5gzorro/issm/issm-api:9934e66
 
 export ISSM_KAFKA_HOST=172.28.3.196
 export ISSM_KAFKA_PORT=9092
@@ -483,7 +483,7 @@ Invocation example:
 1.  Set the `IMAGE` environment variable to hold the image.
 
     ```
-    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:temp
+    $ export IMAGE=$REGISTRY/5gzorro/issm/issm-api:9934e66
     ```
 
 1.  Invoke the below command.
