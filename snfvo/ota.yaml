@@ -366,6 +366,13 @@ spec:
           name: workflow-base
           template: success
   
+  - name: extend-to-geolocation
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
 
   - name: edge-service-attributes
     inputs:
@@ -397,4 +404,4 @@ spec:
       - name: dict
         valueFrom:
           path: /tmp/dict.txt
-    
+

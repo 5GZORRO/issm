@@ -18,16 +18,16 @@ metadata:
   name: snfvo-vcdn-on-slice
 spec:
   templates:
-  - name: instantiate
+  - name: extend-to-geolocation
     steps:
-    - - name: instantiate-service
+    - - name: extend-to-geolocation-service
         when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
-        template: instantiate-service
+        template: extend-to-geolocation-service
     - - name: optimizer-response
         when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
         template: optimizer-response
 
-  - name: instantiate-service
+  - name: extend-to-geolocation-service
     dag:
       tasks:
       - name: get-order-from-catalog
@@ -324,6 +324,15 @@ spec:
 #          - name: related_party
 #            value: "{{tasks.selected-offer-attributes.outputs.parameters.related_party}}"
 
+  - name: instantiate
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
+
+
   - name: scaleout
     dag:
       tasks:
@@ -428,117 +437,3 @@ spec:
       - name: userdata
         valueFrom:
           path: /tmp/userdata.txt
-
-# =============================================================================================================== #
-#  - name: instantiate
-#    steps:
-#    - - name: instantiate-service
-#        when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
-#        template: instantiate-service
-#
-#
-#  - name: instantiate-service
-#    dag:
-#      tasks:
-#      - name: get-order-from-catalog
-#        templateRef:
-#          name: workflow-catalog
-#          template: get-order-from-catalog
-#        arguments:
-#          parameters:
-#          - name: order_id
-#            value: "{{workflow.parameters.order_id}}"
-#
-#      - name: trigger-instantiate
-#        dependencies: [get-order-from-catalog]
-#        template: trigger-instantiate
-#        arguments:
-#          parameters:
-#          - name: related_party
-#            value: "{{tasks.get-order-from-catalog.outputs.parameters.related_party}}"
-#          - name: order_id
-#            value: |
-#              # TEST: main is slice order id
-#              # sub, is Edge order id
-#              [
-#                {"uuid": "afc96311-263e-4eb8-ab39-d838fe6b023a"},
-#                {"uuid": "e212dd6f-d93a-41c1-80c7-4cbef5a6b2fb", "main": "true"}
-#              ]
-#          - name: snfvo_data
-#            value: |
-#              {
-#                "userdata_slice": {
-#                  "sst": "1",
-#                  "sd": "010203",
-#                  "core_namespace": "operator-a",
-#                  "smf_name": "smf-sample",
-#                  "connectedFrom": "gNB1",
-#                  "pool": "60.61.0.0/16",
-#                  "network_name": "gilan",
-#                  "network_master": "ens3",
-#                  "network_range": "10.20.0.0/24",
-#                  "network_start": "10.20.0.2",
-#                  "network_end": "10.20.0.50",
-#          
-#                  "networks": [
-#                      {
-#                          "name": "sbi",
-#                          "master": "ens3",
-#                          "range": "10.100.200.0/24",
-#                          "start": "10.100.200.21",
-#                          "end": "10.100.200.40"
-#                      },
-#                      {
-#                          "name": "up",
-#                          "master": "ens3",
-#                          "range": "10.4.2.0/24",
-#                          "start": "10.4.2.251",
-#                          "end": "10.4.2.253"
-#                      }
-#                  ]
-#                }
-#              }
-#
-#  - name: trigger-snfvo
-#    inputs:
-#      parameters:
-#      - name: related_party
-#      # list of orders ({uuid,main},..)
-#      - name: order_id
-#      - name: snfvo_data
-#    steps:
-#    - - name: snfvo
-#        templateRef:
-#          name: instantiate-scaleout-terminate
-#          template: snfvo
-#        arguments:
-#          parameters:
-#          - name: related_party
-#            value: "{{inputs.parameters.related_party}}"
-#          - name: order_id
-#            value: {{inputs.parameters.order_id}}
-#          - name: snfvo_data
-#            value: {{inputs.parameters.snfvo_data}}
-#
-#    - - name: wait-for-snfvo
-#        dependencies: [snfvo]
-#        templateRef:
-#          name: workflow-base
-#          template: consume
-#        arguments:
-#          parameters:
-#          - name: kafka
-#            value: "{{workflow.parameters.kafka}}"
-#          - name: kafka_topic
-#            value: "issm-in-{{workflow.parameters.service_owner}}"
-#          - name: msg_id
-#            value: "{{steps.snfvo.outputs.parameters.event_uuid}}"
-#
-#
-#  - name: scaleout
-#    dag:
-#      tasks:
-#      - name: success
-#        templateRef:
-#          name: workflow-base
-#          template: success

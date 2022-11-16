@@ -430,6 +430,25 @@ class Proxy:
             steps.append([snfvo_step])
             update = True
 
+        # extend-to-geolocation
+        template_inst = find (templates, lambda t: t['name'] == 'extend-to-geolocation-invoke-snfvo')
+        steps = template_inst['steps']
+
+        snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % product_offer_id)
+        if snfvo_step:
+            sys.stdout.write('snfvo [%s] already exists for extend-to-geolocation\n' % product_offer_id)
+        else:
+            snfvo_step = {
+                "name": "snfvo-%s" % product_offer_id,
+                "templateRef": {
+                    "name": _to_snfvo_template_name(product_offer_id),
+                    "template": "extend-to-geolocation"
+                },
+                "when": "\"{{steps.get-order-from-catalog.outputs.parameters.id}}\" == \"%s\"" % product_offer_id
+            }
+            steps.append([snfvo_step])
+            update = True
+
         # scaleout
         template_sa = find (templates, lambda t: t['name'] == 'scaleout-invoke-snfvo')
         steps = template_sa['steps']
@@ -516,6 +535,19 @@ class Proxy:
         if not snfvo_step:
             # Do not raise if not found
             sys.stdout.write('snfvo [%s] was not found for instantiate\n' % product_offer_id)
+        else:
+            steps.remove(snfvo_step)
+            update = True
+
+        # extend-to-geolocation
+        template_inst = find (templates, lambda t: t['name'] == 'extend-to-geolocation-invoke-snfvo')
+        steps = template_inst['steps']
+
+        # NOTE: steps is a nested list
+        snfvo_step = find (steps, lambda s: s[0]['name'] == 'snfvo-%s' % product_offer_id)
+        if not snfvo_step:
+            # Do not raise if not found
+            sys.stdout.write('snfvo [%s] was not found for extend-to-geolocation\n' % product_offer_id)
         else:
             steps.remove(snfvo_step)
             update = True

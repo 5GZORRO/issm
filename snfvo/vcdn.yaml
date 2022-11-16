@@ -1359,6 +1359,13 @@ spec:
           - name: kafka
             value: "{{workflow.parameters.kafka_dl}}"
 
+  - name: extend-to-geolocation
+    dag:
+      tasks:
+      - name: success
+        templateRef:
+          name: workflow-base
+          template: success
 
   - name: vcdn-status-fail
     dag:

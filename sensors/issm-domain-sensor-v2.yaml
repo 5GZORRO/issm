@@ -175,7 +175,7 @@ spec:
 
                   - - name: extend-to-geolocation
                       when: "\"{{workflow.parameters.operation}}\" == \"extend-to-geolocation\""
-                      template: instantiate
+                      template: extend-to-geolocation
 
                   - - name: scaleout
                       when: "\"{{workflow.parameters.operation}}\" == \"scaleout\""
@@ -204,6 +204,92 @@ spec:
                       template: orchestrate
 
                 - name: instantiate-from-api
+                  #
+                  # Load domain's env first and parse order array, then call into
+                  # INSTANTIATE_SERVICE
+                  #
+                  dag:
+                    tasks:
+                    - name: get-domain-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-domain-env
+                      arguments:
+                        parameters:
+                        - name: domain
+                          value: "{{workflow.parameters.service_owner}}"
+
+                    - name: get-platform-env
+                      templateRef:
+                        name: workflow-environment
+                        template: get-platform-env
+
+                    - name: prepare-orders
+                      dependencies: [get-domain-env]
+                      templateRef:
+                        name: workflow-catalog
+                        template: prepare-orders-from-catalog
+                      arguments:
+                        parameters:
+                        - name: catalogue_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
+                        - name: order_id
+                          # NOTE: here it is an ARRAY
+                          value: "{{workflow.parameters.order_id}}"
+                        - name: category
+                          value: "{{workflow.parameters.category}}"
+                        - name: snfvo_data
+                          value: "{{workflow.parameters.snfvo_data}}"
+
+                    - name: do-instantiate
+                      dependencies: [prepare-orders, get-platform-env]
+                      templateRef:
+                        name: instantiate-scaleout-terminate
+                        template: instantiate
+                      arguments:
+                        parameters:
+                        - name: catalogue_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.catalogue_url}}"
+                        - name: elma_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.elma_url}}"
+                        - name: trmf_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.trmf_url}}"
+                        - name: issm_api_url
+                          value: "{{tasks.get-domain-env.outputs.parameters.issm_api_url}}"
+                        - name: domain_related_party_did
+                          value: "{{tasks.get-domain-env.outputs.parameters.domain_related_party_did}}"
+
+                        - name: srsd_url
+                          value: "{{tasks.get-platform-env.outputs.parameters.srsd_url}}"
+                        - name: kafka_dl
+                          value: "{{tasks.get-platform-env.outputs.parameters.kafka_dl}}"
+
+                        - name: order_id
+                          value: "{{tasks.prepare-orders.outputs.parameters.order_id}}"
+                        - name: snfvo_data
+                          value: "{{tasks.prepare-orders.outputs.parameters.snfvo_data}}"
+
+
+
+                - name: extend-to-geolocation
+                  steps:
+                  - - name: extend-to-geolocation-from-api
+                      when: "{{workflow.parameters.sub_operation}} == \"API\""
+                      template: extend-to-geolocation-from-api
+
+                  - - name: extend-to-geolocation-invoke-snfvo
+                      when: "{{workflow.parameters.sub_operation}} == \"INSTANTIATE_SERVICE\""
+                      template: extend-to-geolocation-invoke-snfvo
+
+                  - - name: extend-to-geolocation-invoke-snfvo-2
+                      when: "{{workflow.parameters.sub_operation}} == \"BEST_OFFER_SELECTION\""
+                      template: extend-to-geolocation-invoke-snfvo
+
+                  - - name: extend-to-geolocation-orchestrate
+                      when: "{{workflow.parameters.sub_operation}} == \"ORCHESTRATE\""
+                      template: orchestrate
+
+                - name: extend-to-geolocation-from-api
                   #
                   # Load domain's env first and parse order array, then call into
                   # INSTANTIATE_SERVICE
@@ -594,6 +680,22 @@ spec:
                 - name: instantiate-invoke-snfvo
                   # 
                   # Invoke proper s-nfvo (Instantiate)
+                  #
+                  # Note: conditional snfvo steps are missing because they are
+                  # dynamically added/removed during platform lifecycle
+                  steps:
+                  - - name: get-order-from-catalog
+                      templateRef:
+                        name: workflow-catalog
+                        template: get-order-from-catalog
+                      arguments:
+                        parameters:
+                        - name: order_id
+                          value: "{{workflow.parameters.order_id}}"
+
+                - name: extend-to-geolocation-invoke-snfvo
+                  # 
+                  # Invoke proper s-nfvo (Extend-to-geolocation)
                   #
                   # Note: conditional snfvo steps are missing because they are
                   # dynamically added/removed during platform lifecycle
