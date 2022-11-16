@@ -154,84 +154,67 @@ spec:
         import json
         import sys
 
+        def find(l, predicate):
+            """
+            util method
+            """
+            results = [x for x in l if predicate(x)]
+            return results[0] if len(results) > 0 else None
+
         resources = {{inputs.parameters.resources}}
         app_topology = {{inputs.parameters.app_topology}}
+
+        # 1. core
+        core_element = find(resources, lambda e: e['offer_object']['name'] == 'Edge Resource Offer (core 1)')
+        if not core_element:
+            raise Exception ('*** WARN Missing core Edge ***\n')
+
+        # 2. upf (1)
+        upf1_element = find(resources, lambda e: e['offer_object']['name'] == 'Edge Resource Offer (upf 1)')
+        if not upf1_element:
+            raise Exception ('*** WARN Missing upf 1 Edge ***\n')
+
+        # 3. upf (2)
+        upf2_element = find(resources, lambda e: e['offer_object']['name'] == 'Edge Resource Offer (upf 2)')
+        if not upf2_element:
+            raise Exception ('*** WARN Missing upf 2 Edge ***\n')
+
+        # 2. app (1)
+        app1_element = find(resources, lambda e: e['offer_object']['name'] == 'Edge Resource Offer (cache 1)')
+        if not app1_element:
+            raise Exception ('*** WARN Missing app 1 Edge ***\n')
+
+        # 3. app (2)
+        app2_element = find(resources, lambda e: e['offer_object']['name'] == 'Edge Resource Offer (cache 2)')
+        if not app2_element:
+            raise Exception ('*** WARN Missing app 2 Edge ***\n')
+
 
         optimizer_output = [
             {
                 'index': 0,
                 'mapped_function': 'core',
-                'selected_offer': {
-                    'offer_object': {
-                        'name': 'some edge resource',
-                        'id': '1',
-                        'place': [{"city": "Madrid", "country": "Spain", "locality": "Madrid"}],
-                        'category': [{'name': 'Edge'}],
-                        'validFor': {},
-                        'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
-                    },
-                    'offer_did': '9'
-                }
+                'selected_offer': core_element
             },
             {
                 'index': 1,
                 'mapped_function': 'upf',
-                'selected_offer': {
-                    'offer_object': {
-                        'name': 'some edge resource 1',
-                        'id': '2',
-                        'place': [{"city": "Madrid", "country": "Spain", "locality": "Madrid"}],
-                        'category': [{'name': 'Edge'}],
-                        'validFor': {},
-                        'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
-                    },
-                    'offer_did': '8'
-                }
+                'selected_offer': upf1_element
             },
             {
                 'index': 2,
                 'mapped_function': 'app',
-                'selected_offer': {
-                    'offer_object': {
-                        'name': 'some edge resource 2',
-                        'id': '3',
-                        'place': [{"city": "Madrid", "country": "Spain", "locality": "Madrid"}],
-                        'category': [{'name': 'Edge'}],
-                        'validFor': {},
-                        'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
-                    },
-                    'offer_did': '7'
-                }
+                'selected_offer': app1_element
             },
             {
                 'index': 3,
                 'mapped_function': 'upf',
-                'selected_offer': {
-                    'offer_object': {
-                        'name': 'some edge resource 3',
-                        'id': '4',
-                        'place': [{"city": "Madrid", "country": "Spain", "locality": "Madrid"}],
-                        'category': [{'name': 'Edge'}],
-                        'validFor': {},
-                        'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
-                    },
-                    'offer_did': '6'
-                }
+                'selected_offer': upf2_element
             },
             {
                 'index': 4,
                 'mapped_function': 'app',
-                'selected_offer': {
-                    'offer_object': {
-                        'name': 'some edge resource 4',
-                        'id': '5',
-                        'place': [{"city": "Madrid", "country": "Spain", "locality": "Madrid"}],
-                        'category': [{'name': 'Edge'}],
-                        'validFor': {},
-                        'productSpecification': {'relatedParty': [{'name': 'operator-e', 'extendedInfo': 'Mftgi4YEab1ZNkdwLwVypo'}]}
-                    },
-                    'offer_did': '5'
-                }
+                'selected_offer': app2_element
             }
         ]
 
@@ -248,3 +231,74 @@ spec:
 #
 #
 #########################################
+
+  - name: entry-attributes
+    # Return various optimizer output entry entry attributes such as index,
+    # selected_offer, mapped_function
+    #
+    # Parameters
+    # resource: a resource offer as returned by SRSD (json)
+    #
+    # Outputs
+    # refer to <outputs:> section for details
+    inputs:
+      parameters:
+      - name: entry
+    script:
+      image: python:alpine3.6
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      source: |
+        import json
+        import sys
+
+        def find(l, predicate):
+            """
+            util method
+            """
+            results = [x for x in l if predicate(x)]
+            return results[0] if len(results) > 0 else None
+
+        # po is an element received from sensor which is a flattened json
+        # none-pythonic json (null, true, false, ..)
+        entry = '{{inputs.parameters.entry}}'
+        entry_json = json.loads(entry)
+
+        index = ""
+        selected_offer = {}
+        mapped_function = ""
+
+        # selected_offer
+        selected_offer = entry_json['selected_offer']
+        sys.stdout.write('selected_offer: "%s" \n' % selected_offer)
+
+        # index
+        index = entry_json['index']
+        sys.stdout.write('index: "%s" \n' % index)
+
+        # mapped_function
+        mapped_function = entry_json['mapped_function']
+        sys.stdout.write('mapped_function: "%s" \n' % mapped_function)
+
+        with open('/tmp/index.txt', 'w') as f:
+            f.write(str(index))
+
+        with open('/tmp/mapped_function.txt', 'w') as f:
+            f.write(mapped_function)
+
+        with open('/tmp/selected_offer.txt', 'w') as f:
+            json.dump(selected_offer, f)
+
+    outputs:
+      parameters:
+      - name: index
+        valueFrom:
+          path: /tmp/index.txt
+
+      - name: mapped_function
+        valueFrom:
+          path: /tmp/mapped_function.txt
+
+      - name: selected_offer
+        valueFrom:
+          path: /tmp/selected_offer.txt

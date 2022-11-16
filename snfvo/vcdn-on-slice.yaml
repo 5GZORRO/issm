@@ -75,7 +75,6 @@ spec:
             value: "{{tasks.build-discovery-query.outputs.result}}"
 
       - name: prepare-request-to-optimizer
-        #dependencies: [build-discovery-query]
         dependencies: [discover-edges]
         templateRef:
           name: workflow-topology
@@ -84,8 +83,6 @@ spec:
           parameters:
           - name: resources
             value: "{{tasks.discover-edges.outputs.result}}"
-#            value: |
-#              [{"todo": "replace until SRSD is fixed"}]
           - name: app_topology
             value: "{{workflow.parameters.app_topology}}"
   
@@ -155,65 +152,42 @@ spec:
         withParam: "{{tasks.core-entry.outputs.parameters.entries}}"
 
   - name: handle-placement-entry
-    # Note: these are 'flattened JSON': true, null, ..
+    # DELETE this note [Note: these are 'flattened JSON': true, null, ..]
     inputs:
       parameters:
       - name: entry
     dag:
       tasks:
-      - name: selected-offer
-        template: from-key-flatten
-        arguments:
-          parameters:
-          - name: key
-            value: selected_offer
-          - name: json_str
-            value: |
-              {{inputs.parameters.entry}}
-
-      - name: index
-        template: from-key-flatten
-        arguments:
-          parameters:
-          - name: key
-            value: index
-          - name: json_str
-            value: |
-              {{inputs.parameters.entry}}
-
-      - name: mapped-function
+      - name: entry-attributes
         templateRef:
-          name: workflow-base
-          template: from-key
+          name: workflow-topology
+          template: entry-attributes
         arguments:
           parameters:
-          - name: key
-            value: mapped_function
-          - name: json_str
-            value: |
-              {{inputs.parameters.entry}}
-
+          - name: entry
+            value: "{{inputs.parameters.entry}}"
+      
       - name: print-selected-offer
-        dependencies: [selected-offer]
+        dependencies: [entry-attributes]
         templateRef:
           name: workflow-base
           template: jq-script
         arguments:
           parameters:
           - name: json_str
-            value: "{{tasks.selected-offer.outputs.result}}"
+            value: "{{tasks.entry-attributes.outputs.parameters.selected_offer}}"
           - name: jq_query
             value: '.'
 
       - name: selected-offer-attributes
-        dependencies: [selected-offer]
+        dependencies: [entry-attributes]
         templateRef:
           name: workflow-discovery
           template: resource-attributes
         arguments:
           parameters:
           - name: resource
-            value: "{{tasks.selected-offer.outputs.result}}"
+            value: "{{tasks.entry-attributes.outputs.parameters.selected_offer}}"
 
 #      - name: acquire
 #        dependencies: [selected-offer-attributes, print-selected-offer]
@@ -242,14 +216,14 @@ spec:
 #            value: "{{tasks.selected-offer-attributes.outputs.parameters.did}}"
 
       - name: userdata
-        dependencies: [mapped-function, index]
+        dependencies: [entry-attributes]
         template: userdata
         arguments:
           parameters:
           - name: mapped_function
-            value: "{{tasks.mapped-function.outputs.result}}"
+            value: "{{tasks.entry-attributes.outputs.parameters.mapped_function}}"
           - name: index
-            value: "{{tasks.index.outputs.result}}"
+            value: "{{tasks.entry-attributes.outputs.parameters.index}}"
           - name: snfvo_data
             value: |
               {{workflow.parameters.snfvo_data}}
@@ -269,7 +243,7 @@ spec:
 
           - name: vsbName
             # possible values: 'core', 'upf' or 'app'
-            value: "{{tasks.mapped-function.outputs.result}}"
+            value: "{{tasks.entry-attributes.outputs.parameters.mapped_function}}"
 
           - name: userdata
             value: "{{tasks.userdata.outputs.parameters.userdata}}"
@@ -341,23 +315,6 @@ spec:
           name: workflow-base
           template: success
 
-  - name: from-key-flatten
-    # Temporary step to return a flattened JSON rather than a python dictionary
-    # Note: it works only when result is a json
-    inputs:
-      parameters:
-      - name: key
-      - name: json_str
-    script:
-      image: python:alpine3.6
-      imagePullPolicy: IfNotPresent
-      command: [python]
-      source: |
-        import json
-
-        print(json.dumps({{inputs.parameters.json_str}}['{{inputs.parameters.key}}']))
-
-
   - name: core-entry
     # Retrieve 'core' placement entry from the placement list, returning back
     # the list excluding that
@@ -379,18 +336,22 @@ spec:
             results = [x for x in l if predicate(x)]
             return results[0] if len(results) > 0 else None
 
-        entries = {{inputs.parameters.entries}}
-        sys.stdout.write('entries: "%s" \n' % entries)
+        # entries is received from sensor which is a flattened json
+        # none-pythonic json (null, true, false, ..)
+        entries = '{{inputs.parameters.entries}}'
+        entries_json = json.loads(entries)
 
-        entry = find(entries, lambda e: e.get('mapped_function', '') == 'core')
+        sys.stdout.write('entries: "%s" \n' % entries_json)
+
+        entry = find(entries_json, lambda e: e.get('mapped_function', '') == 'core')
         if not entry:
             raise Exception("*** Unable to find 'core' entry ***")
 
-        entries.remove(entry)
+        entries_json.remove(entry)
         with open('/tmp/entry.txt', 'w') as f:
             json.dump(entry, f)
         with open('/tmp/entries.txt', 'w') as f:
-            json.dump(entries, f)
+            json.dump(entries_json, f)
 
     outputs:
       parameters:
