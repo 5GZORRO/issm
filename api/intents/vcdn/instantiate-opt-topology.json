@@ -68,7 +68,6 @@
             "success_condition": "status.registered == true",
             "config": {
               "image": "ghcr.io/5gzorro/issm-mec-cnmp/vcache_icom:latest",
-              "registration_ipaddress": "84.88.32.146",
               "data_network_name": "gilan"
             }
         },
