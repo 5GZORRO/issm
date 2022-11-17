@@ -90,9 +90,9 @@
         {
           "id": "upf",
           "minConfig": {
-            "cpu": {"value": 4},
-            "mem": {"value": 8, "units": "GB"},
-            "storage": {"value": 20, "units": "GB"}
+            "cpu": {"value": 2},
+            "mem": {"value": 4, "units": "GB"},
+            "storage": {"value": 10, "units": "GB"}
           }
         },
         {
@@ -106,9 +106,9 @@
         {
           "id": "app",
           "minConfig": {
-            "cpu": {"value": 10},
-            "mem": {"value": 18, "units": "GB"},
-            "storage": {"value": 90, "units": "GB"}
+            "cpu": {"value": 5},
+            "mem": {"value": 9, "units": "GB"},
+            "storage": {"value": 45, "units": "GB"}
           }
         }
       ],
@@ -135,6 +135,6 @@
         [],
         []
       ],
-      "global_demand": "1000"
+      "global_demand": "20000"
     }
 }

@@ -1,0 +1,72 @@
+{
+  "attachment": [],
+  "description": "edge_resource_cache_3",
+  "feature": [],
+  "name": "edge_resource_cache_3",
+  "relatedParty": [
+    {
+      "extendedInfo": "Mftgi4YEab1ZNkdwLwVypo",
+      "href": "http://10.4.2.126:31104/tmf-api/party/v4/organization/",
+      "id": "2d9cc525-f4ba-45c5-a185-0f963e4c5150",
+      "name": "Operator-e"
+    }
+  ],
+  "resourceSpecCharacteristic": [
+    {
+      "description": "Edge CPU Config",
+      "name": "cpu",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "cpu",
+            "value": "15"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Edge RAM Config",
+      "name": "memory",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "memory",
+            "value": "27"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Edge Storage Config",
+      "name": "storage",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "GB",
+          "value": {
+            "alias": "storage",
+            "value": "135"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Bandwidth",
+      "name": "bandwidth",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "unitOfMeasure": "MB/s",
+          "value": {
+            "alias": "bandwidth",
+            "value": "100"
+          }
+        }
+      ]
+    }
+  ],
+  "resourceSpecRelationship": []
+}

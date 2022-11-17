@@ -98,6 +98,19 @@
           }
         }
       ]
+    },
+    {
+      "description": "Demand unit in number of sessions",
+      "name": "Demand unit",
+      "resourceSpecCharRelationship": [],
+      "resourceSpecCharacteristicValue": [
+        {
+          "value": {
+            "alias": "demand",
+            "value": "10000"
+          }
+        }
+      ]
     }
   ],
   "resourceSpecRelationship": []
