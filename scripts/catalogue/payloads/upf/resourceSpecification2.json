@@ -1,8 +1,8 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "vcache",
-  "description": "IBM vcache - resource specification",
+  "name": "open5gs upf",
+  "description": "IBM open5gs upf - resource specification",
   "relatedParty": [
     {
       "extendedInfo": "OD1ndI3xw0Pi6Sl4rgoa6F",
@@ -20,7 +20,7 @@
         {
           "value": {
             "alias": "snfvoUrl",
-            "value": "http://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/vcache.yaml"
+            "value": "http://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/open5gs-upf.yaml"
           }
         }
       ]
@@ -32,33 +32,33 @@
       "resourceSpecCharacteristicValue": [
         {
           "value": {
-            "alias": "vCacheImageUrl",
-            "value": "ghcr.io/5gzorro/issm-mec-cnmp/vcache_icom:latest"
+            "alias": "upfImageUrl",
+            "value": "ghcr.io/5gzorro/open5gs/open5gs-upf:latest"
           }
         }
       ]
     },
     {
-      "description": "vCPU requirements for vcache",
+      "description": "vCPU requirements for upf",
       "name": "vCPU Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
         {
           "value": {
             "alias": "min-vCPU",
-            "value": "5"
+            "value": "2"
           }
         },
         {
           "value": {
             "alias": "max-vCPU",
-            "value": "5"
+            "value": "2"
           }
         }
       ]
     },
     {
-      "description": "Memory requirements for vcache",
+      "description": "Memory requirements for upf",
       "name": "Virtual Memory Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
@@ -66,20 +66,20 @@
           "unitOfMeasure": "GB",
           "value": {
             "alias": "min-virtual-memory",
-            "value": "9"
+            "value": "4"
           }
         },
         {
           "unitOfMeasure": "GB",
           "value": {
             "alias": "max-virtual-memory",
-            "value": "9"
+            "value": "4"
           }
         }
       ]
     },
     {
-      "description": "Storage requirements for vcache",
+      "description": "Storage requirements for upf",
       "name": "Storage Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
@@ -87,14 +87,14 @@
           "unitOfMeasure": "GB",
           "value": {
             "alias": "min-storage",
-            "value": "45"
+            "value": "10"
           }
         },
         {
           "unitOfMeasure": "GB",
           "value": {
             "alias": "max-storage",
-            "value": "45"
+            "value": "10"
           }
         }
       ]

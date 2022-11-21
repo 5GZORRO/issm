@@ -1,8 +1,8 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "vcache",
-  "description": "IBM vcache - resource specification",
+  "name": "open5gs core",
+  "description": "IBM open5gs core - resource specification",
   "relatedParty": [
     {
       "extendedInfo": "OD1ndI3xw0Pi6Sl4rgoa6F",
@@ -20,7 +20,7 @@
         {
           "value": {
             "alias": "snfvoUrl",
-            "value": "http://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/vcache.yaml"
+            "value": "http://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/open5gs-core.yaml"
           }
         }
       ]
@@ -32,33 +32,63 @@
       "resourceSpecCharacteristicValue": [
         {
           "value": {
-            "alias": "vCacheImageUrl",
-            "value": "ghcr.io/5gzorro/issm-mec-cnmp/vcache_icom:latest"
+            "alias": "amfImageUrl",
+            "value": "ghcr.io/5gzorro/open5gs/open5gs-amf:latest"
+          }
+        },
+        {
+          "value": {
+            "alias": "smfImageUrl",
+            "value": "ghcr.io/5gzorro/open5gs/open5gs-smf:latest"
+          }
+        },
+        {
+          "value": {
+            "alias": "pcfImageUrl",
+            "value": "ghcr.io/5gzorro/open5gs/open5gs-pcf:latest"
+          }
+        },
+        {
+          "value": {
+            "alias": "nssfImageUrl",
+            "value": "ghcr.io/5gzorro/open5gs/open5gs-nssf:latest"
+          }
+        },
+        {
+          "value": {
+            "alias": "udrImageUrl",
+            "value": "ghcr.io/5gzorro/open5gs/open5gs-udr:latest"
+          }
+        },
+        {
+          "value": {
+            "alias": "udmImageUrl",
+            "value": "ghcr.io/5gzorro/open5gs/open5gs-udm:latest"
           }
         }
       ]
     },
     {
-      "description": "vCPU requirements for vcache",
+      "description": "vCPU requirements for core",
       "name": "vCPU Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
         {
           "value": {
             "alias": "min-vCPU",
-            "value": "5"
+            "value": "2"
           }
         },
         {
           "value": {
             "alias": "max-vCPU",
-            "value": "5"
+            "value": "2"
           }
         }
       ]
     },
     {
-      "description": "Memory requirements for vcache",
+      "description": "Memory requirements for core",
       "name": "Virtual Memory Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
@@ -66,20 +96,20 @@
           "unitOfMeasure": "GB",
           "value": {
             "alias": "min-virtual-memory",
-            "value": "9"
+            "value": "8"
           }
         },
         {
           "unitOfMeasure": "GB",
           "value": {
             "alias": "max-virtual-memory",
-            "value": "9"
+            "value": "8"
           }
         }
       ]
     },
     {
-      "description": "Storage requirements for vcache",
+      "description": "Storage requirements for core",
       "name": "Storage Requirements",
       "resourceSpecCharRelationship": [],
       "resourceSpecCharacteristicValue": [
@@ -87,14 +117,14 @@
           "unitOfMeasure": "GB",
           "value": {
             "alias": "min-storage",
-            "value": "45"
+            "value": "50"
           }
         },
         {
           "unitOfMeasure": "GB",
           "value": {
             "alias": "max-storage",
-            "value": "45"
+            "value": "50"
           }
         }
       ]

@@ -1,7 +1,7 @@
 {
   "attachment": [],
   "description": "IBM vcdn on slice - service specification",
-  "name": "vcdn on slice",
+  "name": "extensible vcdn on slice",
   "relatedParty": [
     {
       "extendedInfo": "OD1ndI3xw0Pi6Sl4rgoa6F",

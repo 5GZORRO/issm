@@ -1,8 +1,8 @@
 {
   "attachment": [],
   "feature": [],
-  "name": "free5gc slice",
-  "description": "IBM free5gc slice - resource specification",
+  "name": "free5gc upf",
+  "description": "IBM free5gc upf - resource specification",
   "relatedParty": [
     {
       "extendedInfo": "OD1ndI3xw0Pi6Sl4rgoa6F",
@@ -20,7 +20,7 @@
         {
           "value": {
             "alias": "snfvoUrl",
-            "value": "http://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/free5gc-slice.yaml"
+            "value": "http://raw.githubusercontent.com/5GZORRO/issm/master/snfvo/free5gc-upf.yaml"
           }
         }
       ]

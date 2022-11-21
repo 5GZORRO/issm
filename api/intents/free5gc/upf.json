@@ -1,7 +1,7 @@
 {
     "operation": "instantiate",
     "snfvo_data": {
-      "userdata_slice": {
+      "userdata_upf": {
         "sst": "1",
         "sd": "010203",
         "core_namespace": "operator-a",

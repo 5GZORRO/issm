@@ -18,7 +18,7 @@ export URL=http://172.28.3.15:31080
 ### List UPF productOfferings
 
 ```
-curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productOffering" -H  "accept: application/json" | jq -r '.[] | select(.name=="free5gc UPF").id'
+curl -X GET "$URL/tmf-api/productCatalogManagement/v4/productOffering" -H  "accept: application/json" | jq -r '.[] | select(.name=="free5gc upf").id'
 ```
 
 

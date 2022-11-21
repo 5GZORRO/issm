@@ -57,7 +57,7 @@ spec:
         arguments:
           parameters:
           - name: key
-            value: userdata_slice
+            value: userdata_upf
           - name: json_str
             value: |
               {{workflow.parameters.snfvo_data}}
